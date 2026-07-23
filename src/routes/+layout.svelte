@@ -28,7 +28,7 @@
 
 <App theme="material" dark={false} safeAreas>
 	<div class="flex h-[100dvh] flex-col bg-gray-50 text-gray-900">
-		<main class="flex-1 overflow-y-auto pb-20">
+		<main class="relative flex-1 overflow-hidden">
 			{#if !app.ready}
 				<div class="flex h-full items-center justify-center text-sm text-gray-400">
 					加载中…
