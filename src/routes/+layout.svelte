@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { App } from 'konsta/svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import Nav from '$lib/components/Nav.svelte';
 	import { app } from '$lib/context/appContext.svelte';
 	import './layout.css';
@@ -10,6 +12,13 @@
 
 	onMount(() => {
 		app.init();
+	});
+
+	// 未完成 onboarding 时，强制停留在设置页
+	$effect(() => {
+		if (app.ready && !app.onboarded && page.url.pathname !== '/settings') {
+			goto('/settings', { replaceState: true });
+		}
 	});
 </script>
 
