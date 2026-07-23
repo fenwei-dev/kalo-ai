@@ -12,6 +12,10 @@
 
 	onMount(() => {
 		app.init();
+		// 注册 PWA service worker
+		import('virtual:pwa-register').then(({ registerSW }) =>
+			registerSW({ immediate: true })
+		);
 	});
 
 	// 未完成 onboarding 时，强制停留在设置页

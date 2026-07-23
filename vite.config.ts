@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-static';
 // SPA mode: pure client-side app, data lives in IndexedDB
 import { sveltekit } from '@sveltejs/kit/vite';
+import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -16,6 +17,25 @@ export default defineConfig({
 				fallback: 'index.html',
 				strict: false
 			})
+		}),
+		SvelteKitPWA({
+			strategies: 'generateSW',
+			registerType: 'autoUpdate',
+			manifest: {
+				name: 'Kalo AI',
+				short_name: 'Kalo',
+				description: '智能减脂陪伴——和卡卡聊天记录饮食、运动与体重',
+				theme_color: '#10b981',
+				background_color: '#ffffff',
+				lang: 'zh-CN',
+				display: 'standalone',
+				orientation: 'portrait',
+				icons: [
+					{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+					{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+					{ src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+				]
+			}
 		})
 	]
 });
