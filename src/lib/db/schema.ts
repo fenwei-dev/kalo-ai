@@ -99,7 +99,7 @@ export interface Session {
 /** pi-ai 风格的内容块 */
 export type ContentBlock =
 	| { type: 'text'; text: string }
-	| { type: 'toolCall'; id: string; name: string; arguments: unknown }
+	| { type: 'toolCall'; id: string; name: string; arguments: Record<string, any> }
 	| { type: 'image'; data: string; mimeType: string };
 
 export type MessageRole = 'user' | 'assistant' | 'toolResult';
