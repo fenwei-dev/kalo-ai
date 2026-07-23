@@ -7,6 +7,7 @@ import {
 	getExerciseEntriesByDate,
 	getFoodEntriesByDate,
 	getFoodEntriesSince,
+	getUser,
 	getWeightEntries,
 	listLibrary,
 	updateUser,
@@ -15,6 +16,7 @@ import {
 	saveUser
 } from '$lib/db/repositories';
 import { syncFoodToLibrary } from '$lib/utils/librarySync';
+import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
 import {
 	calculateBMR,
 	calculateGoalPlan,
@@ -257,13 +259,16 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				return { ok: true, data: { entry } };
 			}
 
-			case 'logWeight': {
+						case 'logWeight': {
 				const date = (args.date as string) || todayISO();
 				const entry = await addWeightEntry({ date, weight: args.weight });
-				// 简单回填当前体重；自适应 TDEE 留待后续算法步骤
 				if (app.user) {
 					app.user = (await updateUser({ currentWeight: args.weight })) ?? app.user;
 				}
+				await recomputeAdaptiveTDEE();
+				// 重新读取最新的 user（含自适应 TDEE）到全局状态
+				const fresh = await getUser();
+				if (fresh) app.user = fresh;
 				return { ok: true, data: { entry } };
 			}
 
