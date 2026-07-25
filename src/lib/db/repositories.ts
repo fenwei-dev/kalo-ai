@@ -81,7 +81,8 @@ export async function getFoodEntriesSince(sinceISO: string): Promise<FoodEntry[]
 }
 
 export async function updateFoodEntry(id: string, patch: Partial<FoodEntry>): Promise<void> {
-	await db.foodEntries.update(id, patch);
+	const updated = await db.foodEntries.update(id, patch);
+	if (!updated) throw new Error('要修正的饮食记录不存在');
 }
 
 export async function deleteFoodEntry(id: string): Promise<void> {

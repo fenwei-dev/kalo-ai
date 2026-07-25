@@ -4,6 +4,7 @@ import {
 	addExerciseEntry,
 	addFoodEntry,
 	addWeightEntry,
+	updateFoodEntry,
 	getExerciseEntriesByDate,
 	getExerciseEntriesSince,
 	getFoodEntriesByDate,
@@ -61,8 +62,9 @@ export const toolDefs: Tool[] = [
 	{
 		name: 'logFood',
 		description:
-			'记录一条饮食。热量和营养由你（卡卡）估算后作为参数传入。会自动沉淀到食物库。可批量（多次调用）。',
+			'新增或修正一条饮食。修正已有记录时先用 getTodayLog 找到 id，并传 replaceEntryId，禁止重复新增。会自动沉淀到食物库。',
 		parameters: Type.Object({
+			replaceEntryId: Type.Optional(Type.String({ description: '要修正的已有 FoodEntry id；新增时不传' })),
 			name: Type.String({ description: '食物名称，如「牛肉面」' }),
 			calories: Type.Number({ minimum: 0, maximum: 10000, description: '热量 kcal' }),
 			protein: Type.Number({ minimum: 0, maximum: 1000, description: '蛋白质 g' }),
@@ -229,9 +231,9 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 			}
 
 			case 'logFood': {
-				const { name: fname, calories, protein, carbs, fat, time, date } = args;
+				const { replaceEntryId, name: fname, calories, protein, carbs, fat, time, date } = args;
 				const librarySync = await syncFoodToLibrary({ name: fname, calories, protein, carbs, fat });
-				const entry = await addFoodEntry({
+				const values = {
 					date: date || localDateISO(),
 					time: time || new Date().toTimeString().slice(0, 5),
 					name: fname,
@@ -240,11 +242,17 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 					carbs,
 					fat,
 					tef: Math.round(protein * 4 * 0.25 + carbs * 4 * 0.08 + fat * 9 * 0.03),
-					source: librarySync.status === 'matched' ? 'library' : 'ai',
+					source: librarySync.status === 'matched' ? 'library' as const : 'ai' as const,
 					libraryItemId: librarySync.itemId
-				});
+				};
+				if (replaceEntryId) {
+					await updateFoodEntry(replaceEntryId, values);
+					await app.refreshToday();
+					return { ok: true, data: { entry: { id: replaceEntryId, ...values }, corrected: true, library: librarySync } };
+				}
+				const entry = await addFoodEntry(values);
 				await app.refreshToday();
-				return { ok: true, data: { entry, library: librarySync } };
+				return { ok: true, data: { entry, corrected: false, library: librarySync } };
 			}
 
 			case 'logExercise': {
@@ -299,7 +307,11 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 							(patch.gender as Gender) ?? 'male'
 						)
 					};
-					app.user = await saveUser(required);
+					app.user = await saveUser({
+						...required,
+						targetWeight: patch.targetWeight,
+						targetDate: patch.targetDate
+					});
 				}
 				return { ok: true, data: profileSnapshot() };
 			}
