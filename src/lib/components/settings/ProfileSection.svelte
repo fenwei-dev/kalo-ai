@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { List, ListInput, Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
+	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
-	import { saveUser, updateUser } from '$lib/db/repositories';
+	import { addMessage, createSession, saveUser, updateUser } from '$lib/db/repositories';
 	import { ACTIVITY_LABELS, calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
 	import type { ActivityLevel, Gender } from '$lib/db/schema';
 
@@ -37,6 +38,7 @@
 
 	async function save() {
 		if (!valid) return;
+		const firstSave = !app.user;
 		saving = true;
 		try {
 			const data = {
@@ -53,6 +55,18 @@
 				app.user = (await updateUser(data)) ?? null;
 			} else {
 				app.user = await saveUser(data);
+			}
+			if (firstSave) {
+				const session = await createSession('认识卡卡');
+				const target = targetWeight ? `看到你想减到 ${targetWeight}kg，` : '';
+				await addMessage({
+					sessionId: session.id,
+					role: 'assistant',
+					content: [{ type: 'text', text: `你好，我是卡卡！${target}基础代谢和每日消耗已经算好了。接下来想先聊目标，还是记录今天吃了什么？` }]
+				});
+				await app.refreshSessions();
+				await goto(`/chat/${session.id}`);
+				return;
 			}
 			saved = true;
 			setTimeout(() => (saved = false), 1500);
@@ -123,6 +137,26 @@
 	/>
 	<ListInput label="目标日期" type="date" bind:value={targetDate} />
 </List>
+
+{#if app.user}
+	<Block inset>
+		<button
+			onclick={async () => {
+				const session = await createSession('制定减脂目标');
+				await addMessage({
+					sessionId: session.id,
+					role: 'user',
+					content: [{ type: 'text', text: '请根据我的资料和健康体重区间，帮我制定一个安全、可执行的减脂目标。' }]
+				});
+				await app.refreshSessions();
+				await goto(`/chat/${session.id}`);
+			}}
+			class="w-full rounded-full border border-emerald-500 py-2.5 text-sm font-medium text-emerald-600"
+		>
+			让卡卡推荐目标 →
+		</button>
+	</Block>
+{/if}
 
 {#if targetWeight && targetDate}
 	<Block inset>
