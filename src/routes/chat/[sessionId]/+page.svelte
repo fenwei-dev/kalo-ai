@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
@@ -23,6 +22,8 @@
 	let streamText = $state('');
 	let errorMsg = $state('');
 	let drawerOpen = $state(false);
+	let loadGeneration = 0;
+	let creatingNew = false;
 
 	let bottomEl: HTMLDivElement | undefined = $state();
 
@@ -35,23 +36,49 @@
 			{ type: 'toolCall' }
 		>[];
 	}
-
-	async function load() {
-		if (sessionId === 'new') {
-			const s = await createSession();
-			await app.refreshSessions();
-			goto(`/chat/${s.id}`, { replaceState: true });
-			return;
+	function toolResult(callId: string): { failed: boolean; error: string } | null {
+		const result = messages.find((m) => m.role === 'toolResult' && m.toolCallId === callId);
+		if (!result) return null;
+		let error = '';
+		if (result.isError) {
+			try {
+				error = JSON.parse(blocksText(result.content));
+			} catch {
+				error = blocksText(result.content);
+			}
 		}
-		session = (await getSession(sessionId)) ?? null;
-		messages = await listMessages(sessionId);
+		return { failed: !!result.isError, error };
 	}
 
-	onMount(load);
-	// 切换会话时重新加载
+	async function load(id = sessionId) {
+		const generation = ++loadGeneration;
+		if (id === 'new') {
+			if (creatingNew) return;
+			creatingNew = true;
+			try {
+				const s = await createSession();
+				await app.refreshSessions();
+				await goto(`/chat/${s.id}`, { replaceState: true });
+			} finally {
+				creatingNew = false;
+			}
+			return;
+		}
+		const found = (await getSession(id)) ?? null;
+		if (generation !== loadGeneration) return;
+		if (!found) {
+			await goto('/chat', { replaceState: true });
+			return;
+		}
+		session = found;
+		const loaded = await listMessages(id);
+		if (generation === loadGeneration) messages = loaded;
+	}
+
+	// 切换会话时重新加载；单一入口避免 /chat/new 重复创建。
 	$effect(() => {
-		sessionId;
-		if (page.url.pathname.startsWith('/chat/')) load();
+		const id = sessionId;
+		if (page.url.pathname.startsWith('/chat/')) void load(id);
 	});
 
 	// 自动滚到底
@@ -63,7 +90,7 @@
 
 	async function send() {
 		const text = input.trim();
-		if (!text || sending) return;
+		if (!text || sending || !session) return;
 		input = '';
 		errorMsg = '';
 		await addMessage({ sessionId, role: 'user', content: [{ type: 'text', text }] });
@@ -153,9 +180,12 @@
 						</div>
 					{/if}
 					{#each toolCalls(m.content) as tc (tc.id)}
-						<div class="flex justify-start">
-							<ToolChip tool={tc.name} args={tc.arguments} />
-						</div>
+						{@const result = toolResult(tc.id)}
+						{#if result}
+							<div class="flex justify-start">
+								<ToolChip tool={tc.name} args={tc.arguments} failed={result.failed} error={result.error} />
+							</div>
+						{/if}
 					{/each}
 				{/if}
 			{/each}

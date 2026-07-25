@@ -217,13 +217,16 @@ export async function listMessages(sessionId: string): Promise<Message[]> {
 export async function addMessage(
 	data: Omit<Message, 'id' | 'createdAt' | 'order'> & { order?: number }
 ): Promise<Message> {
-	const order =
-		data.order ??
-		(await db.messages.where('sessionId').equals(data.sessionId).count());
-	const msg: Message = { ...data, order, id: uid('msg_'), createdAt: now() };
-	await db.messages.add(msg);
-	await touchSession(data.sessionId);
-	return msg;
+	return db.transaction('rw', db.sessions, db.messages, async () => {
+		const session = await db.sessions.get(data.sessionId);
+		if (!session) throw new Error('对话不存在或已被删除');
+		const order = data.order ?? (await db.messages.where('sessionId').equals(data.sessionId).count());
+		const ts = now();
+		const msg: Message = { ...data, order, id: uid('msg_'), createdAt: ts };
+		await db.messages.add(msg);
+		await db.sessions.update(data.sessionId, { updatedAt: ts, lastMessageAt: ts });
+		return msg;
+	});
 }
 
 export async function deleteMessagesFrom(sessionId: string, order: number): Promise<void> {

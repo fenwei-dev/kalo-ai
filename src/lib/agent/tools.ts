@@ -229,7 +229,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'logFood': {
 				const { name: fname, calories, protein, carbs, fat, time, date } = args;
-				const libraryItemId = await syncFoodToLibrary({ name: fname, calories, protein, carbs, fat });
+				const librarySync = await syncFoodToLibrary({ name: fname, calories, protein, carbs, fat });
 				const entry = await addFoodEntry({
 					date: date || localDateISO(),
 					time: time || new Date().toTimeString().slice(0, 5),
@@ -239,11 +239,11 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 					carbs,
 					fat,
 					tef: Math.round(protein * 4 * 0.25 + carbs * 4 * 0.08 + fat * 9 * 0.03),
-					source: libraryItemId ? 'library' : 'ai',
-					libraryItemId
+					source: librarySync.status === 'matched' ? 'library' : 'ai',
+					libraryItemId: librarySync.itemId
 				});
 				await app.refreshToday();
-				return { ok: true, data: { entry, libraryItemId } };
+				return { ok: true, data: { entry, library: librarySync } };
 			}
 
 			case 'logExercise': {

@@ -1,11 +1,20 @@
 <script lang="ts">
 	// 把一次工具调用渲染成一张小卡片。基于 args（卡卡估算后传入的数值）。
-	let { tool, args }: { tool: string; args: Record<string, any> } = $props();
+	let { tool, args, failed = false, error = '' }: {
+		tool: string;
+		args: Record<string, any>;
+		failed?: boolean;
+		error?: string;
+	} = $props();
 
 	const round = (n: number) => Math.round(n * 10) / 10;
 </script>
 
-{#if tool === 'logFood'}
+{#if failed}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+		<span>⚠️</span><span>{tool} 执行失败{error ? `：${error}` : ''}</span>
+	</div>
+{:else if tool === 'logFood'}
 	<div class="my-1 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
 		<span class="text-base">🍽️</span>
 		<span class="font-medium">{args.name}</span>
