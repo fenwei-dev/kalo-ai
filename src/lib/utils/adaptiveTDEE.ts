@@ -31,7 +31,8 @@ export async function recomputeAdaptiveTDEE(days = 14): Promise<void> {
 		1,
 		(parseLocalDate(endW.date).getTime() - parseLocalDate(startW.date).getTime()) / 86400000
 	);
-	await computeAndSave(food, startW.weight, endW.weight, spanDays, windowWeights.length);
+	const alignedFood = food.filter((entry) => entry.date >= startW.date && entry.date <= endW.date);
+	await computeAndSave(alignedFood, startW.weight, endW.weight, spanDays, windowWeights.length);
 }
 
 async function computeAndSave(

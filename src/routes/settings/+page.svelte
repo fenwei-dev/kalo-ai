@@ -10,6 +10,7 @@
 	let confirmingClear = $state(false);
 
 	async function handleExport() {
+		if (app.aiConfig?.apiKey && !confirm('导出的备份将包含明文 API Key。请妥善保管且不要上传到公共位置，是否继续？')) return;
 		const data = await exportAll();
 		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
@@ -27,6 +28,7 @@
 		importing = true;
 		try {
 			const text = await file.text();
+			if (!confirm('导入会覆盖当前全部本地数据，且备份可能包含 API Key。是否继续？')) return;
 			await importAll(JSON.parse(text));
 			await app.reload();
 			alert('导入成功，所有本地数据已恢复');

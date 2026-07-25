@@ -135,7 +135,8 @@ export async function getLatestWeight(): Promise<WeightEntry | undefined> {
 // ---------- Food library ----------
 
 export async function listLibrary(): Promise<FoodLibraryItem[]> {
-	return db.foodLibrary.orderBy('lastUsedAt').reverse().toArray();
+	const items = await db.foodLibrary.toArray();
+	return items.sort((a, b) => b.servingsCount - a.servingsCount || b.lastUsedAt - a.lastUsedAt);
 }
 
 export async function upsertLibraryItem(
