@@ -61,10 +61,10 @@ export const toolDefs: Tool[] = [
 			'记录一条饮食。热量和营养由你（卡卡）估算后作为参数传入。会自动沉淀到食物库。可批量（多次调用）。',
 		parameters: Type.Object({
 			name: Type.String({ description: '食物名称，如「牛肉面」' }),
-			calories: Type.Number({ description: '热量 kcal' }),
-			protein: Type.Number({ description: '蛋白质 g' }),
-			carbs: Type.Number({ description: '碳水 g' }),
-			fat: Type.Number({ description: '脂肪 g' }),
+			calories: Type.Number({ minimum: 0, maximum: 10000, description: '热量 kcal' }),
+			protein: Type.Number({ minimum: 0, maximum: 1000, description: '蛋白质 g' }),
+			carbs: Type.Number({ minimum: 0, maximum: 2000, description: '碳水 g' }),
+			fat: Type.Number({ minimum: 0, maximum: 1000, description: '脂肪 g' }),
 			time: Type.Optional(Type.String({ description: 'HH:mm，默认现在' })),
 			date: dateParam
 		})
@@ -74,8 +74,8 @@ export const toolDefs: Tool[] = [
 		description: '记录一条运动。',
 		parameters: Type.Object({
 			description: Type.String({ description: '运动描述，如「跑步」' }),
-			duration: Type.Number({ description: '时长（分钟）' }),
-			caloriesBurned: Type.Number({ description: '消耗热量 kcal' }),
+			duration: Type.Number({ minimum: 1, maximum: 1440, description: '时长（分钟）' }),
+			caloriesBurned: Type.Number({ minimum: 0, maximum: 10000, description: '消耗热量 kcal' }),
 			time: Type.Optional(Type.String({ description: 'HH:mm，默认现在' })),
 			date: dateParam
 		})
@@ -84,7 +84,7 @@ export const toolDefs: Tool[] = [
 		name: 'logWeight',
 		description: '记录一次体重，会触发自适应 TDEE 重算。',
 		parameters: Type.Object({
-			weight: Type.Number({ description: '体重 kg' }),
+			weight: Type.Number({ minimum: 25, maximum: 400, description: '体重 kg' }),
 			date: dateParam
 		})
 	},
@@ -93,14 +93,14 @@ export const toolDefs: Tool[] = [
 		description:
 			'更新用户资料或目标（任意子集）。改目标体重/日期后会实时重算每周减重与每日缺口。首次填写也可用。',
 		parameters: Type.Object({
-			age: Type.Optional(Type.Number()),
+			age: Type.Optional(Type.Number({ minimum: 13, maximum: 120 })),
 			gender: Type.Optional(StringEnum(['male', 'female'])),
-			height: Type.Optional(Type.Number({ description: 'cm' })),
-			currentWeight: Type.Optional(Type.Number({ description: 'kg' })),
+			height: Type.Optional(Type.Number({ minimum: 100, maximum: 250, description: 'cm' })),
+			currentWeight: Type.Optional(Type.Number({ minimum: 25, maximum: 400, description: 'kg' })),
 			activityLevel: Type.Optional(
 				StringEnum(['sedentary', 'light', 'moderate', 'active', 'very_active'])
 			),
-			targetWeight: Type.Optional(Type.Number({ description: 'kg' })),
+			targetWeight: Type.Optional(Type.Number({ minimum: 25, maximum: 400, description: 'kg' })),
 			targetDate: Type.Optional(Type.String({ description: 'YYYY-MM-DD' }))
 		})
 	},
@@ -144,7 +144,8 @@ function profileSnapshot() {
 		currentWeight: u.currentWeight,
 		targetWeight: u.targetWeight,
 		targetDate: u.targetDate,
-		bmr
+		bmr,
+		tdee
 	});
 	const range = healthWeightRange(u.height);
 	return {
@@ -274,6 +275,13 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 			case 'updateProfile': {
 				const patch: Record<string, any> = { ...args };
 				if (app.user) {
+					const merged = { ...app.user, ...patch };
+					patch.calculatedBMR = calculateBMR(
+						merged.currentWeight,
+						merged.height,
+						merged.age,
+						merged.gender
+					);
 					app.user = (await updateUser(patch)) ?? app.user;
 				} else {
 					// 首次填写：补全必填字段后创建

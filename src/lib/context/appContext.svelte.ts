@@ -69,7 +69,8 @@ class AppState {
 					currentWeight: this.user.currentWeight,
 					targetWeight: this.user.targetWeight,
 					targetDate: this.user.targetDate,
-					bmr: this.bmr
+					bmr: this.bmr,
+					tdee: this.tdee
 				})
 			: { weeks: null, weeklyRate: null, dailyDeficit: null, safety: 'unknown' as const }
 	);

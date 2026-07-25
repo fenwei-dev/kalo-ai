@@ -88,17 +88,27 @@ export function calculateGoalPlan(opts: {
 	targetWeight?: number;
 	targetDate?: string;
 	bmr?: number;
+	tdee?: number;
 }): GoalPlan {
-	const { currentWeight, targetWeight, targetDate, bmr } = opts;
+	const { currentWeight, targetWeight, targetDate, bmr, tdee } = opts;
 
 	if (!targetWeight || !targetDate) {
 		return { weeks: null, weeklyRate: null, dailyDeficit: null, safety: 'unknown' };
 	}
 
-	const daysToTarget = Math.ceil(
-		(new Date(targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-	);
-	if (daysToTarget <= 0) {
+	if (targetWeight >= currentWeight) {
+		return {
+			weeks: null,
+			weeklyRate: null,
+			dailyDeficit: null,
+			safety: 'unknown',
+			warning: '目标体重应低于当前体重'
+		};
+	}
+
+	const targetTime = new Date(`${targetDate}T12:00:00`).getTime();
+	const daysToTarget = Math.ceil((targetTime - Date.now()) / (1000 * 60 * 60 * 24));
+	if (!Number.isFinite(targetTime) || daysToTarget <= 0) {
 		return {
 			weeks: 0,
 			weeklyRate: null,
@@ -120,9 +130,12 @@ export function calculateGoalPlan(opts: {
 	if (weeklyRate > 1 || weeklyRate > weightCap) {
 		safety = 'danger';
 		warning = '减重过快，有掉肌肉和反弹风险，建议放慢节奏';
-	} else if (dailyDeficit > 1000 || (typeof bmr === 'number' && dailyDeficit > 0 && bmr - dailyDeficit < 0)) {
+	} else if (
+		dailyDeficit > 1000 ||
+		(typeof bmr === 'number' && typeof tdee === 'number' && tdee - dailyDeficit < bmr)
+	) {
 		safety = 'danger';
-		warning = '每日热量缺口过大，可能低于基础代谢，影响健康';
+		warning = '每日热量缺口过大，目标摄入会低于基础代谢，影响健康';
 	} else if (weeklyRate > 0.5) {
 		safety = 'ok';
 	} else {

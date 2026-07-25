@@ -2,7 +2,7 @@
 	import { List, ListInput, Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
 	import { app } from '$lib/context/appContext.svelte';
 	import { saveUser, updateUser } from '$lib/db/repositories';
-	import { ACTIVITY_LABELS, calculateBMR, calculateTDEE } from '$lib/utils/calculations';
+	import { ACTIVITY_LABELS, calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
 	import type { ActivityLevel, Gender } from '$lib/db/schema';
 
 	const activities: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
@@ -19,11 +19,21 @@
 	let saving = $state(false);
 	let saved = $state(false);
 
-	let valid = $derived(age !== '' && height !== '' && currentWeight !== '');
+	let valid = $derived(
+		Number.isFinite(+age) && +age >= 13 && +age <= 120 &&
+		Number.isFinite(+height) && +height >= 100 && +height <= 250 &&
+		Number.isFinite(+currentWeight) && +currentWeight >= 25 && +currentWeight <= 400
+	);
 
 	const liveBMR = $derived(valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0);
 	const liveTDEE = $derived(valid ? calculateTDEE(liveBMR, activityLevel) : 0);
-	const goal = $derived(app.goalPlan);
+	const goal = $derived(calculateGoalPlan({
+		currentWeight: +currentWeight,
+		targetWeight: targetWeight ? +targetWeight : undefined,
+		targetDate: targetDate || undefined,
+		bmr: liveBMR,
+		tdee: liveTDEE
+	}));
 
 	async function save() {
 		if (!valid) return;
@@ -130,7 +140,11 @@
 				<div class="text-xs text-gray-500">每日热量缺口</div>
 			</div>
 		</div>
-		{#if goal.safety === 'danger'}
+		{#if goal.warning && goal.safety !== 'danger'}
+			<div class="mt-2 rounded-lg bg-amber-50 p-2 text-center text-xs text-amber-700">
+				⚠️ {goal.warning}
+			</div>
+		{:else if goal.safety === 'danger'}
 			<div class="mt-2 rounded-lg bg-red-50 p-2 text-center text-xs text-red-600">
 				⚠️ {goal.warning}
 			</div>
@@ -143,6 +157,9 @@
 {/if}
 
 <Block inset>
+	{#if !valid && (age || height || currentWeight)}
+		<p class="mb-2 text-center text-xs text-red-500">请填写合理范围：年龄 13–120、身高 100–250cm、体重 25–400kg</p>
+	{/if}
 	<button
 		onclick={save}
 		disabled={!valid || saving}

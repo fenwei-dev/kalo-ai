@@ -59,6 +59,31 @@ test('Goal plan ok within recommended range', () => {
 	expect(plan.dailyDeficit).toBe(Math.round((0.5 * KCAL_PER_KG) / 7));
 });
 
+test('Goal plan warns when target intake falls below BMR', () => {
+	const plan = calculateGoalPlan({
+		currentWeight: 80,
+		targetWeight: 76,
+		targetDate: new Date(Date.now() + 70 * 86400000).toISOString().slice(0, 10),
+		bmr: 1800,
+		tdee: 2100
+	});
+	expect(plan.dailyDeficit).toBeGreaterThan(300);
+	expect(plan.safety).toBe('danger');
+});
+
+test('Goal plan rejects a non-loss target', () => {
+	const plan = calculateGoalPlan({
+		currentWeight: 80,
+		targetWeight: 85,
+		targetDate: new Date(Date.now() + 70 * 86400000).toISOString().slice(0, 10),
+		bmr: 1749,
+		tdee: 2400
+	});
+	expect(plan.safety).toBe('unknown');
+	expect(plan.dailyDeficit).toBeNull();
+	expect(plan.warning).toContain('低于当前体重');
+});
+
 test('Health weight range uses BMI 18.5-23.9', () => {
 	const r = healthWeightRange(175); // m=1.75, min=18.5*3.0625=56.66→56.7, max=23.9*3.0625=73.19→73.2
 	expect(r.min).toBe(56.7);
