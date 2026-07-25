@@ -102,6 +102,10 @@ export async function getExerciseEntriesByDate(date: string): Promise<ExerciseEn
 	return db.exerciseEntries.where('date').equals(date).reverse().sortBy('time');
 }
 
+export async function getExerciseEntriesSince(sinceISO: string): Promise<ExerciseEntry[]> {
+	return db.exerciseEntries.where('date').aboveOrEqual(sinceISO).toArray();
+}
+
 export async function deleteExerciseEntry(id: string): Promise<void> {
 	await db.exerciseEntries.delete(id);
 }
@@ -116,6 +120,10 @@ export async function addWeightEntry(data: Omit<WeightEntry, 'id' | 'createdAt'>
 
 export async function getWeightEntries(): Promise<WeightEntry[]> {
 	return db.weightEntries.orderBy('date').toArray();
+}
+
+export async function getWeightEntriesByDate(date: string): Promise<WeightEntry[]> {
+	return db.weightEntries.where('date').equals(date).toArray();
 }
 
 export async function getLatestWeight(): Promise<WeightEntry | undefined> {

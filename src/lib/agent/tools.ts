@@ -5,10 +5,12 @@ import {
 	addFoodEntry,
 	addWeightEntry,
 	getExerciseEntriesByDate,
+	getExerciseEntriesSince,
 	getFoodEntriesByDate,
 	getFoodEntriesSince,
 	getUser,
 	getWeightEntries,
+	getWeightEntriesByDate,
 	listLibrary,
 	updateUser,
 	upsertLibraryItem,
@@ -26,6 +28,7 @@ import {
 } from '$lib/utils/calculations';
 import type { FoodCategory, Gender, ActivityLevel } from '$lib/db/schema';
 import { localDateISO, localDateOffset } from '$lib/utils/date';
+import { buildTrendSummary } from '$lib/utils/trends';
 
 // ---------- 工具 schema ----------
 
@@ -186,7 +189,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				const [food, exercise, weights] = await Promise.all([
 					getFoodEntriesByDate(date),
 					getExerciseEntriesByDate(date),
-					getWeightEntries()
+					getWeightEntriesByDate(date)
 				]);
 				const summary = summarizeDay(food);
 				const burned = exercise.reduce((s, e) => s + e.caloriesBurned, 0);
@@ -209,17 +212,15 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 			case 'getTrends': {
 				const days = args.range === '7d' ? 7 : args.range === '90d' ? 90 : 30;
 				const since = localDateOffset(-days);
-				const food = await getFoodEntriesSince(since);
-				const weights = await getWeightEntries();
+				const [food, exercise, allWeights] = await Promise.all([
+					getFoodEntriesSince(since),
+					getExerciseEntriesSince(since),
+					getWeightEntries()
+				]);
+				const weights = allWeights.filter((entry) => entry.date >= since);
 				return {
 					ok: true,
-					data: {
-						range: args.range,
-						days,
-						foodEntries: food,
-						weightEntries: weights.slice(-days),
-						insights: 'trend analysis pending'
-					}
+					data: { range: args.range, days, ...buildTrendSummary({ food, exercise, weights, days }) }
 				};
 			}
 
