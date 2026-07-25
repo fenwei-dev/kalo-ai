@@ -7,6 +7,7 @@ import {
 	getWeightEntries
 } from '$lib/db/repositories';
 import type { AIConfig, ExerciseEntry, FoodEntry, Session, User, WeightEntry } from '$lib/db/schema';
+import { localDateISO } from '$lib/utils/date';
 import {
 	calculateBMR,
 	calculateGoalPlan,
@@ -39,7 +40,7 @@ class AppState {
 	today = $state<TodayData>(emptyToday);
 
 	/** 选中的查看日期（用于饮食/运动翻页），默认今天 */
-	viewDate = $state<string>(new Date().toISOString().slice(0, 10));
+	viewDate = $state<string>(localDateISO());
 
 	/** 是否已完成 onboarding（user 非空） */
 	onboarded = $derived(this.user !== null);
@@ -80,11 +81,17 @@ class AppState {
 
 	async init() {
 		if (this.ready) return;
+		await this.reload();
+		this.ready = true;
+	}
+
+	/** Reload all global state after an import or destructive operation. */
+	async reload() {
 		this.user = (await getUser()) ?? null;
 		this.aiConfig = (await getAIConfig()) ?? null;
 		this.sessions = await listSessions();
+		this.viewDate = localDateISO();
 		await this.refreshToday();
-		this.ready = true;
 	}
 
 	async refreshSessions() {

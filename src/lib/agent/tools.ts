@@ -24,13 +24,12 @@ import {
 	effectiveTDEE,
 	healthWeightRange
 } from '$lib/utils/calculations';
-import type { ApiType, FoodCategory, Gender, ActivityLevel } from '$lib/db/schema';
-
-const todayISO = () => new Date().toISOString().slice(0, 10);
+import type { FoodCategory, Gender, ActivityLevel } from '$lib/db/schema';
+import { localDateISO, localDateOffset } from '$lib/utils/date';
 
 // ---------- 工具 schema ----------
 
-const dateParam = Type.Optional(Type.String({ description: 'YYYY-MM-DD，默认今天' }));
+const dateParam = Type.Optional(Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'YYYY-MM-DD，默认今天' }));
 
 export const toolDefs: Tool[] = [
 	{
@@ -182,7 +181,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				return { ok: true, data: profileSnapshot() };
 
 			case 'getTodayLog': {
-				const date = (args.date as string) || todayISO();
+				const date = (args.date as string) || localDateISO();
 				const [food, exercise, weights] = await Promise.all([
 					getFoodEntriesByDate(date),
 					getExerciseEntriesByDate(date),
@@ -208,7 +207,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'getTrends': {
 				const days = args.range === '7d' ? 7 : args.range === '90d' ? 90 : 30;
-				const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+				const since = localDateOffset(-days);
 				const food = await getFoodEntriesSince(since);
 				const weights = await getWeightEntries();
 				return {
@@ -231,7 +230,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				const { name: fname, calories, protein, carbs, fat, time, date } = args;
 				const libraryItemId = await syncFoodToLibrary({ name: fname, calories, protein, carbs, fat });
 				const entry = await addFoodEntry({
-					date: date || todayISO(),
+					date: date || localDateISO(),
 					time: time || new Date().toTimeString().slice(0, 5),
 					name: fname,
 					calories,
@@ -248,7 +247,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'logExercise': {
 				const entry = await addExerciseEntry({
-					date: (args.date as string) || todayISO(),
+					date: (args.date as string) || localDateISO(),
 					time: args.time || new Date().toTimeString().slice(0, 5),
 					description: args.description,
 					duration: args.duration,
@@ -260,7 +259,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 			}
 
 						case 'logWeight': {
-				const date = (args.date as string) || todayISO();
+				const date = (args.date as string) || localDateISO();
 				const entry = await addWeightEntry({ date, weight: args.weight });
 				if (app.user) {
 					app.user = (await updateUser({ currentWeight: args.weight })) ?? app.user;

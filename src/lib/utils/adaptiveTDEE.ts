@@ -1,4 +1,5 @@
 import { getFoodEntriesSince, getUser, getWeightEntries, updateUser } from '$lib/db/repositories';
+import { localDateOffset, parseLocalDate } from '$lib/utils/date';
 
 /**
  * 自适应 TDEE：基于近期体重变化和饮食摄入反推真实每日消耗。
@@ -15,22 +16,11 @@ export async function recomputeAdaptiveTDEE(days = 14): Promise<void> {
 		return;
 	}
 
-	const sinceISO = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+	const sinceISO = localDateOffset(-days);
 	const food = await getFoodEntriesSince(sinceISO);
-
-	// 窗口内的体重记录
-	const windowStart = Date.now() - days * 86400000;
-	const windowWeights = weights.filter((w) => new Date(w.date).getTime() >= windowStart);
+	const windowWeights = weights.filter((w) => w.date >= sinceISO);
 	if (windowWeights.length < 2) {
-		// 窗口内不足，退而用全部记录的首尾
-		const sortedAll = [...weights].sort((a, b) => a.date.localeCompare(b.date));
-		const startW = sortedAll[0];
-		const endW = sortedAll[sortedAll.length - 1];
-		const spanDays = Math.max(
-			1,
-			(new Date(endW.date).getTime() - new Date(startW.date).getTime()) / 86400000
-		);
-		await computeAndSave(user.id, food, startW.weight, endW.weight, spanDays, weights.length);
+		await updateUser({ adaptiveTDEE: undefined, adaptiveConfidence: undefined });
 		return;
 	}
 
@@ -39,28 +29,32 @@ export async function recomputeAdaptiveTDEE(days = 14): Promise<void> {
 	const endW = sorted[sorted.length - 1];
 	const spanDays = Math.max(
 		1,
-		(new Date(endW.date).getTime() - new Date(startW.date).getTime()) / 86400000
+		(parseLocalDate(endW.date).getTime() - parseLocalDate(startW.date).getTime()) / 86400000
 	);
-	await computeAndSave(user.id, food, startW.weight, endW.weight, spanDays, weights.length);
+	await computeAndSave(food, startW.weight, endW.weight, spanDays, windowWeights.length);
 }
 
 async function computeAndSave(
-	userId: 'me',
 	food: { calories: number; date: string }[],
 	startWeight: number,
 	endWeight: number,
 	spanDays: number,
 	totalWeightRecords: number
 ) {
-	const foodInWindow = food; // 已是 since=days 天的数据
-	const totalIntake = foodInWindow.reduce((s, e) => s + e.calories, 0);
-	const daysCovered = new Set(foodInWindow.map((e) => e.date)).size || spanDays;
-	const avgIntake = totalIntake / Math.max(1, daysCovered);
+	const totalIntake = food.reduce((s, e) => s + e.calories, 0);
+	const daysCovered = new Set(food.map((e) => e.date)).size;
+	const requiredCoverage = Math.max(3, Math.ceil(Math.min(14, spanDays + 1) * 0.7));
+	if (daysCovered < requiredCoverage) {
+		await updateUser({ adaptiveTDEE: undefined, adaptiveConfidence: undefined });
+		return;
+	}
+	const avgIntake = totalIntake / daysCovered;
 	const weightChange = endWeight - startWeight;
 	const actualTDEE = avgIntake - (weightChange * 7700) / spanDays;
 
 	if (!isFinite(actualTDEE) || actualTDEE <= 0 || actualTDEE > 6000) {
-		return; // 数据异常，不更新
+		await updateUser({ adaptiveTDEE: undefined, adaptiveConfidence: undefined });
+		return;
 	}
 
 	// 置信度：天数占比 + 体重记录数，封顶 0.9

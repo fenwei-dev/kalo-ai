@@ -1,4 +1,5 @@
 import { db } from './schema';
+import { localDateISO } from '$lib/utils/date';
 import type {
 	AIConfig,
 	ExerciseEntry,
@@ -14,7 +15,6 @@ const uid = (prefix = ''): string =>
 	prefix + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36));
 
 const now = (): number => Date.now();
-const todayISO = (): string => new Date().toISOString().slice(0, 10);
 
 // ---------- User (singleton, id='me') ----------
 
@@ -233,17 +233,18 @@ export async function deleteMessagesFrom(sessionId: string, order: number): Prom
 // ---------- 聚合 / 工具 ----------
 
 export async function todayDateStr(): Promise<string> {
-	return todayISO();
+	return localDateISO();
 }
 
-/** 清空全部业务数据（保留设置页可独立清空各表） */
+/** 清空全部数据，包括本地保存的 API Key。 */
 export async function clearAllData(): Promise<void> {
 	await db.transaction(
 		'rw',
-		[db.user, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
+		[db.user, db.aiConfig, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
 		async () => {
 			await Promise.all([
 				db.user.clear(),
+				db.aiConfig.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
 				db.weightEntries.clear(),
@@ -251,6 +252,55 @@ export async function clearAllData(): Promise<void> {
 				db.sessions.clear(),
 				db.messages.clear()
 			]);
+		}
+	);
+}
+
+export interface KaloBackup {
+	version: 1;
+	exportedAt: number;
+	user: User[];
+	aiConfig: AIConfig[];
+	foodEntries: FoodEntry[];
+	exerciseEntries: ExerciseEntry[];
+	weightEntries: WeightEntry[];
+	foodLibrary: FoodLibraryItem[];
+	sessions: Session[];
+	messages: Message[];
+}
+
+/** Validate and atomically replace all app data from a Kalo backup. */
+export async function importAll(value: unknown): Promise<void> {
+	if (!value || typeof value !== 'object') throw new Error('备份文件不是有效对象');
+	const data = value as Partial<KaloBackup>;
+	const keys: (keyof Omit<KaloBackup, 'version' | 'exportedAt'>)[] = [
+		'user', 'aiConfig', 'foodEntries', 'exerciseEntries', 'weightEntries',
+		'foodLibrary', 'sessions', 'messages'
+	];
+	for (const key of keys) {
+		if (!Array.isArray(data[key])) throw new Error(`备份缺少 ${key} 数据`);
+	}
+	const user = data.user as User[];
+	const aiConfig = data.aiConfig as AIConfig[];
+	if (user.length > 1 || user.some((item) => item?.id !== 'me')) throw new Error('用户资料格式无效');
+	if (aiConfig.length > 1 || aiConfig.some((item) => item?.id !== 'singleton')) throw new Error('AI 配置格式无效');
+
+	await db.transaction(
+		'rw',
+		[db.user, db.aiConfig, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
+		async () => {
+			await Promise.all([
+				db.user.clear(), db.aiConfig.clear(), db.foodEntries.clear(), db.exerciseEntries.clear(),
+				db.weightEntries.clear(), db.foodLibrary.clear(), db.sessions.clear(), db.messages.clear()
+			]);
+			await db.user.bulkPut(user);
+			await db.aiConfig.bulkPut(aiConfig);
+			await db.foodEntries.bulkPut(data.foodEntries as FoodEntry[]);
+			await db.exerciseEntries.bulkPut(data.exerciseEntries as ExerciseEntry[]);
+			await db.weightEntries.bulkPut(data.weightEntries as WeightEntry[]);
+			await db.foodLibrary.bulkPut(data.foodLibrary as FoodLibraryItem[]);
+			await db.sessions.bulkPut(data.sessions as Session[]);
+			await db.messages.bulkPut(data.messages as Message[]);
 		}
 	);
 }
@@ -277,6 +327,7 @@ export async function exportAll(): Promise<Record<string, unknown>> {
 		db.messages.toArray()
 	]);
 	return {
+		version: 1,
 		exportedAt: now(),
 		user,
 		aiConfig,

@@ -3,8 +3,8 @@
 	import ProfileSection from '$lib/components/settings/ProfileSection.svelte';
 	import AIConfigSection from '$lib/components/settings/AIConfigSection.svelte';
 	import { app } from '$lib/context/appContext.svelte';
-	import { exportAll, clearAllData, saveUser } from '$lib/db/repositories';
-	import type { User } from '$lib/db/schema';
+	import { exportAll, importAll, clearAllData } from '$lib/db/repositories';
+	import { localDateISO } from '$lib/utils/date';
 
 	let importing = $state(false);
 	let confirmingClear = $state(false);
@@ -15,7 +15,7 @@
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `kalo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+		a.download = `kalo-backup-${localDateISO()}.json`;
 		a.click();
 		URL.revokeObjectURL(url);
 	}
@@ -27,13 +27,9 @@
 		importing = true;
 		try {
 			const text = await file.text();
-			const data = JSON.parse(text);
-			if (data.user?.[0]) {
-				const { id, createdAt, updatedAt, ...rest } = data.user[0] as User;
-				app.user = await saveUser(rest);
-			}
-			await app.init();
-			alert('导入成功');
+			await importAll(JSON.parse(text));
+			await app.reload();
+			alert('导入成功，所有本地数据已恢复');
 		} catch {
 			alert('导入失败，请检查备份文件格式');
 		} finally {
@@ -44,10 +40,7 @@
 
 	async function handleClear() {
 		await clearAllData();
-		app.user = null;
-		app.aiConfig = null;
-		app.sessions = [];
-		await app.refreshToday();
+		await app.reload();
 		confirmingClear = false;
 	}
 </script>
