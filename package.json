@@ -27,6 +27,8 @@
 	"dependencies": {
 		"@earendil-works/pi-ai": "^0.81.1",
 		"dexie": "^4.4.4",
-		"konsta": "^5.2.0"
+		"dompurify": "^3.4.12",
+		"konsta": "^5.2.0",
+		"marked": "^18.0.7"
 	}
 }

@@ -12,6 +12,7 @@
 	import type { ContentBlock, Message as DBMessage, Session } from '$lib/db/schema';
 	import { runTurn } from '$lib/agent/client';
 	import ToolChip from '$lib/components/chat/ToolChip.svelte';
+	import Markdown from '$lib/components/chat/Markdown.svelte';
 	import SessionDrawer from '$lib/components/chat/SessionDrawer.svelte';
 
 	let sessionId = $derived(page.params.sessionId ?? '');
@@ -24,6 +25,7 @@
 	let drawerOpen = $state(false);
 	let loadGeneration = 0;
 	let creatingNew = false;
+	const autoTriggered = new Set<string>();
 
 	let bottomEl: HTMLDivElement | undefined = $state();
 
@@ -72,7 +74,19 @@
 		}
 		session = found;
 		const loaded = await listMessages(id);
-		if (generation === loadGeneration) messages = loaded;
+		if (generation === loadGeneration) {
+			messages = loaded;
+			void triggerPendingTurn(id, loaded);
+		}
+	}
+
+	/** 设置页等入口会预先写入 user 消息；进入会话后自动让卡卡回答。 */
+	async function triggerPendingTurn(id: string, loaded: DBMessage[]) {
+		if (sending || autoTriggered.has(id) || !app.aiConfig) return;
+		const lastUserIndex = loaded.findLastIndex((message) => message.role === 'user');
+		if (lastUserIndex < 0 || loaded.slice(lastUserIndex + 1).some((message) => message.role === 'assistant')) return;
+		autoTriggered.add(id);
+		await runAgent(id);
 	}
 
 	// 切换会话时重新加载；单一入口避免 /chat/new 重复创建。
@@ -87,6 +101,27 @@
 		streamText;
 		bottomEl?.scrollIntoView({ behavior: 'smooth' });
 	});
+
+	async function runAgent(id: string) {
+		if (sending) return;
+		sending = true;
+		errorMsg = '';
+		streamText = '';
+		try {
+			await runTurn(id, {
+				onAssistantText: (d) => (streamText += d),
+				onAssistantMessage: async () => {
+					streamText = '';
+					await load(id);
+				},
+				onError: (message) => (errorMsg = message)
+			});
+		} finally {
+			sending = false;
+			streamText = '';
+			await load(id);
+		}
+	}
 
 	async function send() {
 		const text = input.trim();
@@ -104,19 +139,7 @@
 			await app.refreshSessions();
 		}
 
-		sending = true;
-		streamText = '';
-		await runTurn(sessionId, {
-			onAssistantText: (d) => (streamText += d),
-			onAssistantMessage: async () => {
-				streamText = '';
-				await load();
-			},
-			onError: (m) => (errorMsg = m)
-		});
-		sending = false;
-		streamText = '';
-		await load();
+		await runAgent(sessionId);
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -167,7 +190,7 @@
 				{#if m.role === 'user'}
 					<div class="flex justify-end">
 						<div class="max-w-[80%] rounded-2xl rounded-br-md bg-emerald-500 px-3.5 py-2 text-sm text-white">
-							{blocksText(m.content)}
+							<Markdown content={blocksText(m.content)} class="text-white" />
 						</div>
 					</div>
 				{:else if m.role === 'assistant'}
@@ -175,7 +198,7 @@
 					{#if text}
 						<div class="flex justify-start">
 							<div class="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm">
-								{text}
+								<Markdown content={text} />
 							</div>
 						</div>
 					{/if}
@@ -197,7 +220,7 @@
 						class="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm"
 					>
 						{#if streamText}
-							{streamText}<span class="animate-pulse">▋</span>
+							<Markdown content={streamText} /><span class="animate-pulse">▋</span>
 						{:else}
 							<span class="text-gray-400">卡卡正在思考…</span>
 						{/if}
