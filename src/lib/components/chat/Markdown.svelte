@@ -29,4 +29,19 @@
 	.markdown :global(pre) { margin: 0.5rem 0; overflow-x: auto; border-radius: 0.6rem; background: #111827; padding: 0.7rem; color: #f9fafb; }
 	.markdown :global(pre code) { background: transparent; padding: 0; color: inherit; }
 	.markdown :global(hr) { margin: 0.65rem 0; border-color: #e5e7eb; }
+	.markdown :global(table) {
+		display: block;
+		max-width: 100%;
+		overflow-x: auto;
+		border-collapse: collapse;
+		white-space: nowrap;
+		-webkit-overflow-scrolling: touch;
+	}
+	.markdown :global(th), .markdown :global(td) {
+		border: 1px solid #d1d5db;
+		padding: 0.4rem 0.6rem;
+		text-align: left;
+		white-space: nowrap;
+	}
+	.markdown :global(th) { background: #f3f4f6; font-weight: 700; }
 </style>
