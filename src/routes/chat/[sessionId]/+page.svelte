@@ -150,9 +150,9 @@
 	}
 </script>
 
-<div class="flex h-full flex-col pb-16">
+<div class="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pb-16">
 	<!-- header -->
-	<header class="flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2.5">
+	<header class="shrink-0 flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2.5">
 		<button
 			class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
 			aria-label="对话列表"
@@ -174,7 +174,7 @@
 	</header>
 
 	<!-- messages -->
-	<div class="flex-1 overflow-y-auto bg-gray-50 px-3 py-4">
+	<div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 [-webkit-overflow-scrolling:touch]">
 		<div class="mx-auto max-w-md space-y-3">
 			{#if messages.length === 0 && !sending}
 				<div class="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
@@ -237,7 +237,7 @@
 	</div>
 
 	<!-- input -->
-	<div class="border-t border-black/5 bg-white px-2 py-2">
+	<div class="shrink-0 border-t border-black/5 bg-white px-2 py-2">
 		<div class="mx-auto flex max-w-md items-end gap-2">
 			<textarea
 				rows="1"

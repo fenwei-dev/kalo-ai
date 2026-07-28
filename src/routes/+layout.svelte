@@ -32,7 +32,7 @@
 
 <App theme="material" dark={false} safeAreas>
 	<div class="flex h-[100dvh] w-full max-w-full flex-col overflow-hidden bg-gray-50 text-gray-900">
-		<main class="relative flex-1 overflow-hidden">
+		<main class="relative min-h-0 min-w-0 flex-1 overflow-hidden">
 			{#if !app.ready}
 				<div class="flex h-full items-center justify-center text-sm text-gray-400">
 					加载中…
