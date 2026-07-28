@@ -28,7 +28,7 @@
 			cy="64"
 			r={R}
 			fill="none"
-			{color}
+			stroke={color}
 			stroke-width="10"
 			stroke-linecap="round"
 			stroke-dasharray="{dash} {C}"
