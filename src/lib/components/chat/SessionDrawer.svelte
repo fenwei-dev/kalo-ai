@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
 	import { createSession, deleteSession } from '$lib/db/repositories';
+	import * as m from '$lib/paraglide/messages';
 
 	let { open = $bindable(), currentId = '' }: { open: boolean; currentId: string } = $props();
 
@@ -28,13 +29,13 @@
 	}
 
 	function timeAgo(ts: number): string {
-		const m = Math.floor((Date.now() - ts) / 60000);
-		if (m < 1) return '刚刚';
-		if (m < 60) return `${m} 分钟前`;
-		const h = Math.floor(m / 60);
-		if (h < 24) return `${h} 小时前`;
+		const minutes = Math.floor((Date.now() - ts) / 60000);
+		if (minutes < 1) return m.common_just_now();
+		if (minutes < 60) return m.common_minutes_ago({ value: minutes });
+		const h = Math.floor(minutes / 60);
+		if (h < 24) return m.common_hours_ago({ value: h });
 		const d = Math.floor(h / 24);
-		return `${d} 天前`;
+		return m.common_days_ago({ value: d });
 	}
 </script>
 
@@ -42,14 +43,14 @@
 	<!-- 遮罩 -->
 	<button
 		class="fixed inset-0 z-40 bg-black/30"
-		aria-label="关闭"
+		aria-label={m.common_close()}
 		onclick={() => (open = false)}
 	></button>
 	<!-- 抽屉 -->
 	<div class="fixed inset-x-0 top-0 z-50 max-h-[80vh] overflow-y-auto rounded-b-2xl bg-white shadow-xl">
 		<div class="flex items-center justify-between px-4 py-3">
-			<h2 class="text-base font-semibold">对话</h2>
-			<button class="text-sm text-gray-400" onclick={() => (open = false)}>关闭</button>
+			<h2 class="text-base font-semibold">{m.chat_drawer_title()}</h2>
+			<button class="text-sm text-gray-400" onclick={() => (open = false)}>{m.common_close()}</button>
 		</div>
 		<div class="px-4 pb-2">
 			<button
@@ -57,7 +58,7 @@
 				disabled={creating}
 				class="w-full rounded-xl bg-emerald-500 py-2.5 text-sm font-medium text-white disabled:opacity-50"
 			>
-				+ 开始新对话
+				{m.chat_start_new()}
 			</button>
 		</div>
 		<ul class="px-2 pb-4">
@@ -87,7 +88,7 @@
 					</button>
 				</li>
 			{:else}
-				<li class="px-3 py-6 text-center text-sm text-gray-400">还没有对话</li>
+				<li class="px-3 py-6 text-center text-sm text-gray-400">{m.chat_no_sessions()}</li>
 			{/each}
 		</ul>
 	</div>

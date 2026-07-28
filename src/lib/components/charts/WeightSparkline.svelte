@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
 	let { weights, height = 48 }: { weights: number[]; height?: number } = $props();
 
 	let points = $derived.by(() => {
@@ -39,5 +40,5 @@
 		</span>
 	</div>
 {:else}
-	<p class="text-xs text-gray-400">记录至少两次体重后显示趋势</p>
+	<p class="text-xs text-gray-400">{m.weight_need_more()}</p>
 {/if}

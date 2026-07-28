@@ -4,6 +4,7 @@
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ProgressRing from '$lib/components/charts/ProgressRing.svelte';
 	import WeightSparkline from '$lib/components/charts/WeightSparkline.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let intake = $derived(app.today.food.reduce((s, e) => s + e.calories, 0));
 	let burned = $derived(app.today.exercise.reduce((s, e) => s + e.caloriesBurned, 0));
@@ -21,15 +22,15 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
-	<AppHeader title="卡卡 AI" subtitle="今天 · 你的减脂进度" />
+	<AppHeader title={m.home_title()} subtitle={m.home_subtitle()} />
 	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md px-4 py-5">
 		{#if !app.onboarded}
 			<div class="rounded-2xl bg-emerald-50 p-5 text-center">
-				<p class="text-sm font-medium text-emerald-700">欢迎使用 Kalo AI 🌿</p>
-				<p class="mt-1 text-xs text-emerald-600">先去设置填好基础信息，卡卡才能开始帮你。</p>
+				<p class="text-sm font-medium text-emerald-700">{m.home_welcome()}</p>
+				<p class="mt-1 text-xs text-emerald-600">{m.home_onboarding()}</p>
 				<a href="/settings" class="mt-3 inline-block rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-white"
-					>去设置</a
+					>{m.home_go_settings()}</a
 				>
 			</div>
 		{:else}
@@ -37,11 +38,11 @@
 			<div class="rounded-2xl bg-white p-4 shadow-sm">
 				<div class="flex items-center justify-between">
 					<div>
-						<p class="text-xs text-gray-400">今日预算</p>
+						<p class="text-xs text-gray-400">{m.home_budget()}</p>
 						<p class="text-2xl font-bold">{app.dailyBudget || '—'}<span class="text-sm font-normal text-gray-400"> kcal</span></p>
 					</div>
 					<div class="text-right">
-						<p class="text-xs text-gray-400">已摄入 / 剩余</p>
+						<p class="text-xs text-gray-400">{m.home_intake_remaining()}</p>
 						<p class="text-sm font-semibold {intake > (app.dailyBudget || Infinity) ? 'text-red-500' : 'text-gray-700'}">
 							{intake} / {Math.max(0, (app.dailyBudget || 0) - intake)}
 						</p>
@@ -54,10 +55,10 @@
 					></div>
 				</div>
 				<div class="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-					<div><div class="font-semibold text-emerald-600">{Math.round(protein)}g</div><div class="text-gray-400">蛋白</div></div>
-					<div><div class="font-semibold text-amber-600">{Math.round(carbs)}g</div><div class="text-gray-400">碳水</div></div>
-					<div><div class="font-semibold text-sky-600">{Math.round(fat)}g</div><div class="text-gray-400">脂肪</div></div>
-					<div><div class="font-semibold text-gray-600">{burned}</div><div class="text-gray-400">运动</div></div>
+					<div><div class="font-semibold text-emerald-600">{Math.round(protein)}g</div><div class="text-gray-400">{m.home_protein()}</div></div>
+					<div><div class="font-semibold text-amber-600">{Math.round(carbs)}g</div><div class="text-gray-400">{m.home_carbs()}</div></div>
+					<div><div class="font-semibold text-sky-600">{Math.round(fat)}g</div><div class="text-gray-400">{m.home_fat()}</div></div>
+					<div><div class="font-semibold text-gray-600">{burned}</div><div class="text-gray-400">{m.home_exercise()}</div></div>
 				</div>
 			</div>
 
@@ -67,11 +68,11 @@
 					<ProgressRing
 						current={intake}
 						target={app.dailyBudget || 2000}
-						label="摄入进度"
+						label={m.home_intake_progress()}
 					/>
 				</div>
 				<div class="rounded-2xl bg-white p-4 shadow-sm">
-					<p class="text-xs text-gray-400">体重趋势</p>
+					<p class="text-xs text-gray-400">{m.home_weight_trend()}</p>
 					{#if app.today.weights.length}
 						<p class="mt-1 text-lg font-bold">{app.today.weights[app.today.weights.length - 1].weight} kg</p>
 					{:else}
@@ -87,18 +88,18 @@
 			<a href="/chat" class="mt-3 block rounded-2xl bg-white p-4 shadow-sm">
 				<div class="flex items-center gap-2">
 					<span class="text-base">🌿</span>
-					<span class="text-sm font-medium">卡卡</span>
+					<span class="text-sm font-medium">{m.home_kaka()}</span>
 				</div>
-				<p class="mt-1 text-xs text-gray-400">没有新消息。有想聊的随时点这里 →</p>
+				<p class="mt-1 text-xs text-gray-400">{m.home_no_messages()}</p>
 			</a>
 
 			<!-- 今日时间线 -->
 			<div class="mt-4">
-				<h2 class="mb-2 text-sm font-semibold text-gray-700">今日</h2>
+				<h2 class="mb-2 text-sm font-semibold text-gray-700">{m.home_today()}</h2>
 				{#if todayList.length === 0}
 					<div class="rounded-2xl bg-white p-6 text-center shadow-sm">
-						<p class="text-sm text-gray-400">今天还没记录</p>
-						<a href="/chat" class="mt-2 inline-block text-sm font-medium text-emerald-600">和卡卡聊聊 →</a>
+						<p class="text-sm text-gray-400">{m.home_no_logs()}</p>
+						<a href="/chat" class="mt-2 inline-block text-sm font-medium text-emerald-600">{m.home_chat_cta()}</a>
 					</div>
 				{:else}
 					<ul class="space-y-2">
@@ -120,7 +121,7 @@
 				onclick={() => goto('/chat')}
 				class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 font-medium text-white shadow-sm hover:bg-emerald-600"
 			>
-				和卡卡聊聊 →
+				{m.home_chat_cta()}
 			</button>
 		{/if}
 	</div>

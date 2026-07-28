@@ -7,8 +7,8 @@
 		upsertLibraryItem,
 		deleteLibraryItem
 	} from '$lib/db/repositories';
-	import { CATEGORY_LABELS } from '$lib/utils/librarySync';
 	import type { FoodCategory, FoodLibraryItem } from '$lib/db/schema';
+	import * as m from '$lib/paraglide/messages';
 
 	let items = $state<FoodLibraryItem[]>([]);
 	let query = $state('');
@@ -16,6 +16,10 @@
 	let saving = $state(false);
 
 	const categories: FoodCategory[] = ['meal', 'snack', 'drink', 'fruit', 'other'];
+	const categoryLabel = (value: FoodCategory) => ({
+		meal: m.category_meal(), snack: m.category_snack(), drink: m.category_drink(),
+		fruit: m.category_fruit(), other: m.category_other()
+	})[value];
 
 	onMount(reload);
 	async function reload() {
@@ -66,46 +70,46 @@
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
 	<AppHeader
-		title="食物库"
-		subtitle="卡卡自动沉淀的常用食物"
+		title={m.library_title()}
+		subtitle={m.library_subtitle()}
 		backHref="/settings"
-		actionLabel="新增"
+		actionLabel={m.common_add()}
 		onaction={startNew}
 	/>
 	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md px-4 py-5">
-		<p class="text-xs text-gray-400">在这里纠正营养数据，之后记录会优先使用食物库。</p>
+		<p class="text-xs text-gray-400">{m.library_intro()}</p>
 
 		<!-- 搜索 -->
 		<input
 			bind:value={query}
-			placeholder="搜索食物…"
+			placeholder={m.library_search()}
 			class="mt-4 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
 		/>
 
 		<!-- 编辑/新增表单 -->
 		{#if editing}
 			<div class="mt-4 rounded-2xl bg-white p-4 shadow-sm">
-				<div class="mb-3 text-sm font-semibold">{editing.id ? '编辑食物' : '新增食物'}</div>
+				<div class="mb-3 text-sm font-semibold">{editing.id ? m.library_edit() : m.library_add()}</div>
 				<div class="space-y-2">
-					<input bind:value={editing.name} placeholder="名称" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
+					<input bind:value={editing.name} placeholder={m.library_name()} class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
 					<div class="grid grid-cols-2 gap-2">
-						<input bind:value={editing.calories} type="number" inputmode="decimal" placeholder="热量 kcal" class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
+						<input bind:value={editing.calories} type="number" inputmode="decimal" placeholder={m.library_calories()} class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
 						<select bind:value={editing.category} class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400">
 							{#each categories as c (c)}
-								<option value={c}>{CATEGORY_LABELS[c]}</option>
+								<option value={c}>{categoryLabel(c)}</option>
 							{/each}
 						</select>
 					</div>
 					<div class="grid grid-cols-3 gap-2">
-						<input bind:value={editing.protein} type="number" inputmode="decimal" placeholder="蛋白 g" class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
-						<input bind:value={editing.carbs} type="number" inputmode="decimal" placeholder="碳水 g" class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
-						<input bind:value={editing.fat} type="number" inputmode="decimal" placeholder="脂肪 g" class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
+						<input bind:value={editing.protein} type="number" inputmode="decimal" placeholder={m.library_protein()} class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
+						<input bind:value={editing.carbs} type="number" inputmode="decimal" placeholder={m.library_carbs()} class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
+						<input bind:value={editing.fat} type="number" inputmode="decimal" placeholder={m.library_fat()} class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-emerald-400" />
 					</div>
 				</div>
 				<div class="mt-3 flex gap-2">
-					<button onclick={cancel} class="flex-1 rounded-full border border-gray-300 py-2 text-sm font-medium">取消</button>
-					<button onclick={save} disabled={saving || !editing.name} class="flex-1 rounded-full bg-emerald-500 py-2 text-sm font-medium text-white disabled:opacity-50">保存</button>
+					<button onclick={cancel} class="flex-1 rounded-full border border-gray-300 py-2 text-sm font-medium">{m.common_cancel()}</button>
+					<button onclick={save} disabled={saving || !editing.name} class="flex-1 rounded-full bg-emerald-500 py-2 text-sm font-medium text-white disabled:opacity-50">{m.common_save()}</button>
 				</div>
 			</div>
 		{/if}
@@ -119,7 +123,7 @@
 							<div class="min-w-0">
 								<p class="truncate text-sm font-medium">{i.name}</p>
 								<p class="text-[11px] text-gray-400">
-									{CATEGORY_LABELS[i.category]} · 记录 {i.servingsCount} 次
+									{categoryLabel(i.category)} · {m.library_count({ value: i.servingsCount })}
 								</p>
 							</div>
 							<div class="text-right">
@@ -131,12 +135,12 @@
 						</div>
 					</button>
 					<div class="mt-2 text-right">
-						<button onclick={() => remove(i.id)} class="text-xs text-red-400 hover:text-red-500">删除</button>
+						<button onclick={() => remove(i.id)} class="text-xs text-red-400 hover:text-red-500">{m.common_delete()}</button>
 					</div>
 				</li>
 			{:else}
 				<li class="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm">
-					{query ? '没有匹配的食物' : '食物库还是空的，记几顿饭卡卡就会帮你填满'}
+					{query ? m.library_no_match() : m.library_empty()}
 				</li>
 			{/each}
 		</ul>

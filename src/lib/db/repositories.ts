@@ -1,5 +1,6 @@
 import { db } from './schema';
 import { localDateISO } from '$lib/utils/date';
+import { getLocale } from '$lib/paraglide/runtime';
 import type {
 	AIConfig,
 	ExerciseEntry,
@@ -181,11 +182,12 @@ export async function deleteLibraryItem(id: string): Promise<void> {
 
 // ---------- Sessions ----------
 
-export async function createSession(title = '新对话'): Promise<Session> {
+export async function createSession(title?: string): Promise<Session> {
 	const ts = now();
+	const resolvedTitle = title ?? (getLocale() === 'en-us' ? 'New chat' : '新对话');
 	const session: Session = {
 		id: uid('sess_'),
-		title,
+		title: resolvedTitle,
 		createdAt: ts,
 		updatedAt: ts,
 		lastMessageAt: ts

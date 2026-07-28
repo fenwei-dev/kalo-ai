@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-static';
 // SPA mode: pure client-side app, data lives in IndexedDB
@@ -17,6 +18,12 @@ export default defineConfig({
 				fallback: 'index.html',
 				strict: false
 			})
+		}),
+		paraglideVitePlugin({
+			project: './project.inlang',
+			outdir: './src/lib/paraglide',
+			strategy: ['localStorage', 'preferredLanguage', 'baseLocale'],
+			emitTsDeclarations: true
 		}),
 		SvelteKitPWA({
 			strategies: 'generateSW',

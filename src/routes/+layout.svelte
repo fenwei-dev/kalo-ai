@@ -7,10 +7,12 @@
 	import { app } from '$lib/context/appContext.svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { children } = $props();
 
 	onMount(() => {
+		document.documentElement.lang = getLocale();
 		app.init();
 		// 注册 PWA service worker
 		import('virtual:pwa-register').then(({ registerSW }) =>
@@ -35,7 +37,7 @@
 		<main class="relative min-h-0 min-w-0 flex-1 overflow-hidden">
 			{#if !app.ready}
 				<div class="flex h-full items-center justify-center text-sm text-gray-400">
-					加载中…
+					{getLocale() === 'zh-cn' ? '加载中…' : 'Loading…'}
 				</div>
 			{:else}
 				{@render children()}

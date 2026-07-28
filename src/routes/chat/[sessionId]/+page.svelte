@@ -15,6 +15,7 @@
 	import ToolChip from '$lib/components/chat/ToolChip.svelte';
 	import Markdown from '$lib/components/chat/Markdown.svelte';
 	import SessionDrawer from '$lib/components/chat/SessionDrawer.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let sessionId = $derived(page.params.sessionId ?? '');
 	let session = $state<Session | null>(null);
@@ -140,7 +141,7 @@
 		await load();
 
 		// 首条消息自动起标题
-		if (session && session.title === '新对话') {
+		if (session && (session.title === '新对话' || session.title === 'New chat')) {
 			const title = text.length > 16 ? text.slice(0, 16) + '…' : text;
 			await renameSession(sessionId, title);
 			session = { ...session, title };
@@ -163,7 +164,7 @@
 	<header class="shrink-0 flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2.5">
 		<button
 			class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-			aria-label="对话列表"
+			aria-label={m.chat_session_list()}
 			onclick={() => (drawerOpen = true)}
 		>
 			<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -171,10 +172,10 @@
 			</svg>
 		</button>
 		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-semibold">{session?.title ?? '对话'}</p>
-			<p class="text-[11px] text-gray-400">卡卡 · {app.aiConfig?.model ?? '未配置 AI'}</p>
+			<p class="truncate text-sm font-semibold">{session?.title ?? m.chat_session_fallback()}</p>
+			<p class="text-[11px] text-gray-400">{m.chat_list_title()} · {app.aiConfig?.model ?? m.chat_unconfigured()}</p>
 		</div>
-		<a href="/chat/new" class="block rounded-lg p-1.5 text-gray-400 hover:bg-gray-100" aria-label="新对话">
+		<a href="/chat/new" class="block rounded-lg p-1.5 text-gray-400 hover:bg-gray-100" aria-label={m.chat_new()}>
 			<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M12 5v14M5 12h14" stroke-linecap="round" />
 			</svg>
@@ -190,9 +191,9 @@
 			{#if messages.length === 0 && !sending}
 				<div class="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
 					<div class="mb-2 text-3xl">🌿</div>
-					<p class="text-sm font-medium text-gray-700">和卡卡聊聊</p>
+					<p class="text-sm font-medium text-gray-700">{m.chat_empty_title()}</p>
 					<p class="mt-1 text-xs text-gray-400">
-						告诉我你吃了什么、运动了没，或者想聊目标都可以。
+						{m.chat_empty_body()}
 					</p>
 				</div>
 			{/if}
@@ -233,7 +234,7 @@
 						{#if streamText}
 							<Markdown content={streamText} /><span class="animate-pulse">▋</span>
 						{:else}
-							<span class="text-gray-400">卡卡正在思考…</span>
+							<span class="text-gray-400">{m.chat_thinking()}</span>
 						{/if}
 					</div>
 				</div>
@@ -254,14 +255,14 @@
 				rows="1"
 				bind:value={input}
 				onkeydown={onKeydown}
-				placeholder="和卡卡说点什么…"
+				placeholder={m.chat_placeholder()}
 				class="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400"
 			></textarea>
 			<button
 				onclick={send}
 				disabled={!input.trim() || sending}
 				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-40"
-				aria-label="发送"
+				aria-label={m.chat_send()}
 			>
 				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
 					<path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />

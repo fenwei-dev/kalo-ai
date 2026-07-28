@@ -1,4 +1,6 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
+
 	let {
 		title,
 		subtitle = '',
@@ -24,7 +26,7 @@
 			<a
 				href={backHref}
 				class="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-600 active:bg-gray-100"
-				aria-label="返回"
+				aria-label={m.common_back()}
 			>
 				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
 					<path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />

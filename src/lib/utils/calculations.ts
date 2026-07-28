@@ -1,4 +1,5 @@
 import type { ActivityLevel, Gender } from '$lib/db/schema';
+import { getLocale } from '$lib/paraglide/runtime';
 
 /** 1kg 脂肪约等于 7700 kcal */
 export const KCAL_PER_KG = 7700;
@@ -102,7 +103,7 @@ export function calculateGoalPlan(opts: {
 			weeklyRate: null,
 			dailyDeficit: null,
 			safety: 'unknown',
-			warning: '目标体重应低于当前体重'
+			warning: getLocale() === 'en-us' ? 'Target weight must be below current weight' : '目标体重应低于当前体重'
 		};
 	}
 
@@ -114,7 +115,7 @@ export function calculateGoalPlan(opts: {
 			weeklyRate: null,
 			dailyDeficit: null,
 			safety: 'unknown',
-			warning: '目标日期已过，请重新设定'
+			warning: getLocale() === 'en-us' ? 'The target date has passed; choose a new date' : '目标日期已过，请重新设定'
 		};
 	}
 
@@ -129,13 +130,13 @@ export function calculateGoalPlan(opts: {
 	const weightCap = currentWeight * 0.01;
 	if (weeklyRate > 1 || weeklyRate > weightCap) {
 		safety = 'danger';
-		warning = '减重过快，有掉肌肉和反弹风险，建议放慢节奏';
+		warning = getLocale() === 'en-us' ? 'This pace is too fast and may increase muscle-loss and rebound risk' : '减重过快，有掉肌肉和反弹风险，建议放慢节奏';
 	} else if (
 		dailyDeficit > 1000 ||
 		(typeof bmr === 'number' && typeof tdee === 'number' && tdee - dailyDeficit < bmr)
 	) {
 		safety = 'danger';
-		warning = '每日热量缺口过大，目标摄入会低于基础代谢，影响健康';
+		warning = getLocale() === 'en-us' ? 'The deficit is too large and would put intake below BMR' : '每日热量缺口过大，目标摄入会低于基础代谢，影响健康';
 	} else if (weeklyRate > 0.5) {
 		safety = 'ok';
 	} else {

@@ -2,7 +2,8 @@ import type { Api, AssistantMessage, Message } from '@earendil-works/pi-ai';
 import { app } from '$lib/context/appContext.svelte';
 import { addMessage, listMessages } from '$lib/db/repositories';
 import type { ContentBlock, Message as DBMessage } from '$lib/db/schema';
-import { KALO_SYSTEM_PROMPT } from './systemPrompt';
+import { getKaloSystemPrompt } from './systemPrompt';
+import { getLocale } from '$lib/paraglide/runtime';
 import { buildModels } from './provider';
 import { executeTool, toolDefs, type ToolOutcome } from './tools';
 
@@ -60,7 +61,7 @@ function dbToContextMessage(m: DBMessage): Message {
 async function buildContext(sessionId: string) {
 	const history = await listMessages(sessionId);
 	return {
-		systemPrompt: KALO_SYSTEM_PROMPT,
+		systemPrompt: getKaloSystemPrompt(getLocale()),
 		messages: history.map(dbToContextMessage),
 		tools: toolDefs
 	};

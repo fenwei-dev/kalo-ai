@@ -3,10 +3,16 @@
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
 	import { addMessage, createSession, saveUser, updateUser } from '$lib/db/repositories';
-	import { ACTIVITY_LABELS, calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
+	import { calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
 	import type { ActivityLevel, Gender } from '$lib/db/schema';
+	import * as m from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	const activities: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+	const activityLabel = (value: ActivityLevel) => ({
+		sedentary: m.activity_sedentary(), light: m.activity_light(), moderate: m.activity_moderate(),
+		active: m.activity_active(), very_active: m.activity_very_active()
+	})[value];
 
 	const u = app.user;
 	let gender = $state<Gender>(u?.gender ?? 'male');
@@ -57,12 +63,15 @@
 				app.user = await saveUser(data);
 			}
 			if (firstSave) {
-				const session = await createSession('认识卡卡');
-				const target = targetWeight ? `看到你想减到 ${targetWeight}kg，` : '';
+				const english = getLocale() === 'en-us';
+				const session = await createSession(english ? 'Meet Kalo' : '认识卡卡');
+				const target = targetWeight ? (english ? `I see you want to reach ${targetWeight} kg. ` : `看到你想减到 ${targetWeight}kg，`) : '';
 				await addMessage({
 					sessionId: session.id,
 					role: 'assistant',
-					content: [{ type: 'text', text: `你好，我是卡卡！${target}基础代谢和每日消耗已经算好了。接下来想先聊目标，还是记录今天吃了什么？` }]
+					content: [{ type: 'text', text: english
+						? `Hi, I'm Kalo! ${target}I've calculated your BMR and daily expenditure. Would you like to discuss your goal or log today's food first?`
+						: `你好，我是卡卡！${target}基础代谢和每日消耗已经算好了。接下来想先聊目标，还是记录今天吃了什么？` }]
 				});
 				await app.refreshSessions();
 				await goto(`/chat/${session.id}`);
@@ -76,31 +85,31 @@
 	}
 </script>
 
-<BlockTitle>个人资料</BlockTitle>
+<BlockTitle>{m.profile_title()}</BlockTitle>
 
 <Block inset>
-	<div class="mb-2 text-xs text-gray-500">性别</div>
+	<div class="mb-2 text-xs text-gray-500">{m.profile_gender()}</div>
 	<Segmented>
-		<SegmentedButton active={gender === 'male'} onclick={() => (gender = 'male')}>男</SegmentedButton>
+		<SegmentedButton active={gender === 'male'} onclick={() => (gender = 'male')}>{m.profile_male()}</SegmentedButton>
 		<SegmentedButton active={gender === 'female'} onclick={() => (gender = 'female')}
-			>女</SegmentedButton
+			>{m.profile_female()}</SegmentedButton
 		>
 	</Segmented>
 </Block>
 
 <List inset strong>
-	<ListInput label="年龄" type="number" inputmode="numeric" placeholder="岁" bind:value={age} />
-	<ListInput label="身高" type="number" inputmode="numeric" placeholder="cm" bind:value={height} />
+	<ListInput label={m.profile_age()} type="number" inputmode="numeric" placeholder={m.profile_age_unit()} bind:value={age} />
+	<ListInput label={m.profile_height()} type="number" inputmode="numeric" placeholder="cm" bind:value={height} />
 	<ListInput
-		label="当前体重"
+		label={m.profile_weight()}
 		type="number"
 		inputmode="decimal"
 		placeholder="kg"
 		bind:value={currentWeight}
 	/>
-	<ListInput label="活动水平" type="select" bind:value={activityLevel}>
+	<ListInput label={m.profile_activity()} type="select" bind:value={activityLevel}>
 		{#each activities as a (a)}
-			<option value={a}>{ACTIVITY_LABELS[a]}</option>
+			<option value={a}>{activityLabel(a)}</option>
 		{/each}
 	</ListInput>
 </List>
@@ -110,50 +119,52 @@
 		<div class="grid grid-cols-2 gap-3">
 			<div class="rounded-xl bg-gray-100 p-3 text-center">
 				<div class="text-2xl font-bold text-gray-900">{liveBMR || '—'}</div>
-				<div class="text-xs text-gray-500">基础代谢 (BMR)</div>
+				<div class="text-xs text-gray-500">{m.profile_bmr()}</div>
 			</div>
 			<div class="rounded-xl bg-emerald-50 p-3 text-center">
 				<div class="text-2xl font-bold text-emerald-700">{liveTDEE || '—'}</div>
-				<div class="text-xs text-emerald-600">每日消耗 (TDEE)</div>
+				<div class="text-xs text-emerald-600">{m.profile_tdee()}</div>
 			</div>
 		</div>
 		{#if app.user?.adaptiveTDEE != null}
 			<div class="mt-2 text-center text-xs text-gray-500">
-				自适应 TDEE：{Math.round(app.user.adaptiveTDEE)} kcal（置信度
-				{Math.round((app.user.adaptiveConfidence ?? 0) * 100)}%）
+				{m.profile_adaptive_tdee({ value: Math.round(app.user.adaptiveTDEE), confidence: Math.round((app.user.adaptiveConfidence ?? 0) * 100) })}
 			</div>
 		{/if}
 	</Block>
 {/if}
 
-<BlockTitle>减重目标（可选）</BlockTitle>
+<BlockTitle>{m.profile_goal_title()}</BlockTitle>
 <List inset strong>
 	<ListInput
-		label="目标体重"
+		label={m.profile_target_weight()}
 		type="number"
 		inputmode="decimal"
 		placeholder="kg"
 		bind:value={targetWeight}
 	/>
-	<ListInput label="目标日期" type="date" bind:value={targetDate} />
+	<ListInput label={m.profile_target_date()} type="date" bind:value={targetDate} />
 </List>
 
 {#if app.user}
 	<Block inset>
 		<button
 			onclick={async () => {
-				const session = await createSession('制定减脂目标');
+				const english = getLocale() === 'en-us';
+				const session = await createSession(english ? 'Set a weight-loss goal' : '制定减脂目标');
 				await addMessage({
 					sessionId: session.id,
 					role: 'user',
-					content: [{ type: 'text', text: '请根据我的资料和健康体重区间，帮我制定一个安全、可执行的减脂目标。' }]
+					content: [{ type: 'text', text: english
+						? 'Based on my profile and healthy weight range, help me set a safe and practical weight-loss goal.'
+						: '请根据我的资料和健康体重区间，帮我制定一个安全、可执行的减脂目标。' }]
 				});
 				await app.refreshSessions();
 				await goto(`/chat/${session.id}`);
 			}}
 			class="w-full rounded-full border border-emerald-500 py-2.5 text-sm font-medium text-emerald-600"
 		>
-			让卡卡推荐目标 →
+			{m.profile_ask_kaka()}
 		</button>
 	</Block>
 {/if}
@@ -165,13 +176,13 @@
 				<div class="text-xl font-bold">
 					{goal.weeklyRate != null ? `${goal.weeklyRate} kg` : '—'}
 				</div>
-				<div class="text-xs text-gray-500">每周减重</div>
+				<div class="text-xs text-gray-500">{m.profile_weekly_loss()}</div>
 			</div>
 			<div class="rounded-xl bg-gray-100 p-3">
 				<div class="text-xl font-bold">
 					{goal.dailyDeficit != null ? `${goal.dailyDeficit} kcal` : '—'}
 				</div>
-				<div class="text-xs text-gray-500">每日热量缺口</div>
+				<div class="text-xs text-gray-500">{m.profile_daily_deficit()}</div>
 			</div>
 		</div>
 		{#if goal.warning && goal.safety !== 'danger'}
@@ -184,7 +195,7 @@
 			</div>
 		{:else if goal.safety === 'ok' && goal.weeklyRate != null}
 			<div class="mt-2 rounded-lg bg-emerald-50 p-2 text-center text-xs text-emerald-600">
-				✓ 节奏合理（推荐每周 0.5–1kg）
+				{m.profile_safe_pace()}
 			</div>
 		{/if}
 	</Block>
@@ -192,13 +203,13 @@
 
 <Block inset>
 	{#if !valid && (age || height || currentWeight)}
-		<p class="mb-2 text-center text-xs text-red-500">请填写合理范围：年龄 13–120、身高 100–250cm、体重 25–400kg</p>
+		<p class="mb-2 text-center text-xs text-red-500">{m.profile_invalid()}</p>
 	{/if}
 	<button
 		onclick={save}
 		disabled={!valid || saving}
 		class="w-full rounded-full bg-emerald-500 py-3 font-medium text-white shadow-sm transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
 	>
-		{saving ? '保存中…' : app.user ? (saved ? '已保存 ✓' : '保存') : '开始使用'}
+		{saving ? m.common_saving() : app.user ? (saved ? m.common_saved() : m.common_save()) : m.common_start()}
 	</button>
 </Block>
