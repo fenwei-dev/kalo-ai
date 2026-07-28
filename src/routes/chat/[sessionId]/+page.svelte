@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
@@ -27,7 +28,7 @@
 	let creatingNew = false;
 	const autoTriggered = new Set<string>();
 
-	let bottomEl: HTMLDivElement | undefined = $state();
+	let messagesEl: HTMLDivElement | undefined = $state();
 
 	function blocksText(blocks: ContentBlock[]): string {
 		return blocks.filter((b) => b.type === 'text').map((b) => (b as any).text).join('');
@@ -95,12 +96,19 @@
 		if (page.url.pathname.startsWith('/chat/')) void load(id);
 	});
 
-	// 自动滚到底
+	// 只滚动消息容器。scrollIntoView 会连带滚动移动端 visual viewport，
+	// 导致整个应用顶部永久移出屏幕。
 	$effect(() => {
 		messages.length;
 		streamText;
-		bottomEl?.scrollIntoView({ behavior: 'smooth' });
+		void scrollMessagesToBottom();
 	});
+
+	async function scrollMessagesToBottom() {
+		await tick();
+		if (!messagesEl) return;
+		messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+	}
 
 	async function runAgent(id: string) {
 		if (sending) return;
@@ -174,7 +182,10 @@
 	</header>
 
 	<!-- messages -->
-	<div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 [-webkit-overflow-scrolling:touch]">
+	<div
+		bind:this={messagesEl}
+		class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 [-webkit-overflow-scrolling:touch]"
+	>
 		<div class="mx-auto max-w-md space-y-3">
 			{#if messages.length === 0 && !sending}
 				<div class="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
@@ -232,7 +243,7 @@
 				<div class="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">⚠️ {errorMsg}</div>
 			{/if}
 
-			<div bind:this={bottomEl}></div>
+			<div aria-hidden="true"></div>
 		</div>
 	</div>
 
