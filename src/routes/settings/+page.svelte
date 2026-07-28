@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Block, BlockTitle, List, ListItem, Button } from 'konsta/svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
+	import AppDialog from '$lib/components/AppDialog.svelte';
 	import ProfileSection from '$lib/components/settings/ProfileSection.svelte';
 	import AIConfigSection from '$lib/components/settings/AIConfigSection.svelte';
 	import LanguageSection from '$lib/components/settings/LanguageSection.svelte';
@@ -11,9 +12,22 @@
 
 	let importing = $state(false);
 	let confirmingClear = $state(false);
+	let exportDialogOpen = $state(false);
+	let importDialogOpen = $state(false);
+	let resultDialogOpen = $state(false);
+	let resultTitle = $state('');
+	let resultMessage = $state('');
+	let pendingImport: { text: string; input: HTMLInputElement } | null = null;
 
 	async function handleExport() {
-		if (app.aiConfig?.apiKey && !confirm(m.settings_export_warning())) return;
+		if (app.aiConfig?.apiKey) {
+			exportDialogOpen = true;
+			return;
+		}
+		await performExport();
+	}
+
+	async function performExport() {
 		const data = await exportAll();
 		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
@@ -30,17 +44,41 @@
 		if (!file) return;
 		importing = true;
 		try {
-			const text = await file.text();
-			if (!confirm(m.settings_import_warning())) return;
+			pendingImport = { text: await file.text(), input };
+			importDialogOpen = true;
+		} catch {
+			showResult(m.settings_import_failed_title(), m.settings_import_failed());
+			input.value = '';
+			importing = false;
+		}
+	}
+
+	async function performImport() {
+		if (!pendingImport) return;
+		const { text, input } = pendingImport;
+		try {
 			await importAll(JSON.parse(text));
 			await app.reload();
-			alert(m.settings_import_success());
+			showResult(m.settings_import_success_title(), m.settings_import_success());
 		} catch {
-			alert(m.settings_import_failed());
+			showResult(m.settings_import_failed_title(), m.settings_import_failed());
 		} finally {
-			importing = false;
+			pendingImport = null;
 			input.value = '';
+			importing = false;
 		}
+	}
+
+	function cancelImport() {
+		if (pendingImport) pendingImport.input.value = '';
+		pendingImport = null;
+		importing = false;
+	}
+
+	function showResult(title: string, message: string) {
+		resultTitle = title;
+		resultMessage = message;
+		resultDialogOpen = true;
 	}
 
 	async function handleClear() {
@@ -103,3 +141,20 @@
 	</div>
 	</div>
 </div>
+
+<AppDialog
+	bind:open={exportDialogOpen}
+	title={m.settings_export_warning_title()}
+	message={m.settings_export_warning()}
+	kind="confirm"
+	onconfirm={performExport}
+/>
+<AppDialog
+	bind:open={importDialogOpen}
+	title={m.settings_import_warning_title()}
+	message={m.settings_import_warning()}
+	kind="confirm"
+	onconfirm={performImport}
+	onclose={cancelImport}
+/>
+<AppDialog bind:open={resultDialogOpen} title={resultTitle} message={resultMessage} />
