@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Block, BlockTitle, List, ListItem, Button } from 'konsta/svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ProfileSection from '$lib/components/settings/ProfileSection.svelte';
 	import AIConfigSection from '$lib/components/settings/AIConfigSection.svelte';
 	import { app } from '$lib/context/appContext.svelte';
@@ -47,14 +48,16 @@
 	}
 </script>
 
-<div class="h-full overflow-y-auto pb-20">
-	<div class="mx-auto max-w-md">
-		<div class="px-4 pt-6 pb-2">
-			<h1 class="text-2xl font-bold">设置</h1>
-			{#if !app.onboarded}
-				<p class="mt-1 text-sm text-emerald-600">先填写基础信息，卡卡才能为你计算代谢和目标。</p>
-			{/if}
-		</div>
+<div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
+	<AppHeader
+		title="设置"
+		subtitle={app.onboarded ? '资料、AI 与本地数据' : '先填写基础信息，卡卡才能开始工作'}
+	/>
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+	<div class="mx-auto max-w-md pt-2">
+		{#if !app.onboarded}
+			<p class="mx-4 mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">先填写基础信息，卡卡才能为你计算代谢和目标。</p>
+		{/if}
 
 		<ProfileSection />
 		<AIConfigSection />
@@ -94,5 +97,6 @@
 		</Block>
 
 		<p class="px-4 pb-4 pt-2 text-center text-xs text-gray-400">Kalo AI · 数据仅存于本地</p>
+	</div>
 	</div>
 </div>

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import { createSession } from '$lib/db/repositories';
 
 	let creating = $state(false);
@@ -28,20 +29,11 @@
 	}
 </script>
 
-<div class="h-full overflow-y-auto pb-20">
-	<div class="mx-auto max-w-md px-4 py-6">
-		<h1 class="text-xl font-bold">卡卡</h1>
-		<p class="mt-1 text-sm text-gray-500">选择一个对话，或开始新的聊天</p>
-
-		<button
-			onclick={newSession}
-			disabled={creating}
-			class="mt-6 w-full rounded-xl bg-emerald-500 py-3 font-medium text-white shadow-sm disabled:opacity-50"
-		>
-			+ 开始新对话
-		</button>
-
-		<ul class="mt-4 space-y-2">
+<div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
+	<AppHeader title="卡卡" subtitle="选择一个对话，或开始新的聊天" actionLabel="新对话" onaction={newSession} disabled={creating} />
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+	<div class="mx-auto max-w-md px-4 py-5">
+		<ul class="space-y-2">
 			{#each app.sessions as s (s.id)}
 				<li>
 					<button
@@ -60,5 +52,6 @@
 				</li>
 			{/each}
 		</ul>
+	</div>
 	</div>
 </div>

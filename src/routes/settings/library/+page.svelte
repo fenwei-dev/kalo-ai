@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { app } from '$lib/context/appContext.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import {
 		listLibrary,
 		upsertLibraryItem,
@@ -63,16 +64,17 @@
 	}
 </script>
 
-<div class="h-full overflow-y-auto pb-20">
+<div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
+	<AppHeader
+		title="食物库"
+		subtitle="卡卡自动沉淀的常用食物"
+		backHref="/settings"
+		actionLabel="新增"
+		onaction={startNew}
+	/>
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md px-4 py-5">
-		<a href="/settings" class="text-sm text-emerald-600">← 返回设置</a>
-		<div class="mt-2 flex items-center justify-between">
-			<h1 class="text-xl font-bold">食物库</h1>
-			<button onclick={startNew} class="rounded-full bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white">
-				+ 新增
-			</button>
-		</div>
-		<p class="mt-1 text-xs text-gray-400">卡卡会自动沉淀你记录过的食物，这里用于纠偏。</p>
+		<p class="text-xs text-gray-400">在这里纠正营养数据，之后记录会优先使用食物库。</p>
 
 		<!-- 搜索 -->
 		<input
@@ -138,5 +140,6 @@
 				</li>
 			{/each}
 		</ul>
+	</div>
 	</div>
 </div>

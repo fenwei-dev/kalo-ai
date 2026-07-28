@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ProgressRing from '$lib/components/charts/ProgressRing.svelte';
 	import WeightSparkline from '$lib/components/charts/WeightSparkline.svelte';
 
@@ -19,7 +20,9 @@
 	);
 </script>
 
-<div class="h-full overflow-y-auto pb-20">
+<div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
+	<AppHeader title="卡卡 AI" subtitle="今天 · 你的减脂进度" />
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md px-4 py-5">
 		{#if !app.onboarded}
 			<div class="rounded-2xl bg-emerald-50 p-5 text-center">
@@ -120,5 +123,6 @@
 				和卡卡聊聊 →
 			</button>
 		{/if}
+	</div>
 	</div>
 </div>
