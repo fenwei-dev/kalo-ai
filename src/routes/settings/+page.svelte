@@ -67,7 +67,7 @@
 
 		<BlockTitle>{m.settings_library()}</BlockTitle>
 		<List inset strong>
-			<ListItem href="/settings/library" title={m.settings_manage_library()} after={m.settings_library_hint()} chevron />
+			<ListItem href="/settings/library" title={m.settings_manage_library()} chevron />
 		</List>
 
 		<BlockTitle>{m.settings_data()}</BlockTitle>
