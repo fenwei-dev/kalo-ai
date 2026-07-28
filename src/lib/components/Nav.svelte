@@ -33,15 +33,26 @@
 			aria-label={m.nav_chat_aria()}
 		>
 			<span
-				class="-mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white
-					shadow-lg shadow-emerald-500/40 ring-4 ring-white transition-transform active:scale-95
+				class="-mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white
+					ring-4 ring-white transition-transform active:scale-95
 					{isActive('/chat') ? 'scale-105 bg-emerald-600' : ''}"
 			>
-				<svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
+				<svg
+					class="h-7 w-7"
+					viewBox="0 0 28 28"
+					fill="none"
+					aria-hidden="true"
+				>
 					<path
-						d="M12 2l1.8 4.6L18.5 8l-3.5 3.3.8 4.9L12 14l-3.8 2.2.8-4.9L5.5 8l4.7-1.4L12 2z"
+						d="M23.5 17.5a4 4 0 01-4 4H10l-5.5 3 1.7-4.7A6 6 0 014.5 15.5V9a4 4 0 014-4h11a4 4 0 014 4v8.5z"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linejoin="round"
 					/>
-					<path d="M9 18.5l1.5 2.5 1-1.6 1 1.6 1.5-2.5-1.5-.9H10.5l-1.5.9z" opacity=".7" />
+					<path
+						d="M14 7.2l1.35 3.45 3.5 1.05-2.6 2.48.6 3.67L14 16.2l-2.85 1.65.6-3.67-2.6-2.48 3.5-1.05L14 7.2z"
+						fill="currentColor"
+					/>
 				</svg>
 			</span>
 			<span class="mt-0.5 text-[11px] font-medium {isActive('/chat') ? 'text-emerald-600' : 'text-gray-400'}"
