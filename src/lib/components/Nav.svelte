@@ -5,11 +5,13 @@
 	let { unread = 0 }: { unread?: number } = $props();
 
 	let pathname = $derived(page.url.pathname);
+	let hidden = $derived(pathname === '/about');
 
 	const isActive = (href: string) =>
 		href === '/' ? pathname === '/' : pathname.startsWith(href);
 </script>
 
+{#if !hidden}
 <nav
 	class="fixed inset-x-0 bottom-0 z-50 h-16 bg-white border-t border-black/5 pb-[env(safe-area-inset-bottom)]"
 >
@@ -84,3 +86,4 @@
 		</a>
 	</div>
 </nav>
+{/if}
