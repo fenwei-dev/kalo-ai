@@ -144,13 +144,13 @@
 
 		<BlockTitle>{m.settings_help()}</BlockTitle>
 		<List inset strong>
-			<ListItem href="/help" title={m.settings_help()} after={m.settings_help_hint()} chevron />
+			<ListItem href="/help" title={m.settings_help()} chevron />
 		</List>
 		<div class="mx-4 my-3 border-t border-gray-300"></div>
 
 		<BlockTitle>{m.settings_about()}</BlockTitle>
 		<List inset strong>
-			<ListItem href="/about" title={m.settings_about()} after={m.settings_about_hint()} chevron />
+			<ListItem href="/about" title={m.settings_about()} chevron />
 		</List>
 
 		<p class="px-4 pb-4 pt-2 text-center text-xs text-gray-400">{m.settings_local_only()}</p>
