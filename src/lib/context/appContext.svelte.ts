@@ -4,7 +4,8 @@ import {
 	listSessions,
 	getFoodEntriesByDate,
 	getExerciseEntriesByDate,
-	getWeightEntries
+	getWeightEntries,
+	getWeightEntriesByDate
 } from '$lib/db/repositories';
 import type { AIConfig, ExerciseEntry, FoodEntry, Session, User, WeightEntry } from '$lib/db/schema';
 import { localDateISO } from '$lib/utils/date';
@@ -36,8 +37,11 @@ class AppState {
 	/** 所有会话（按最近更新排序） */
 	sessions = $state<Session[]>([]);
 
-	/** 今日数据 */
+	/** 当前查看日期的数据 */
 	today = $state<TodayData>(emptyToday);
+
+	/** 全部体重历史，用于截止查看日期的趋势图 */
+	weightHistory = $state<WeightEntry[]>([]);
 
 	/** 选中的查看日期（用于饮食/运动翻页），默认今天 */
 	viewDate = $state<string>(localDateISO());
@@ -100,12 +104,14 @@ class AppState {
 	}
 
 	async refreshToday() {
-		const [food, exercise, weights] = await Promise.all([
+		const [food, exercise, weights, weightHistory] = await Promise.all([
 			getFoodEntriesByDate(this.viewDate),
 			getExerciseEntriesByDate(this.viewDate),
+			getWeightEntriesByDate(this.viewDate),
 			getWeightEntries()
 		]);
 		this.today = { food, exercise, weights };
+		this.weightHistory = weightHistory;
 	}
 
 	/** 当 viewDate 变化时重新拉取当日数据 */

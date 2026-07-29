@@ -1,17 +1,50 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Dialog, DialogButton } from 'konsta/svelte';
 	import { app } from '$lib/context/appContext.svelte';
 	import AppHeader from '$lib/components/AppHeader.svelte';
 	import ProgressRing from '$lib/components/charts/ProgressRing.svelte';
 	import WeightSparkline from '$lib/components/charts/WeightSparkline.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { localDateISO, localDateOffset, parseLocalDate } from '$lib/utils/date';
 
 	let intake = $derived(app.today.food.reduce((s, e) => s + e.calories, 0));
 	let burned = $derived(app.today.exercise.reduce((s, e) => s + e.caloriesBurned, 0));
 	let protein = $derived(app.today.food.reduce((s, e) => s + e.protein, 0));
 	let carbs = $derived(app.today.food.reduce((s, e) => s + e.carbs, 0));
 	let fat = $derived(app.today.food.reduce((s, e) => s + e.fat, 0));
-	let weightSeries = $derived(app.today.weights.map((w) => w.weight).slice(-14));
+	let visibleWeights = $derived(app.weightHistory.filter((w) => w.date <= app.viewDate).slice(-14));
+	let weightSeries = $derived(visibleWeights.map((w) => w.weight));
+	let currentDate = $derived(localDateISO());
+	let isToday = $derived(app.viewDate === currentDate);
+	let dateLabel = $derived(formatViewDate(app.viewDate));
+	let dateDialogOpen = $state(false);
+	let pendingDate = $state(app.viewDate);
+
+	function formatViewDate(value: string): string {
+		if (value === localDateISO()) return m.home_selected_today();
+		if (value === localDateOffset(-1)) return m.home_selected_yesterday();
+		return new Intl.DateTimeFormat(getLocale(), {
+			month: 'short', day: 'numeric', weekday: 'short', year: 'numeric'
+		}).format(parseLocalDate(value));
+	}
+
+	function openDateDialog() {
+		pendingDate = app.viewDate;
+		dateDialogOpen = true;
+	}
+
+	async function applyDate() {
+		if (pendingDate && pendingDate <= localDateISO()) await app.setViewDate(pendingDate);
+		dateDialogOpen = false;
+	}
+
+	async function returnToday() {
+		pendingDate = localDateISO();
+		await app.setViewDate(pendingDate);
+		dateDialogOpen = false;
+	}
 
 	let todayList = $derived(
 		[
@@ -22,7 +55,12 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
-	<AppHeader title={m.home_title()} subtitle={m.home_subtitle()} />
+	<AppHeader
+		title={m.home_title()}
+		subtitle={m.home_subtitle()}
+		actionLabel={dateLabel}
+		onaction={app.onboarded ? openDateDialog : undefined}
+	/>
 	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md px-4 py-5">
 		{#if !app.onboarded}
@@ -73,8 +111,8 @@
 				</div>
 				<div class="rounded-2xl bg-white p-4 shadow-sm">
 					<p class="text-xs text-gray-400">{m.home_weight_trend()}</p>
-					{#if app.today.weights.length}
-						<p class="mt-1 text-lg font-bold">{app.today.weights[app.today.weights.length - 1].weight} kg</p>
+					{#if visibleWeights.length}
+						<p class="mt-1 text-lg font-bold">{visibleWeights[visibleWeights.length - 1].weight} kg</p>
 					{:else}
 						<p class="mt-1 text-lg font-bold text-gray-300">—</p>
 					{/if}
@@ -95,7 +133,12 @@
 
 			<!-- 今日时间线 -->
 			<div class="mt-4">
-				<h2 class="mb-2 text-sm font-semibold text-gray-700">{m.home_today()}</h2>
+				<div class="mb-2 flex items-center justify-between">
+					<h2 class="text-sm font-semibold text-gray-700">{dateLabel}</h2>
+					{#if !isToday}
+						<button onclick={() => app.setViewDate(localDateISO())} class="text-xs font-medium text-emerald-600">{m.home_return_today()}</button>
+					{/if}
+				</div>
 				{#if todayList.length === 0}
 					<div class="rounded-2xl bg-white p-6 text-center shadow-sm">
 						<p class="text-sm text-gray-400">{m.home_no_logs()}</p>
@@ -127,3 +170,31 @@
 	</div>
 	</div>
 </div>
+
+{#snippet dateDialogTitle()}
+	{m.home_select_date()}
+{/snippet}
+{#snippet dateDialogButtons()}
+	{#if !isToday}
+		<DialogButton onclick={returnToday}>{m.home_return_today()}</DialogButton>
+	{/if}
+	<DialogButton onclick={() => (dateDialogOpen = false)}>{m.common_cancel()}</DialogButton>
+	<DialogButton strong onclick={applyDate}>{m.common_confirm()}</DialogButton>
+{/snippet}
+
+<Dialog
+	opened={dateDialogOpen}
+	title={dateDialogTitle}
+	buttons={dateDialogButtons}
+	onBackdropClick={() => (dateDialogOpen = false)}
+>
+	<div class="py-2">
+		<input
+			type="date"
+			bind:value={pendingDate}
+			max={currentDate}
+			aria-label={m.home_select_date()}
+			class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-gray-900 outline-none focus:border-emerald-500"
+		/>
+	</div>
+</Dialog>
