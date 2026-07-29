@@ -59,6 +59,9 @@
 
 			<BlockTitle>{m.help_security_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-amber-700">{m.help_security_body()}</p></Block>
+
+			<BlockTitle>{m.disclaimer_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-amber-700">{m.disclaimer_body()}</p></Block>
 		</div>
 	</div>
 </div>

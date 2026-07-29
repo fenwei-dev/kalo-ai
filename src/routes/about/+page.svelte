@@ -26,6 +26,11 @@
 				<p class="text-sm leading-relaxed text-gray-600">{m.about_privacy_body()}</p>
 			</Block>
 
+			<BlockTitle>{m.disclaimer_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-amber-700">{m.disclaimer_body()}</p>
+			</Block>
+
 			<BlockTitle>{m.about_open_source_title()}</BlockTitle>
 			<Block inset strong>
 				<p class="text-sm leading-relaxed text-gray-600">{m.about_open_source_body()}</p>

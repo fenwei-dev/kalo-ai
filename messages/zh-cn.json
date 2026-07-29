@@ -108,6 +108,8 @@
 	"about_open_source_body": "卡卡 AI 的源代码公开托管在 GitHub，欢迎查看、反馈问题或参与改进。",
 	"about_github": "在 GitHub 查看项目",
 	"about_version": "版本 {version}",
+	"disclaimer_title": "免责声明",
+	"disclaimer_body": "卡卡 AI 提供的内容由大语言模型生成，仅供一般信息与自我记录参考，不构成医疗、营养或其他专业建议。大语言模型可能因知识不准确、过时或产生幻觉而给出错误信息。请自行核实重要信息；涉及健康风险、疾病、用药或重大饮食与运动调整时，请咨询合格的医生或专业人士。",
 	"settings_export_warning_title": "导出敏感数据？",
 	"settings_export_warning": "导出的备份将包含明文 API Key。请妥善保管且不要上传到公共位置，是否继续？",
 	"settings_import_warning_title": "覆盖本地数据？",
