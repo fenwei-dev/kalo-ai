@@ -100,13 +100,17 @@
 		{/if}
 
 		<LanguageSection />
+		<div class="mx-4 my-3 border-t border-gray-300"></div>
 		<ProfileSection />
+		<div class="mx-4 my-3 border-t border-gray-300"></div>
 		<AIConfigSection />
+		<div class="mx-4 my-3 border-t border-gray-300"></div>
 
 		<BlockTitle>{m.settings_library()}</BlockTitle>
 		<List inset strong>
 			<ListItem href="/settings/library" title={m.settings_manage_library()} chevron />
 		</List>
+		<div class="mx-4 my-3 border-t border-gray-300"></div>
 
 		<BlockTitle>{m.settings_data()}</BlockTitle>
 		<Block inset>
