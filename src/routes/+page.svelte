@@ -188,13 +188,44 @@
 	buttons={dateDialogButtons}
 	onBackdropClick={() => (dateDialogOpen = false)}
 >
-	<div class="py-2">
-		<input
-			type="date"
-			bind:value={pendingDate}
-			max={currentDate}
-			aria-label={m.home_select_date()}
-			class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-gray-900 outline-none focus:border-emerald-500"
-		/>
+	<div class="min-w-0 max-w-full overflow-hidden py-2">
+		<label class="date-field relative block min-w-0 max-w-full">
+			<input
+				type="date"
+				bind:value={pendingDate}
+				max={currentDate}
+				aria-label={m.home_select_date()}
+				class="date-input block min-w-0 max-w-full rounded-xl border border-gray-200 bg-white py-3 pl-3 pr-11 text-gray-900 outline-none focus:border-emerald-500"
+			/>
+			<svg
+				class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				aria-hidden="true"
+			>
+				<path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1z" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</label>
 	</div>
 </Dialog>
+
+<style>
+	.date-input {
+		width: 100%;
+		box-sizing: border-box;
+		-webkit-appearance: none;
+		appearance: none;
+	}
+
+	.date-input::-webkit-calendar-picker-indicator {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+</style>
