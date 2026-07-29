@@ -1,42 +1,52 @@
-# sv
+# Kalo AI
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**English** | [简体中文](./README_zh.md)
 
-## Creating a project
+**An agent-native, local-first companion for healthy weight loss.**
 
-If you're seeing this, you've probably already done this step. Congrats!
+Express what you need in natural language, and Kalo uses tools to help query, log, revise, and delete food, exercise, weight, and goal data while providing ongoing guidance based on your personal records.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Highlights
 
-To recreate this project with the same configuration:
+- **Agent-native**: The agent understands natural-language intent and uses tools to help users operate their data.
+- **Local first**: Health records and the API key are stored in browser IndexedDB.
+- **No application backend**: The app runs entirely in the frontend, and AI requests go directly from the browser to the model service configured by the user.
+- **Bring your own model**: Supports OpenAI Completions, OpenAI Responses, and Anthropic Messages protocols.
+- **Complete tracking**: Food, exercise, weight, goals, daily summaries, and trend analysis.
+- **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
+- **Bilingual**: Supports Simplified Chinese and English.
 
-```sh
-# recreate this project
-bun x sv@0.16.5 create --template minimal --types ts --add tailwindcss="plugins:none" sveltekit-adapter="adapter:static" paraglide="languageTags:en-us, zh-cn+demo:yes" --install bun kalo-ai
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Development
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun install
+bun run dev
 ```
 
-## Building
-
-To create a production version of your app:
+Check, test, and build:
 
 ```sh
-npm run build
+bun run check
+bun test
+bun run build
 ```
 
-You can preview the production build with `npm run preview`.
+## Deployment
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The project uses SvelteKit adapter-static. Production assets are written to `build/`.
+
+Deploy to Cloudflare:
+
+```sh
+bun run deploy
+```
+
+## Privacy and disclaimer
+
+The app has no application backend. Health data and the API key stay in the current browser, while AI requests are sent directly to the user-configured service. The API key is stored in plain text in IndexedDB and is included in full backup exports.
+
+Large language models may provide inaccurate information because their knowledge can be wrong, outdated, or hallucinated. This project does not provide medical, nutritional, or other professional advice.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).

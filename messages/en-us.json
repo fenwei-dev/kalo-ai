@@ -101,7 +101,7 @@
 	"settings_about": "About",
 	"about_title": "About Kalo AI",
 	"about_subtitle": "Project information",
-	"about_description": "Kalo AI is a local-first, conversation-centered companion for healthy weight loss. Chat with Kalo to log food, exercise, and weight, and review your progress.",
+	"about_description": "Kalo AI is an agent-native, local-first companion for healthy weight loss. It understands natural language and uses tools to help log and revise food, exercise, weight, and goals while providing ongoing guidance from your data.",
 	"about_privacy_title": "Local first",
 	"about_privacy_body": "Health records and your API key stay in your browser. AI requests are sent directly to the model service you configure.",
 	"about_open_source_title": "Open source",

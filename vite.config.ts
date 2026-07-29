@@ -31,7 +31,7 @@ export default defineConfig({
 			manifest: {
 				name: 'Kalo AI',
 				short_name: 'Kalo',
-				description: '智能减脂陪伴——和卡卡聊天记录饮食、运动与体重',
+				description: 'An agent-native companion for tracking food, exercise, weight, and healthy weight-loss goals',
 				theme_color: '#10b981',
 				background_color: '#ffffff',
 				lang: 'zh-CN',

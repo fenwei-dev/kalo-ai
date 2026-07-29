@@ -101,7 +101,7 @@
 	"settings_about": "关于",
 	"about_title": "关于卡卡 AI",
 	"about_subtitle": "项目信息",
-	"about_description": "卡卡 AI 是一个本地优先、以对话为核心的智能减脂陪伴应用。你可以通过和卡卡聊天记录饮食、运动与体重，并查看自己的进度。",
+	"about_description": "卡卡 AI 是一个 agent-native、本地优先的智能减脂陪伴应用。它理解自然语言，并通过调用工具协助你记录和修改饮食、运动、体重与目标，再结合你的数据提供持续陪伴。",
 	"about_privacy_title": "本地优先",
 	"about_privacy_body": "健康记录和 API Key 保存在你的浏览器本地。AI 请求会直接发送到你配置的模型服务。",
 	"about_open_source_title": "开源项目",
