@@ -153,7 +153,6 @@
 			<ListItem href="/about" title={m.settings_about()} chevron />
 		</List>
 
-		<p class="px-4 pb-4 pt-2 text-center text-xs text-gray-400">{m.settings_local_only()}</p>
 	</div>
 	</div>
 </div>
