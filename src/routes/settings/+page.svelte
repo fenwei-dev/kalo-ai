@@ -142,6 +142,12 @@
 		</Block>
 		<div class="mx-4 my-3 border-t border-gray-300"></div>
 
+		<BlockTitle>{m.settings_help()}</BlockTitle>
+		<List inset strong>
+			<ListItem href="/help" title={m.settings_help()} after={m.settings_help_hint()} chevron />
+		</List>
+		<div class="mx-4 my-3 border-t border-gray-300"></div>
+
 		<BlockTitle>{m.settings_about()}</BlockTitle>
 		<List inset strong>
 			<ListItem href="/about" title={m.settings_about()} after={m.settings_about_hint()} chevron />

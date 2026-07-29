@@ -1,0 +1,64 @@
+<script lang="ts">
+	import { Block, BlockTitle } from 'konsta/svelte';
+	import AppHeader from '$lib/components/AppHeader.svelte';
+	import ExternalLink from '$lib/components/ExternalLink.svelte';
+	import * as m from '$lib/paraglide/messages';
+
+	const links = {
+		openRouterModels: 'https://openrouter.ai/collections/free-models',
+		openRouterFree: 'https://openrouter.ai/openrouter/free',
+		ollama: 'https://github.com/ollama/ollama',
+		llamaCpp: 'https://github.com/ggml-org/llama.cpp',
+		termux: 'https://github.com/termux/termux-app',
+		mnnChat: 'https://github.com/alibaba/MNN/tree/master/apps/Android/MnnLlmChat'
+	};
+</script>
+
+<div class="flex h-full min-h-0 flex-col overflow-hidden">
+	<AppHeader title={m.help_title()} subtitle={m.help_subtitle()} backHref="/settings" />
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+		<div class="mx-auto max-w-md py-4">
+			<BlockTitle>{m.help_overview_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_overview_body()}</p></Block>
+
+			<BlockTitle>{m.help_api_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_api_body()}</p></Block>
+
+			<BlockTitle>{m.help_cloud_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_cloud_body()}</p>
+				<div class="mt-4 space-y-2">
+					<ExternalLink href={links.openRouterModels} label={m.help_openrouter_models()} />
+					<ExternalLink href={links.openRouterFree} label={m.help_openrouter_router()} />
+				</div>
+			</Block>
+
+			<BlockTitle>{m.help_local_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_local_body()}</p></Block>
+
+			<BlockTitle>{m.help_desktop_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_desktop_body()}</p>
+				<div class="mt-4 grid grid-cols-2 gap-2">
+					<ExternalLink href={links.ollama} label="Ollama" />
+					<ExternalLink href={links.llamaCpp} label="llama.cpp" />
+				</div>
+			</Block>
+
+			<BlockTitle>{m.help_android_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_android_body()}</p>
+				<div class="mt-4 grid grid-cols-2 gap-2">
+					<ExternalLink href={links.termux} label={m.help_termux()} />
+					<ExternalLink href={links.mnnChat} label="MNN Chat" />
+				</div>
+			</Block>
+
+			<BlockTitle>{m.help_ios_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_ios_body()}</p></Block>
+
+			<BlockTitle>{m.help_security_title()}</BlockTitle>
+			<Block inset strong><p class="text-sm leading-relaxed text-amber-700">{m.help_security_body()}</p></Block>
+		</div>
+	</div>
+</div>

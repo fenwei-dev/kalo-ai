@@ -5,7 +5,7 @@
 	let { unread = 0 }: { unread?: number } = $props();
 
 	let pathname = $derived(page.url.pathname);
-	let hidden = $derived(pathname === '/about');
+	let hidden = $derived(pathname === '/about' || pathname === '/help');
 
 	const isActive = (href: string) =>
 		href === '/' ? pathname === '/' : pathname.startsWith(href);
