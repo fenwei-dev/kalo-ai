@@ -113,6 +113,8 @@ export interface Message {
 	toolCallId?: string; // role='toolResult' 时关联的 toolCall id
 	toolName?: string;
 	isError?: boolean;
+	/** Local wall-clock time captured when the message was created. */
+	localTimestamp?: string; // YYYY-MM-DD HH:mm
 	createdAt: number;
 }
 

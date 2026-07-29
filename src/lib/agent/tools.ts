@@ -5,11 +5,19 @@ import {
 	addFoodEntry,
 	addWeightEntry,
 	updateFoodEntry,
+	deleteFoodEntry,
+	deleteExerciseEntry,
+	deleteWeightEntry,
+	getFoodEntry,
+	getExerciseEntry,
+	getWeightEntry,
+	getLatestWeight,
 	getExerciseEntriesByDate,
 	getExerciseEntriesSince,
 	getFoodEntriesByDate,
 	getFoodEntriesSince,
 	getUser,
+	getLibraryItem,
 	getWeightEntries,
 	getWeightEntriesByDate,
 	listLibrary,
@@ -18,7 +26,6 @@ import {
 	deleteLibraryItem,
 	saveUser
 } from '$lib/db/repositories';
-import { syncFoodToLibrary } from '$lib/utils/librarySync';
 import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
 import {
 	calculateBMR,
@@ -62,7 +69,7 @@ export const toolDefs: Tool[] = [
 	{
 		name: 'logFood',
 		description:
-			'新增或修正一条饮食。修正已有记录时先用 getTodayLog 找到 id，并传 replaceEntryId，禁止重复新增。会自动沉淀到食物库。',
+			'新增或修正一条饮食。修正已有记录时先用 getTodayLog 找到 id，并传 replaceEntryId，禁止重复新增。此工具永远不会创建、更新或匹配食物库；只有用户明确要求保存常用食物时才调用 editLibrary。若用户描述的是早餐/午餐/晚餐/昨晚等非当前时刻，必须传入推断出的合理 time/date；无法合理确定时先询问用户，不要省略时间。',
 		parameters: Type.Object({
 			replaceEntryId: Type.Optional(Type.String({ description: '要修正的已有 FoodEntry id；新增时不传' })),
 			name: Type.String({ description: '食物名称，如「牛肉面」' }),
@@ -70,7 +77,7 @@ export const toolDefs: Tool[] = [
 			protein: Type.Number({ minimum: 0, maximum: 1000, description: '蛋白质 g' }),
 			carbs: Type.Number({ minimum: 0, maximum: 2000, description: '碳水 g' }),
 			fat: Type.Number({ minimum: 0, maximum: 1000, description: '脂肪 g' }),
-			time: Type.Optional(Type.String({ description: 'HH:mm，默认现在' })),
+			time: Type.Optional(Type.String({ pattern: '^([01]\\d|2[0-3]):[0-5]\\d$', description: 'HH:mm。仅当用户确实在描述当前刚吃的食物时可省略；早餐/午餐/晚餐等必须传合理时间' })),
 			date: dateParam
 		})
 	},
@@ -110,15 +117,25 @@ export const toolDefs: Tool[] = [
 		})
 	},
 	{
+		name: 'deleteLog',
+		description: '删除一条饮食、运动或体重记录。必须先调用 getTodayLog 找到准确记录，并传入 id 及用于二次核对的 expectedLabel。饮食填食物名称，运动填运动描述，体重填数值字符串（如 "72.5"）。不匹配时会拒绝删除。',
+		parameters: Type.Object({
+			type: StringEnum(['food', 'exercise', 'weight']),
+			id: Type.String({ description: 'getTodayLog 返回的准确记录 id' }),
+			expectedLabel: Type.String({ description: '用于防误删：食物名称、运动描述或体重数值' }),
+			date: dateParam
+		})
+	},
+	{
 		name: 'editLibrary',
-		description: '手动管理食物库：增/改/删条目。',
+		description: '仅在用户明确要求保存、修改或删除常用食物时管理食物库。删除前必须先调用 listLibrary，并同时提供准确的 id 和 name；两者不匹配会拒绝删除。',
 		parameters: Type.Object({
 			action: StringEnum(['add', 'update', 'remove']),
 			item: Type.Object({
 				id: Type.Optional(Type.String()),
 				name: Type.String(),
 				category: Type.Optional(StringEnum(['meal', 'snack', 'drink', 'fruit', 'other'])),
-				calories: Type.Number(),
+				calories: Type.Optional(Type.Number()),
 				protein: Type.Optional(Type.Number()),
 				carbs: Type.Optional(Type.Number()),
 				fat: Type.Optional(Type.Number())
@@ -232,7 +249,6 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'logFood': {
 				const { replaceEntryId, name: fname, calories, protein, carbs, fat, time, date } = args;
-				const librarySync = await syncFoodToLibrary({ name: fname, calories, protein, carbs, fat });
 				const values = {
 					date: date || localDateISO(),
 					time: time || new Date().toTimeString().slice(0, 5),
@@ -242,17 +258,16 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 					carbs,
 					fat,
 					tef: Math.round(protein * 4 * 0.25 + carbs * 4 * 0.08 + fat * 9 * 0.03),
-					source: librarySync.status === 'matched' ? 'library' as const : 'ai' as const,
-					libraryItemId: librarySync.itemId
+					source: 'ai' as const
 				};
 				if (replaceEntryId) {
 					await updateFoodEntry(replaceEntryId, values);
 					await app.refreshToday();
-					return { ok: true, data: { entry: { id: replaceEntryId, ...values }, corrected: true, library: librarySync } };
+					return { ok: true, data: { entry: { id: replaceEntryId, ...values }, corrected: true } };
 				}
 				const entry = await addFoodEntry(values);
 				await app.refreshToday();
-				return { ok: true, data: { entry, corrected: false, library: librarySync } };
+				return { ok: true, data: { entry, corrected: false } };
 			}
 
 			case 'logExercise': {
@@ -279,6 +294,47 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				const fresh = await getUser();
 				if (fresh) app.user = fresh;
 				return { ok: true, data: { entry } };
+			}
+
+			case 'deleteLog': {
+				const { type, id, expectedLabel } = args as { type: string; id: string; expectedLabel: string };
+				const expected = expectedLabel.trim().toLocaleLowerCase();
+				if (type === 'food') {
+					const entry = await getFoodEntry(id);
+					if (!entry) return { ok: false, data: null, error: '要删除的饮食记录不存在' };
+					if (entry.name.trim().toLocaleLowerCase() !== expected) {
+						return { ok: false, data: null, error: '记录 id 与食物名称不匹配，已拒绝删除' };
+					}
+					await deleteFoodEntry(id);
+					await app.refreshToday();
+					return { ok: true, data: { deleted: { type, id, name: entry.name, date: entry.date, time: entry.time } } };
+				}
+				if (type === 'exercise') {
+					const entry = await getExerciseEntry(id);
+					if (!entry) return { ok: false, data: null, error: '要删除的运动记录不存在' };
+					if (entry.description.trim().toLocaleLowerCase() !== expected) {
+						return { ok: false, data: null, error: '记录 id 与运动描述不匹配，已拒绝删除' };
+					}
+					await deleteExerciseEntry(id);
+					await app.refreshToday();
+					return { ok: true, data: { deleted: { type, id, description: entry.description, date: entry.date, time: entry.time } } };
+				}
+				if (type === 'weight') {
+					const entry = await getWeightEntry(id);
+					if (!entry) return { ok: false, data: null, error: '要删除的体重记录不存在' };
+					if (String(entry.weight) !== expected) {
+						return { ok: false, data: null, error: '记录 id 与体重数值不匹配，已拒绝删除' };
+					}
+					await deleteWeightEntry(id);
+					const latest = await getLatestWeight();
+					if (latest && app.user) app.user = (await updateUser({ currentWeight: latest.weight })) ?? app.user;
+					await recomputeAdaptiveTDEE();
+					const fresh = await getUser();
+					if (fresh) app.user = fresh;
+					await app.refreshToday();
+					return { ok: true, data: { deleted: { type, id, weight: entry.weight, date: entry.date } } };
+				}
+				return { ok: false, data: null, error: `不支持的记录类型：${type}` };
 			}
 
 			case 'updateProfile': {
@@ -319,9 +375,17 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 			case 'editLibrary': {
 				const { action, item } = args;
 				if (action === 'remove') {
-					if (!item.id) return { ok: false, data: null, error: 'remove 需要提供 item.id' };
+					if (!item.id) return { ok: false, data: null, error: 'remove 需要提供 item.id 和准确名称' };
+					const existing = await getLibraryItem(item.id);
+					if (!existing) return { ok: false, data: null, error: '要删除的食物库条目不存在' };
+					if (existing.name.trim().toLocaleLowerCase() !== item.name.trim().toLocaleLowerCase()) {
+						return { ok: false, data: null, error: 'item.id 与 item.name 不匹配，已拒绝删除；请重新调用 listLibrary 核对' };
+					}
 					await deleteLibraryItem(item.id);
-					return { ok: true, data: { removed: item.id } };
+					return { ok: true, data: { removed: { id: item.id, name: existing.name } } };
+				}
+				if (typeof item.calories !== 'number') {
+					return { ok: false, data: null, error: `${action} 需要提供 item.calories` };
 				}
 				const result = await upsertLibraryItem({
 					id: item.id,

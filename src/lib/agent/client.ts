@@ -5,6 +5,7 @@ import type { ContentBlock, Message as DBMessage } from '$lib/db/schema';
 import { getKaloSystemPrompt } from './systemPrompt';
 import { getLocale } from '$lib/paraglide/runtime';
 import { buildModels } from './provider';
+import { localMessageTimestamp } from '$lib/utils/date';
 import { executeTool, toolDefs, type ToolOutcome } from './tools';
 
 export interface ToolCallView {
@@ -33,7 +34,12 @@ function ensureConfig() {
 function dbToContextMessage(m: DBMessage): Message {
 	const timestamp = m.createdAt;
 	if (m.role === 'user') {
-		return { role: 'user', content: m.content as any, timestamp };
+		const content = m.content.map((block) =>
+			block.type === 'text'
+				? { ...block, text: `[Message sent at ${m.localTimestamp ?? localMessageTimestamp(new Date(m.createdAt))} local time]\n${block.text}` }
+				: block
+		);
+		return { role: 'user', content: content as any, timestamp };
 	}
 	if (m.role === 'toolResult') {
 		return {

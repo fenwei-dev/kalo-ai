@@ -1,5 +1,5 @@
 import { db } from './schema';
-import { localDateISO } from '$lib/utils/date';
+import { localDateISO, localMessageTimestamp } from '$lib/utils/date';
 import { getLocale } from '$lib/paraglide/runtime';
 import type {
 	AIConfig,
@@ -90,6 +90,10 @@ export async function deleteFoodEntry(id: string): Promise<void> {
 	await db.foodEntries.delete(id);
 }
 
+export async function getFoodEntry(id: string): Promise<FoodEntry | undefined> {
+	return db.foodEntries.get(id);
+}
+
 // ---------- Exercise entries ----------
 
 export async function addExerciseEntry(
@@ -112,6 +116,10 @@ export async function deleteExerciseEntry(id: string): Promise<void> {
 	await db.exerciseEntries.delete(id);
 }
 
+export async function getExerciseEntry(id: string): Promise<ExerciseEntry | undefined> {
+	return db.exerciseEntries.get(id);
+}
+
 // ---------- Weight entries ----------
 
 export async function addWeightEntry(data: Omit<WeightEntry, 'id' | 'createdAt'>): Promise<WeightEntry> {
@@ -128,6 +136,14 @@ export async function getWeightEntriesByDate(date: string): Promise<WeightEntry[
 	return db.weightEntries.where('date').equals(date).toArray();
 }
 
+export async function getWeightEntry(id: string): Promise<WeightEntry | undefined> {
+	return db.weightEntries.get(id);
+}
+
+export async function deleteWeightEntry(id: string): Promise<void> {
+	await db.weightEntries.delete(id);
+}
+
 export async function getLatestWeight(): Promise<WeightEntry | undefined> {
 	const all = await db.weightEntries.orderBy('date').toArray();
 	return all[all.length - 1];
@@ -138,6 +154,10 @@ export async function getLatestWeight(): Promise<WeightEntry | undefined> {
 export async function listLibrary(): Promise<FoodLibraryItem[]> {
 	const items = await db.foodLibrary.toArray();
 	return items.sort((a, b) => b.servingsCount - a.servingsCount || b.lastUsedAt - a.lastUsedAt);
+}
+
+export async function getLibraryItem(id: string): Promise<FoodLibraryItem | undefined> {
+	return db.foodLibrary.get(id);
 }
 
 export async function upsertLibraryItem(
@@ -234,7 +254,13 @@ export async function addMessage(
 		if (!session) throw new Error('对话不存在或已被删除');
 		const order = data.order ?? (await db.messages.where('sessionId').equals(data.sessionId).count());
 		const ts = now();
-		const msg: Message = { ...data, order, id: uid('msg_'), createdAt: ts };
+		const msg: Message = {
+			...data,
+			order,
+			id: uid('msg_'),
+			localTimestamp: data.localTimestamp ?? localMessageTimestamp(new Date(ts)),
+			createdAt: ts
+		};
 		await db.messages.add(msg);
 		await db.sessions.update(data.sessionId, { updatedAt: ts, lastMessageAt: ts });
 		return msg;

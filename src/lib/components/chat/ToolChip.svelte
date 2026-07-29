@@ -42,6 +42,11 @@
 		<span class="text-base">📝</span>
 		<span>{args.targetWeight != null || args.targetDate != null ? m.tool_profile_goal() : m.tool_profile_data()}</span>
 	</div>
+{:else if tool === 'deleteLog'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+		<span class="text-base">🗑️</span>
+		<span>{args.type === 'food' ? args.expectedLabel : args.type === 'exercise' ? args.expectedLabel : `${args.expectedLabel} kg`}</span>
+	</div>
 {:else if tool === 'editLibrary'}
 	<div class="my-1 flex items-center gap-2 rounded-xl bg-gray-100 px-3 py-2 text-xs text-gray-700">
 		<span class="text-base">📚</span>

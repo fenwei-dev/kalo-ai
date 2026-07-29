@@ -6,6 +6,14 @@ export function localDateISO(date = new Date()): string {
 	return `${year}-${month}-${day}`;
 }
 
+export function localTimeHHMM(date = new Date()): string {
+	return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+export function localMessageTimestamp(date = new Date()): string {
+	return `${localDateISO(date)} ${localTimeHHMM(date)}`;
+}
+
 /** Return a local calendar date offset by a number of days. */
 export function localDateOffset(days: number, from = new Date()): string {
 	const date = new Date(from);
