@@ -32,6 +32,7 @@
 		"dexie": "^4.4.4",
 		"dompurify": "^3.4.12",
 		"konsta": "^5.2.0",
+		"layerchart": "^2.0.4",
 		"marked": "^18.0.7"
 	}
 }

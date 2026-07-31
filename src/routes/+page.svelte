@@ -109,8 +109,15 @@
 						label={m.home_intake_progress()}
 					/>
 				</div>
-				<div class="rounded-2xl bg-white p-4 shadow-sm">
-					<p class="text-xs text-gray-400">{m.home_weight_trend()}</p>
+				<a
+					href="/weight"
+					aria-label={m.home_view_weight_details()}
+					class="block rounded-2xl bg-white p-4 shadow-sm transition active:scale-[0.98]"
+				>
+					<div class="flex items-center justify-between gap-2">
+						<p class="text-xs text-gray-400">{m.home_weight_trend()}</p>
+						<svg class="h-4 w-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</div>
 					{#if visibleWeights.length}
 						<p class="mt-1 text-lg font-bold">{visibleWeights[visibleWeights.length - 1].weight} kg</p>
 					{:else}
@@ -119,7 +126,7 @@
 					<div class="mt-2">
 						<WeightSparkline weights={weightSeries} />
 					</div>
-				</div>
+				</a>
 			</div>
 
 			<!-- 卡卡的消息（主动消息，v1 占位） -->

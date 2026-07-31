@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'konsta/svelte/theme.css';
+@import 'layerchart/core.css';
 
 html,
 body {
