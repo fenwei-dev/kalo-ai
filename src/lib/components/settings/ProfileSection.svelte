@@ -2,11 +2,17 @@
 	import { List, ListInput, Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
-	import { addMessage, createSession, saveUser, updateUser } from '$lib/db/repositories';
+	import AppDialog from '$lib/components/AppDialog.svelte';
+	import {
+		addMessage, createSession, saveUser, updateUser, upsertWeightEntryForDate, getUser,
+		getWeightEntriesByDate
+	} from '$lib/db/repositories';
 	import { calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
 	import type { ActivityLevel, Gender } from '$lib/db/schema';
 	import * as m from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { localDateISO } from '$lib/utils/date';
+	import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
 
 	const activities: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
 	const activityLabel = (value: ActivityLevel) => ({
@@ -25,6 +31,8 @@
 
 	let saving = $state(false);
 	let saved = $state(false);
+	let weightConfirmOpen = $state(false);
+	let weightConfirmMode = $state<'create' | 'update'>('create');
 
 	let valid = $derived(
 		Number.isFinite(+age) && +age >= 13 && +age <= 120 &&
@@ -44,7 +52,18 @@
 
 	async function save() {
 		if (!valid) return;
+		if (app.user && +currentWeight !== app.user.currentWeight) {
+			weightConfirmMode = (await getWeightEntriesByDate(localDateISO())).length ? 'update' : 'create';
+			weightConfirmOpen = true;
+			return;
+		}
+		await persistProfile();
+	}
+
+	async function persistProfile() {
+		if (!valid) return;
 		const firstSave = !app.user;
+		const weightChanged = firstSave || +currentWeight !== app.user?.currentWeight;
 		saving = true;
 		try {
 			const data = {
@@ -57,10 +76,13 @@
 				activityLevel,
 				calculatedBMR: liveBMR
 			};
-			if (app.user) {
-				app.user = (await updateUser(data)) ?? null;
-			} else {
-				app.user = await saveUser(data);
+			if (app.user) app.user = (await updateUser(data)) ?? null;
+			else app.user = await saveUser(data);
+			if (weightChanged) {
+				await upsertWeightEntryForDate({ date: localDateISO(), weight: +currentWeight });
+				await recomputeAdaptiveTDEE();
+				app.user = (await getUser()) ?? app.user;
+				await app.refreshToday();
 			}
 			if (firstSave) {
 				const english = getLocale() === 'en-us';
@@ -213,3 +235,14 @@
 		{saving ? m.common_saving() : app.user ? (saved ? m.common_saved() : m.common_save()) : m.common_start()}
 	</button>
 </Block>
+
+<AppDialog
+	bind:open={weightConfirmOpen}
+	title={weightConfirmMode === 'create' ? m.profile_weight_create_title() : m.profile_weight_update_title()}
+	message={weightConfirmMode === 'create'
+		? m.profile_weight_create_body({ date: localDateISO(), weight: +currentWeight })
+		: m.profile_weight_update_body({ date: localDateISO(), weight: +currentWeight })}
+	kind="confirm"
+	confirmLabel={weightConfirmMode === 'create' ? m.profile_weight_create_confirm() : m.profile_weight_update_confirm()}
+	onconfirm={persistProfile}
+/>

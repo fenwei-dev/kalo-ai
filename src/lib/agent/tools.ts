@@ -11,7 +11,8 @@ import {
 	getFoodEntry,
 	getExerciseEntry,
 	getWeightEntry,
-	getLatestWeight,
+	upsertWeightEntryForDate,
+	syncCurrentWeightFromLatest,
 	getExerciseEntriesByDate,
 	getExerciseEntriesSince,
 	getFoodEntriesByDate,
@@ -94,7 +95,7 @@ export const toolDefs: Tool[] = [
 	},
 	{
 		name: 'logWeight',
-		description: '记录一次体重，会触发自适应 TDEE 重算。',
+		description: '日常称重必须使用此工具。记录某日体重并触发自适应 TDEE 重算；不允许未来日期。每个日期只允许一条记录，已有记录时返回错误且不覆盖。需要更正时先 getTodayLog，调用 deleteLog 删除后再记录。updateProfile.currentWeight 只用于首次建档或用户明确修改资料基线。',
 		parameters: Type.Object({
 			weight: Type.Number({ minimum: 25, maximum: 400, description: '体重 kg' }),
 			date: dateParam
@@ -103,7 +104,7 @@ export const toolDefs: Tool[] = [
 	{
 		name: 'updateProfile',
 		description:
-			'更新用户资料或目标（任意子集）。改目标体重/日期后会实时重算每周减重与每日缺口。首次填写也可用。',
+			'更新用户资料或目标（任意子集）。日常称重应使用 logWeight；currentWeight 仅用于首次建档或用户明确修改资料基线。传 currentWeight 时会创建或更新今天的体重记录，并同步最新记录到 Profile。改目标后会实时重算计划。',
 		parameters: Type.Object({
 			age: Type.Optional(Type.Number({ minimum: 13, maximum: 120 })),
 			gender: Type.Optional(StringEnum(['male', 'female'])),
@@ -286,9 +287,6 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 						case 'logWeight': {
 				const date = (args.date as string) || localDateISO();
 				const entry = await addWeightEntry({ date, weight: args.weight });
-				if (app.user) {
-					app.user = (await updateUser({ currentWeight: args.weight })) ?? app.user;
-				}
 				await recomputeAdaptiveTDEE();
 				// 重新读取最新的 user（含自适应 TDEE）到全局状态
 				const fresh = await getUser();
@@ -326,8 +324,6 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 						return { ok: false, data: null, error: '记录 id 与体重数值不匹配，已拒绝删除' };
 					}
 					await deleteWeightEntry(id);
-					const latest = await getLatestWeight();
-					if (latest && app.user) app.user = (await updateUser({ currentWeight: latest.weight })) ?? app.user;
 					await recomputeAdaptiveTDEE();
 					const fresh = await getUser();
 					if (fresh) app.user = fresh;
@@ -339,17 +335,17 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'updateProfile': {
 				const patch: Record<string, any> = { ...args };
+				let weightRecord: Awaited<ReturnType<typeof upsertWeightEntryForDate>> | undefined;
 				if (app.user) {
+					if (typeof patch.currentWeight === 'number') {
+						weightRecord = await upsertWeightEntryForDate({ date: localDateISO(), weight: patch.currentWeight });
+						const latest = await syncCurrentWeightFromLatest();
+						if (latest) patch.currentWeight = latest.weight;
+					}
 					const merged = { ...app.user, ...patch };
-					patch.calculatedBMR = calculateBMR(
-						merged.currentWeight,
-						merged.height,
-						merged.age,
-						merged.gender
-					);
+					patch.calculatedBMR = calculateBMR(merged.currentWeight, merged.height, merged.age, merged.gender);
 					app.user = (await updateUser(patch)) ?? app.user;
 				} else {
-					// 首次填写：补全必填字段后创建
 					const required = {
 						age: patch.age ?? 30,
 						gender: (patch.gender as Gender) ?? 'male',
@@ -357,19 +353,17 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 						currentWeight: patch.currentWeight ?? 70,
 						activityLevel: (patch.activityLevel as ActivityLevel) ?? 'moderate',
 						calculatedBMR: calculateBMR(
-							patch.currentWeight ?? 70,
-							patch.height ?? 170,
-							patch.age ?? 30,
+							patch.currentWeight ?? 70, patch.height ?? 170, patch.age ?? 30,
 							(patch.gender as Gender) ?? 'male'
 						)
 					};
-					app.user = await saveUser({
-						...required,
-						targetWeight: patch.targetWeight,
-						targetDate: patch.targetDate
-					});
+					app.user = await saveUser({ ...required, targetWeight: patch.targetWeight, targetDate: patch.targetDate });
+					weightRecord = await upsertWeightEntryForDate({ date: localDateISO(), weight: required.currentWeight });
 				}
-				return { ok: true, data: profileSnapshot() };
+				if (weightRecord) await recomputeAdaptiveTDEE();
+				const fresh = await getUser();
+				if (fresh) app.user = fresh;
+				return { ok: true, data: { ...profileSnapshot(), weightRecord } };
 			}
 
 			case 'editLibrary': {

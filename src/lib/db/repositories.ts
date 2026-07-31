@@ -122,10 +122,59 @@ export async function getExerciseEntry(id: string): Promise<ExerciseEntry | unde
 
 // ---------- Weight entries ----------
 
+function assertWeightDate(date: string): void {
+	if (date > localDateISO()) throw new Error('不能记录未来日期的体重');
+}
+
 export async function addWeightEntry(data: Omit<WeightEntry, 'id' | 'createdAt'>): Promise<WeightEntry> {
-	const entry: WeightEntry = { ...data, id: uid('w_'), createdAt: now() };
-	await db.weightEntries.add(entry);
-	return entry;
+	assertWeightDate(data.date);
+	return db.transaction('rw', db.weightEntries, db.user, async () => {
+		const existing = await db.weightEntries.where('date').equals(data.date).first();
+		if (existing) {
+			throw new Error(`日期 ${data.date} 已有体重记录（${existing.weight} kg），每天只能记录一次；如需更正请先删除原记录`);
+		}
+		const entry: WeightEntry = { ...data, id: uid('w_'), createdAt: now() };
+		await db.weightEntries.add(entry);
+		await syncCurrentWeightInTransaction();
+		return entry;
+	});
+}
+
+/** 设置资料时使用：当天无记录则创建，有记录则修改，并清理旧版本遗留的同日重复项。 */
+export async function upsertWeightEntryForDate(data: Omit<WeightEntry, 'id' | 'createdAt'>): Promise<{
+	entry: WeightEntry;
+	status: 'created' | 'updated';
+}> {
+	assertWeightDate(data.date);
+	return db.transaction('rw', db.weightEntries, db.user, async () => {
+		const existing = await db.weightEntries.where('date').equals(data.date).toArray();
+		if (!existing.length) {
+			const entry: WeightEntry = { ...data, id: uid('w_'), createdAt: now() };
+			await db.weightEntries.add(entry);
+			await syncCurrentWeightInTransaction();
+			return { entry, status: 'created' as const };
+		}
+		const keep = [...existing].sort((a, b) => b.createdAt - a.createdAt)[0];
+		const entry: WeightEntry = { ...keep, ...data };
+		await db.weightEntries.put(entry);
+		await db.weightEntries.bulkDelete(existing.filter((item) => item.id !== keep.id).map((item) => item.id));
+		await syncCurrentWeightInTransaction();
+		return { entry, status: 'updated' as const };
+	});
+}
+
+async function syncCurrentWeightInTransaction(): Promise<WeightEntry | undefined> {
+	const all = await db.weightEntries.orderBy('date').toArray();
+	const latest = all.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt).at(-1);
+	if (latest && await db.user.get('me')) {
+		await db.user.update('me', { currentWeight: latest.weight, updatedAt: now() });
+	}
+	return latest;
+}
+
+/** 当存在体重记录时，让 Profile.currentWeight 始终等于日期最晚的记录。 */
+export async function syncCurrentWeightFromLatest(): Promise<WeightEntry | undefined> {
+	return db.transaction('rw', db.weightEntries, db.user, syncCurrentWeightInTransaction);
 }
 
 export async function getWeightEntries(): Promise<WeightEntry[]> {
@@ -141,7 +190,13 @@ export async function getWeightEntry(id: string): Promise<WeightEntry | undefine
 }
 
 export async function deleteWeightEntry(id: string): Promise<void> {
-	await db.weightEntries.delete(id);
+	await db.transaction('rw', db.weightEntries, db.user, async () => {
+		const entry = await db.weightEntries.get(id);
+		if (!entry) throw new Error('要删除的体重记录不存在');
+		if ((await db.weightEntries.count()) <= 1) throw new Error('不能删除唯一一条体重记录');
+		await db.weightEntries.delete(id);
+		await syncCurrentWeightInTransaction();
+	});
 }
 
 export async function getLatestWeight(): Promise<WeightEntry | undefined> {

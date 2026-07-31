@@ -14,8 +14,17 @@
 	let protein = $derived(app.today.food.reduce((s, e) => s + e.protein, 0));
 	let carbs = $derived(app.today.food.reduce((s, e) => s + e.carbs, 0));
 	let fat = $derived(app.today.food.reduce((s, e) => s + e.fat, 0));
-	let visibleWeights = $derived(app.weightHistory.filter((w) => w.date <= app.viewDate).slice(-14));
+	let visibleWeights = $derived(weightEntriesForLast30Days());
 	let weightSeries = $derived(visibleWeights.map((w) => w.weight));
+
+	function weightEntriesForLast30Days() {
+		const start = localDateOffset(-29, parseLocalDate(app.viewDate));
+		const latestByDate = new Map<string, (typeof app.weightHistory)[number]>();
+		for (const entry of app.weightHistory) {
+			if (entry.date >= start && entry.date <= app.viewDate) latestByDate.set(entry.date, entry);
+		}
+		return [...latestByDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+	}
 	let currentDate = $derived(localDateISO());
 	let isToday = $derived(app.viewDate === currentDate);
 	let dateLabel = $derived(formatViewDate(app.viewDate));
@@ -115,7 +124,7 @@
 					class="block rounded-2xl bg-white p-4 shadow-sm transition active:scale-[0.98]"
 				>
 					<div class="flex items-center justify-between gap-2">
-						<p class="text-xs text-gray-400">{m.home_weight_trend()}</p>
+						<p class="text-xs text-gray-400">{m.home_weight_trend()} {m.home_weight_trend_30d()}</p>
 						<svg class="h-4 w-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</div>
 					{#if visibleWeights.length}
