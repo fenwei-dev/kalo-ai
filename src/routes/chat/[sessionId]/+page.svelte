@@ -27,7 +27,7 @@
 	let drawerOpen = $state(false);
 	let loadGeneration = 0;
 	let creatingNew = false;
-	const autoTriggered = new Set<string>();
+	const attemptedUserMessages = new Set<string>();
 
 	let messagesEl: HTMLDivElement | undefined = $state();
 
@@ -69,7 +69,7 @@
 			return;
 		}
 		const found = (await getSession(id)) ?? null;
-		if (generation !== loadGeneration) return;
+		if (generation !== loadGeneration || id !== sessionId) return;
 		if (!found) {
 			await goto('/chat', { replaceState: true });
 			return;
@@ -84,17 +84,21 @@
 
 	/** 设置页等入口会预先写入 user 消息；进入会话后自动让卡卡回答。 */
 	async function triggerPendingTurn(id: string, loaded: DBMessage[]) {
-		if (sending || autoTriggered.has(id) || !app.aiConfig) return;
+		if (sending || !app.aiConfig) return;
 		const lastUserIndex = loaded.findLastIndex((message) => message.role === 'user');
 		if (lastUserIndex < 0 || loaded.slice(lastUserIndex + 1).some((message) => message.role === 'assistant')) return;
-		autoTriggered.add(id);
+		const userMessage = loaded[lastUserIndex];
+		if (attemptedUserMessages.has(userMessage.id)) return;
+		attemptedUserMessages.add(userMessage.id);
 		await runAgent(id);
 	}
 
 	// 切换会话时重新加载；单一入口避免 /chat/new 重复创建。
 	$effect(() => {
 		const id = sessionId;
-		if (page.url.pathname.startsWith('/chat/')) void load(id);
+		if (page.url.pathname.startsWith('/chat/')) {
+			void load(id).catch((error) => showError(error));
+		}
 	});
 
 	// 只滚动消息容器。scrollIntoView 会连带滚动移动端 visual viewport，
@@ -111,44 +115,75 @@
 		messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
 	}
 
+	function showError(error: unknown) {
+		errorMsg = error instanceof Error ? error.message : String(error);
+	}
+
+	async function processAgent(id: string) {
+		await runTurn(id, {
+			onAssistantText: (delta) => (streamText += delta),
+			onAssistantMessage: () => (streamText = ''),
+			onError: (message) => (errorMsg = message)
+		});
+	}
+
+	async function finishTurn(id: string) {
+		sending = false;
+		streamText = '';
+		try {
+			await load(id);
+		} catch (error) {
+			showError(error);
+		}
+	}
+
 	async function runAgent(id: string) {
 		if (sending) return;
 		sending = true;
 		errorMsg = '';
 		streamText = '';
 		try {
-			await runTurn(id, {
-				onAssistantText: (d) => (streamText += d),
-				onAssistantMessage: async () => {
-					streamText = '';
-					await load(id);
-				},
-				onError: (message) => (errorMsg = message)
-			});
+			await processAgent(id);
+		} catch (error) {
+			showError(error);
 		} finally {
-			sending = false;
-			streamText = '';
-			await load(id);
+			await finishTurn(id);
 		}
 	}
 
 	async function send() {
 		const text = input.trim();
-		if (!text || sending || !session) return;
+		const activeSession = session;
+		const id = sessionId;
+		if (!text || sending || !activeSession) return;
+
+		// Claim the turn before any IndexedDB work so double taps cannot create an
+		// unprocessed message and the thinking indicator appears immediately.
+		sending = true;
 		input = '';
 		errorMsg = '';
-		await addMessage({ sessionId, role: 'user', content: [{ type: 'text', text }] });
-		await load();
+		streamText = '';
+		let persisted = false;
+		try {
+			const userMessage = await addMessage({ sessionId: id, role: 'user', content: [{ type: 'text', text }] });
+			persisted = true;
+			attemptedUserMessages.add(userMessage.id);
+			await load(id);
 
-		// 首条消息自动起标题
-		if (session && (session.title === '新对话' || session.title === 'New chat')) {
-			const title = text.length > 16 ? text.slice(0, 16) + '…' : text;
-			await renameSession(sessionId, title);
-			session = { ...session, title };
-			await app.refreshSessions();
+			if (activeSession.title === '新对话' || activeSession.title === 'New chat') {
+				const title = text.length > 16 ? text.slice(0, 16) + '…' : text;
+				await renameSession(id, title);
+				session = { ...activeSession, title };
+				await app.refreshSessions();
+			}
+
+			await processAgent(id);
+		} catch (error) {
+			showError(error);
+			if (!persisted) input = text;
+		} finally {
+			await finishTurn(id);
 		}
-
-		await runAgent(sessionId);
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -260,7 +295,7 @@
 			></textarea>
 			<button
 				onclick={send}
-				disabled={!input.trim() || sending}
+				disabled={!input.trim() || sending || !session}
 				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-40"
 				aria-label={m.chat_send()}
 			>
