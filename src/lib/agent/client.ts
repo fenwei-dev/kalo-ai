@@ -1,4 +1,5 @@
-import type { Api, AssistantMessage, Message } from '@earendil-works/pi-ai';
+import { Agent, type AgentMessage, type AgentToolResult } from '@earendil-works/pi-agent-core';
+import type { Api, AssistantMessage, Message, ToolResultMessage } from '@earendil-works/pi-ai';
 import { app } from '$lib/context/appContext.svelte';
 import { addMessage, listMessages } from '$lib/db/repositories';
 import type { ContentBlock, Message as DBMessage } from '$lib/db/schema';
@@ -6,7 +7,7 @@ import { getKaloSystemPrompt } from './systemPrompt';
 import { getLocale } from '$lib/paraglide/runtime';
 import { buildModels } from './provider';
 import { localMessageTimestamp } from '$lib/utils/date';
-import { executeTool, toolDefs, type ToolOutcome } from './tools';
+import { agentTools, type ToolOutcome } from './tools';
 
 export interface ToolCallView {
 	id: string;
@@ -17,74 +18,104 @@ export interface ToolCallView {
 export interface TurnCallbacks {
 	onAssistantText?: (delta: string) => void;
 	onAssistantMessage?: (msg: AssistantMessage) => void;
+	/** Called after a completed assistant or tool-result message has been persisted. */
+	onMessagesChanged?: () => void | Promise<void>;
 	onToolCall?: (call: ToolCallView) => void;
 	onToolResult?: (call: ToolCallView, outcome: ToolOutcome) => void;
 	onError?: (message: string) => void;
 }
 
-class AgentError extends Error {}
-
 function ensureConfig() {
-	if (!app.aiConfig) throw new AgentError('还没有配置 AI，请先去「设置」填写 API Key 和模型。');
-	if (!app.aiConfig.apiKey) throw new AgentError('API Key 为空，请去「设置」配置。');
+	if (!app.aiConfig) throw new Error('还没有配置 AI，请先去「设置」填写 API Key 和模型。');
+	if (!app.aiConfig.apiKey) throw new Error('API Key 为空，请去「设置」配置。');
 	return app.aiConfig;
 }
 
-/** DB 消息 → pi-ai Context 消息（重建必要字段，元数据用占位值） */
-function dbToContextMessage(m: DBMessage): Message {
-	const timestamp = m.createdAt;
-	if (m.role === 'user') {
-		const content = m.content.map((block) =>
+/** DB messages are rehydrated into the metadata-rich messages expected by pi-agent-core. */
+function dbToAgentMessage(message: DBMessage): Message {
+	const timestamp = message.createdAt;
+	if (message.role === 'user') {
+		const content = message.content.map((block) =>
 			block.type === 'text'
-				? { ...block, text: `[Message sent at ${m.localTimestamp ?? localMessageTimestamp(new Date(m.createdAt))} local time]\n${block.text}` }
+				? {
+						...block,
+						text: `[Message sent at ${message.localTimestamp ?? localMessageTimestamp(new Date(timestamp))} local time]\n${block.text}`
+					}
 				: block
 		);
 		return { role: 'user', content: content as any, timestamp };
 	}
-	if (m.role === 'toolResult') {
+	if (message.role === 'toolResult') {
 		return {
 			role: 'toolResult',
-			toolCallId: m.toolCallId ?? '',
-			toolName: m.toolName ?? '',
-			content: m.content as any,
-			isError: !!m.isError,
+			toolCallId: message.toolCallId ?? '',
+			toolName: message.toolName ?? '',
+			content: message.content as any,
+			isError: !!message.isError,
 			timestamp
 		};
 	}
-	// assistant
 	return {
 		role: 'assistant',
-		content: m.content as any,
+		content: message.content as any,
 		api: (app.aiConfig?.apiType ?? 'openai-completions') as Api,
-		provider: 'kalo' as any,
+		provider: 'kalo',
 		model: app.aiConfig?.model ?? 'kalo',
-		usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+		usage: {
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 }
+		},
 		stopReason: 'stop',
 		timestamp
-	} as Message;
-}
-
-async function buildContext(sessionId: string) {
-	const history = await listMessages(sessionId);
-	return {
-		systemPrompt: getKaloSystemPrompt(getLocale()),
-		messages: history.map(dbToContextMessage),
-		tools: toolDefs
 	};
 }
 
-/** 把 assistant 消息的内容块存入 DB */
-async function persistAssistant(sessionId: string, msg: AssistantMessage): Promise<void> {
+async function persistAssistant(sessionId: string, message: AssistantMessage): Promise<void> {
 	await addMessage({
 		sessionId,
 		role: 'assistant',
-		content: msg.content as ContentBlock[]
+		content: message.content as ContentBlock[]
 	});
 }
 
+async function persistToolResult(sessionId: string, message: ToolResultMessage): Promise<void> {
+	await addMessage({
+		sessionId,
+		role: 'toolResult',
+		content: message.content as ContentBlock[],
+		toolCallId: message.toolCallId,
+		toolName: message.toolName,
+		isError: message.isError
+	});
+}
+
+function outcomeFromResult(result: AgentToolResult<unknown>, isError: boolean): ToolOutcome {
+	const details = result.details;
+	if (
+		details &&
+		typeof details === 'object' &&
+		'ok' in details &&
+		typeof (details as ToolOutcome).ok === 'boolean'
+	) {
+		return details as ToolOutcome;
+	}
+	const text = result.content
+		.filter((block) => block.type === 'text')
+		.map((block) => block.text)
+		.join('\n');
+	return isError
+		? { ok: false, data: null, error: text || '工具执行失败' }
+		: { ok: true, data: details ?? text };
+}
+
 /**
- * 跑一轮对话：从 DB 重建上下文 → 流式调用模型 → 有工具调用就执行并回填 → 继续，
- * 直到模型停止工具调用。所有 assistant / toolResult 消息实时入库。
+ * Continue from the user message already persisted by the UI. pi-agent-core owns the
+ * model/tool loop and emits ordered lifecycle events; this adapter persists completed
+ * assistant and tool-result messages into Dexie.
  */
 export async function runTurn(
 	sessionId: string,
@@ -94,77 +125,97 @@ export async function runTurn(
 	let cfg: ReturnType<typeof ensureConfig>;
 	try {
 		cfg = ensureConfig();
-	} catch (e) {
-		cb.onError?.(e instanceof Error ? e.message : String(e));
+	} catch (error) {
+		cb.onError?.(error instanceof Error ? error.message : String(error));
+		return;
+	}
+
+	const history = await listMessages(sessionId);
+	if (history.length === 0) {
+		cb.onError?.('没有可处理的用户消息');
 		return;
 	}
 
 	const { models, model } = buildModels(cfg);
-
-	for (let iteration = 0; iteration < 8; iteration++) {
-		const context = await buildContext(sessionId);
-
-		let stream;
-		try {
-			stream = models.stream(model, context, { apiKey: cfg.apiKey, signal });
-		} catch (e) {
-			cb.onError?.(e instanceof Error ? e.message : String(e));
-			return;
-		}
-
-		let assistant: AssistantMessage | undefined;
-		try {
-			for await (const event of stream) {
-				if (event.type === 'text_delta') cb.onAssistantText?.(event.delta);
-				else if (event.type === 'error') {
-					cb.onError?.(event.error?.errorMessage || '请求出错');
-					return;
-				} else if (event.type === 'done') {
-					assistant = event.message;
-				}
+	let toolTurnCount = 0;
+	const agent = new Agent({
+		initialState: {
+			systemPrompt: getKaloSystemPrompt(getLocale()),
+			model,
+			tools: agentTools,
+			messages: history.map(dbToAgentMessage) as AgentMessage[]
+		},
+		streamFn: models.streamSimple.bind(models),
+		getApiKey: () => cfg.apiKey,
+		sessionId,
+		toolExecution: 'sequential',
+		prepareNextTurnWithContext: ({ toolResults }) => {
+			if (toolResults.length > 0 && ++toolTurnCount >= 8) {
+				throw new Error('工具调用次数过多，已停止');
 			}
-			if (!assistant) {
-				try {
-					assistant = await stream.result();
-				} catch (e) {
-					cb.onError?.(e instanceof Error ? e.message : String(e));
-					return;
+			return undefined;
+		}
+	});
+
+	let reportedError = '';
+	const unsubscribe = agent.subscribe(async (event) => {
+		switch (event.type) {
+			case 'message_update':
+				if (event.assistantMessageEvent.type === 'text_delta') {
+					cb.onAssistantText?.(event.assistantMessageEvent.delta);
 				}
-			}
-		} catch (e) {
-			const text = e instanceof Error ? e.message : String(e);
-			cb.onError?.(text);
-			return;
+				break;
+
+			case 'message_end':
+				if (event.message.role === 'assistant') {
+					if (event.message.errorMessage) {
+						reportedError = event.message.errorMessage;
+						break;
+					}
+					await persistAssistant(sessionId, event.message);
+					await cb.onMessagesChanged?.();
+					cb.onAssistantMessage?.(event.message);
+				} else if (event.message.role === 'toolResult') {
+					await persistToolResult(sessionId, event.message);
+					await cb.onMessagesChanged?.();
+				}
+				break;
+
+			case 'tool_execution_start':
+				cb.onToolCall?.({
+					id: event.toolCallId,
+					name: event.toolName,
+					arguments: event.args
+				});
+				break;
+
+			case 'tool_execution_end':
+				cb.onToolResult?.(
+					{ id: event.toolCallId, name: event.toolName, arguments: {} },
+					outcomeFromResult(event.result, event.isError)
+				);
+				break;
+
+			case 'agent_end':
+				if (agent.state.errorMessage) reportedError = agent.state.errorMessage;
+				break;
 		}
+	});
 
-		if (!assistant) {
-			cb.onError?.('未收到模型响应');
-			return;
-		}
+	const abortAgent = () => agent.abort();
+	if (signal?.aborted) {
+		unsubscribe();
+		cb.onError?.('请求已取消');
+		return;
+	}
+	signal?.addEventListener('abort', abortAgent, { once: true });
 
-		await persistAssistant(sessionId, assistant);
-		cb.onAssistantMessage?.(assistant);
-
-		const toolCalls = assistant.content.filter((b): b is Extract<typeof b, { type: 'toolCall' }> => b.type === 'toolCall');
-		if (toolCalls.length === 0) return; // 一轮结束
-
-		// 执行工具并回填结果
-		for (const call of toolCalls) {
-			const view: ToolCallView = { id: call.id, name: call.name, arguments: call.arguments };
-			cb.onToolCall?.(view);
-			const outcome = await executeTool(call.name, call.arguments);
-			cb.onToolResult?.(view, outcome);
-			await addMessage({
-				sessionId,
-				role: 'toolResult',
-				content: [{ type: 'text', text: JSON.stringify(outcome.data ?? outcome.error) }],
-				toolCallId: call.id,
-				toolName: call.name,
-				isError: !outcome.ok
-			});
-		}
-		// 继续下一轮，让模型基于工具结果继续回复
+	try {
+		await agent.continue();
+	} finally {
+		signal?.removeEventListener('abort', abortAgent);
+		unsubscribe();
 	}
 
-	cb.onError?.('工具调用次数过多，已停止');
+	if (reportedError) cb.onError?.(reportedError);
 }

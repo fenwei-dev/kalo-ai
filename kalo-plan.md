@@ -312,9 +312,9 @@ editLibrary({ action: 'add'|'update'|'remove', item })
 - **Dexie.js（IndexedDB）**，浏览器端。SSR 期间不实例化：所有 DB 访问仅在 `onMount`/浏览器上下文内进行，组件里用 `browser`（`$app/environment`）守卫。
 - **状态管理**：Svelte 5 runes。不引入 store 库。用一个 `appContext.svelte.ts`（`$state` 容器 + `getContext`/`setContext`）替代旧 AppContext，持有 user / aiConfig / 当前 session / today 数据。
 
-### 9.5 AI 集成：@earendil-works/pi-ai（关键）
+### 9.5 AI 集成：@earendil-works/pi-agent-core + @earendil-works/pi-ai（关键）
 
-- **库**：`@earendil-works/pi-ai` 0.81.x。统一 LLM API，内置 tool-calling、流式、TypeBox 工具校验。完全取代原 Pollinations 封装。
+- **库**：`@earendil-works/pi-agent-core` 0.83.x 负责 Agent 状态、tool-calling 循环、工具校验/执行与生命周期事件；底层使用 `@earendil-works/pi-ai` 0.83.x 统一不同 LLM provider 的流式 API。完全取代原 Pollinations 封装。
 - **浏览器直连**（已调研确认可行）：`createModels()` → `createProvider()` 注册用户自配端点 → `models.complete(model, context, { apiKey })`。每个请求显式传 apiKey，key 仅存本地（Dexie 的 AIConfig 表）。**明确告知用户：CORS 取决于其 endpoint，部分代理/网关可能需要支持 CORS。**
 - **用户在设置页配置（AI 配置卡）**：
   - API 类型三选一：`openai-completions` / `openai-responses` / `anthropic-messages`
@@ -327,8 +327,8 @@ editLibrary({ action: 'add'|'update'|'remove', item })
   import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy';
   // 按 apiType 选 api 实现（lazy 三选一），用 createProvider() 造一个 provider
   ```
-- **Tool calling 循环**：用 `models.stream(model, context)` 逐事件消费，遇到 `toolcall_end` → 执行 9 工具之一 → 把 `role:'toolResult'` 消息推回 context → 继续流式，直到 `done`。整条循环在浏览器跑。
-- **工具定义**：用 TypeBox `Type.Object(...)`，与第五节的 9 个工具签名一致。注意用 `StringEnum`（非 `Type.Enum`）以兼容 Google 系。
+- **Agent 循环**：使用 `Agent`，通过 `models.streamSimple.bind(models)` 注入模型 transport。Agent 负责流式响应、工具参数校验、工具执行、toolResult 回填和后续模型调用；应用订阅 `message_update` / `message_end` / `tool_execution_*` / `agent_end` 事件更新 UI 并持久化 Dexie。
+- **工具定义**：使用 `AgentTool` + TypeBox `Type.Object(...)`，与第五节的工具签名一致。会修改健康数据的工具按 `sequential` 顺序执行；工具失败时抛出错误，由 Agent 转换为 `isError` toolResult。注意用 `StringEnum`（非 `Type.Enum`）以兼容 Google 系。
 - **不再有独立 analyze 路径**：食物估算由主模型在推理时直接产出数值传给 `logFood`。
 
 ### 9.6 图表
@@ -353,7 +353,7 @@ src/
 │   │   └── repositories.ts        # 各表数据访问
 │   ├── agent/
 │   │   ├── tools.ts               # 9 工具的 TypeBox schema + handler
-│   │   ├── client.ts              # pi-ai 封装（stream 循环 + 工具分发）
+│   │   ├── client.ts              # pi-agent-core 适配（事件持久化 + UI 回调）
 │   │   ├── provider.ts            # 用户配置 → createProvider/createModels
 │   │   ├── systemPrompt.ts        # 卡卡人格 + 工具使用指引
 │   │   └── proactive.ts           # 主动消息生成（饭点/睡前/周报/平台期）
@@ -397,7 +397,7 @@ src/
 1. **骨架**：adapter-static 验证 → PWA 接入 → Konsta App 包根 + 3-Tab 导航 + 路由壳子。
 2. **数据层**：Dexie schema（含新表）+ repositories + appContext（runes）。
 3. **计算层**：calculations（补目标缺口/安全判定）+ librarySync + trends（从旧项目移植）。
-4. **Agent 层**：provider.ts（用户配置→pi-ai）+ systemPrompt + 9 工具 + client（流式 tool-calling 循环）。
+4. **Agent 层**：provider.ts（用户配置→pi-ai）+ systemPrompt + AgentTool 工具集 + client（pi-agent-core 生命周期与 Dexie 适配）。
 5. **设置页**：基础信息 + 目标设定（实时算每周减重/缺口/安全提示）+ AI 配置（BYO endpoint）+ 食物库子页 + 首次引导守卫。
 6. **AI 页**：session 管理（Konsta Messages/Messagebar）+ 卡片渲染 + 三种输入 + tool-call 消息渲染。
 7. **首页**：状态条 + 今日时间线（只读）+ 主动消息入口 + 趋势图。

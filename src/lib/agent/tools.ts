@@ -1,4 +1,5 @@
 import { Type, StringEnum, type Tool } from '@earendil-works/pi-ai';
+import type { AgentTool } from '@earendil-works/pi-agent-core';
 import { app } from '$lib/context/appContext.svelte';
 import {
 	addExerciseEntry,
@@ -400,3 +401,19 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 		return { ok: false, data: null, error: e instanceof Error ? e.message : String(e) };
 	}
 }
+
+/** pi-agent-core tools keep validation, execution and error reporting in one place. */
+export const agentTools: AgentTool[] = toolDefs.map((definition) => ({
+	...definition,
+	label: definition.name,
+	// Kalo tools mutate local health data, so preserve the model's source order.
+	executionMode: 'sequential',
+	execute: async (_toolCallId, params) => {
+		const outcome = await executeTool(definition.name, params as Record<string, any>);
+		if (!outcome.ok) throw new Error(outcome.error || `${definition.name} 执行失败`);
+		return {
+			content: [{ type: 'text', text: JSON.stringify(outcome.data ?? null) }],
+			details: outcome
+		};
+	}
+}));

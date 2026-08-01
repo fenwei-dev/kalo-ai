@@ -122,6 +122,8 @@
 	async function processAgent(id: string) {
 		await runTurn(id, {
 			onAssistantText: (delta) => (streamText += delta),
+			// Keep the streamed response visible until its persisted copy is loaded.
+			onMessagesChanged: () => load(id),
 			onAssistantMessage: () => (streamText = ''),
 			onError: (message) => (errorMsg = message)
 		});
