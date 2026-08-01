@@ -35,14 +35,19 @@ function ensureConfig() {
 function dbToAgentMessage(message: DBMessage): Message {
 	const timestamp = message.createdAt;
 	if (message.role === 'user') {
-		const content = message.content.map((block) =>
-			block.type === 'text'
-				? {
-						...block,
-						text: `[Message sent at ${message.localTimestamp ?? localMessageTimestamp(new Date(timestamp))} local time]\n${block.text}`
-					}
-				: block
-		);
+		const sentAt = message.localTimestamp ?? localMessageTimestamp(new Date(timestamp));
+		let timestampAdded = false;
+		const content = message.content.map((block) => {
+			if (block.type !== 'text' || timestampAdded) return block;
+			timestampAdded = true;
+			return { ...block, text: `[Message sent at ${sentAt} local time]\n${block.text}` };
+		});
+		if (!timestampAdded) {
+			content.unshift({
+				type: 'text',
+				text: `[Message sent at ${sentAt} local time]\n[User attached an image without text.]`
+			});
+		}
 		return { role: 'user', content: content as any, timestamp };
 	}
 	if (message.role === 'toolResult') {

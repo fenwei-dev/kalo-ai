@@ -329,6 +329,7 @@ editLibrary({ action: 'add'|'update'|'remove', item })
   ```
 - **Agent 循环**：使用 `Agent`，通过 `models.streamSimple.bind(models)` 注入模型 transport。Agent 负责流式响应、工具参数校验、工具执行、toolResult 回填和后续模型调用；应用订阅 `message_update` / `message_end` / `tool_execution_*` / `agent_end` 事件更新 UI 并持久化 Dexie。
 - **工具定义**：使用 `AgentTool` + TypeBox `Type.Object(...)`，与第五节的工具签名一致。会修改健康数据的工具按 `sequential` 顺序执行；工具失败时抛出错误，由 Agent 转换为 `isError` toolResult。注意用 `StringEnum`（非 `Type.Enum`）以兼容 Google 系。
+- **图片输入**：聊天支持单张 JPEG/PNG/WebP/GIF，经浏览器端缩放和重编码后作为 `ImageContent` 保存并发送。当前活跃上下文保留历史图片，与 pi coding agent 的上下文语义一致；不单独实现图片摘要或图片专用 compaction。
 - **不再有独立 analyze 路径**：食物估算由主模型在推理时直接产出数值传给 `logFood`。
 
 ### 9.6 图表
@@ -406,7 +407,6 @@ src/
 ## 十二、Backlog（第一版不做）
 
 - **Undo**：事件溯源 + Operation 表 + 「撤销到此消息」。方案已设计，因复杂度高推迟。
-- 图片识别 UI 接入（pi-ai 原生支持 image content block，接入成本低）。
 - 语音输入（需 ASR）。
 - 推送通知（需通知权限）。
 - Apple Health / Google Fit 集成。

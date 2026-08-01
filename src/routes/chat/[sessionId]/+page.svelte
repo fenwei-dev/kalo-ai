@@ -16,6 +16,11 @@
 	import Markdown from '$lib/components/chat/Markdown.svelte';
 	import SessionDrawer from '$lib/components/chat/SessionDrawer.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import {
+		ImagePreparationError,
+		prepareImage,
+		type PreparedImage
+	} from '$lib/utils/image';
 
 	let sessionId = $derived(page.params.sessionId ?? '');
 	let session = $state<Session | null>(null);
@@ -25,6 +30,9 @@
 	let streamText = $state('');
 	let errorMsg = $state('');
 	let drawerOpen = $state(false);
+	let selectedImage = $state<PreparedImage | null>(null);
+	let preparingImage = $state(false);
+	let imageInput: HTMLInputElement | undefined = $state();
 	let loadGeneration = 0;
 	let creatingNew = false;
 	const attemptedUserMessages = new Set<string>();
@@ -33,6 +41,15 @@
 
 	function blocksText(blocks: ContentBlock[]): string {
 		return blocks.filter((b) => b.type === 'text').map((b) => (b as any).text).join('');
+	}
+	function imageBlocks(blocks: ContentBlock[]) {
+		return blocks.filter((block) => block.type === 'image') as Extract<
+			ContentBlock,
+			{ type: 'image' }
+		>[];
+	}
+	function imageSource(image: Extract<ContentBlock, { type: 'image' }> | PreparedImage) {
+		return `data:${image.mimeType};base64,${image.data}`;
 	}
 	function toolCalls(blocks: ContentBlock[]) {
 		return blocks.filter((b) => b.type === 'toolCall') as Extract<
@@ -153,27 +170,55 @@
 		}
 	}
 
+	function imageErrorMessage(error: unknown): string {
+		if (!(error instanceof ImagePreparationError)) return m.chat_image_failed();
+		if (error.code === 'unsupported') return m.chat_image_unsupported();
+		if (error.code === 'too-large') return m.chat_image_too_large();
+		return m.chat_image_failed();
+	}
+
+	async function selectImage(event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const file = target.files?.[0];
+		target.value = '';
+		if (!file || sending || preparingImage) return;
+		preparingImage = true;
+		errorMsg = '';
+		try {
+			selectedImage = await prepareImage(file);
+		} catch (error) {
+			errorMsg = imageErrorMessage(error);
+		} finally {
+			preparingImage = false;
+		}
+	}
+
 	async function send() {
 		const text = input.trim();
+		const image = selectedImage;
 		const activeSession = session;
 		const id = sessionId;
-		if (!text || sending || !activeSession) return;
+		if ((!text && !image) || sending || preparingImage || !activeSession) return;
 
 		// Claim the turn before any IndexedDB work so double taps cannot create an
 		// unprocessed message and the thinking indicator appears immediately.
 		sending = true;
 		input = '';
+		selectedImage = null;
 		errorMsg = '';
 		streamText = '';
 		let persisted = false;
 		try {
-			const userMessage = await addMessage({ sessionId: id, role: 'user', content: [{ type: 'text', text }] });
+			const content: ContentBlock[] = [];
+			if (text) content.push({ type: 'text', text });
+			if (image) content.push({ type: 'image', data: image.data, mimeType: image.mimeType });
+			const userMessage = await addMessage({ sessionId: id, role: 'user', content });
 			persisted = true;
 			attemptedUserMessages.add(userMessage.id);
 			await load(id);
 
 			if (activeSession.title === '新对话' || activeSession.title === 'New chat') {
-				const title = text.length > 16 ? text.slice(0, 16) + '…' : text;
+				const title = text ? (text.length > 16 ? text.slice(0, 16) + '…' : text) : m.chat_image_title();
 				await renameSession(id, title);
 				session = { ...activeSession, title };
 				await app.refreshSessions();
@@ -182,7 +227,10 @@
 			await processAgent(id);
 		} catch (error) {
 			showError(error);
-			if (!persisted) input = text;
+			if (!persisted) {
+				input = text;
+				selectedImage = image;
+			}
 		} finally {
 			await finishTurn(id);
 		}
@@ -235,15 +283,26 @@
 				</div>
 			{/if}
 
-			{#each messages as m (m.id)}
-				{#if m.role === 'user'}
+			{#each messages as message (message.id)}
+				{#if message.role === 'user'}
+					{@const text = blocksText(message.content)}
+					{@const images = imageBlocks(message.content)}
 					<div class="flex justify-end">
-						<div class="max-w-[80%] rounded-2xl rounded-br-md bg-emerald-500 px-3.5 py-2 text-sm text-white">
-							<Markdown content={blocksText(m.content)} class="text-white" />
+						<div class="max-w-[80%] overflow-hidden rounded-2xl rounded-br-md bg-emerald-500 text-sm text-white">
+							{#each images as image}
+								<img
+									src={imageSource(image)}
+									alt={m.chat_image_alt()}
+									class="max-h-72 w-full object-contain"
+								/>
+							{/each}
+							{#if text}
+								<div class="px-3.5 py-2"><Markdown content={text} class="text-white" /></div>
+							{/if}
 						</div>
 					</div>
-				{:else if m.role === 'assistant'}
-					{@const text = blocksText(m.content)}
+				{:else if message.role === 'assistant'}
+					{@const text = blocksText(message.content)}
 					{#if text}
 						<div class="flex justify-start">
 							<div class="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm">
@@ -251,7 +310,7 @@
 							</div>
 						</div>
 					{/if}
-					{#each toolCalls(m.content) as tc (tc.id)}
+					{#each toolCalls(message.content) as tc (tc.id)}
 						{@const result = toolResult(tc.id)}
 						{#if result}
 							<div class="flex justify-start">
@@ -287,24 +346,62 @@
 
 	<!-- input -->
 	<div class="shrink-0 border-t border-black/5 bg-white px-2 py-2">
-		<div class="mx-auto flex max-w-md items-end gap-2">
-			<textarea
-				rows="1"
-				bind:value={input}
-				onkeydown={onKeydown}
-				placeholder={m.chat_placeholder()}
-				class="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400"
-			></textarea>
-			<button
-				onclick={send}
-				disabled={!input.trim() || sending || !session}
-				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-40"
-				aria-label={m.chat_send()}
-			>
-				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
-				</svg>
-			</button>
+		<div class="mx-auto max-w-md space-y-2">
+			{#if selectedImage}
+				<div class="relative inline-block overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1">
+					<img src={imageSource(selectedImage)} alt={m.chat_image_preview()} class="h-16 w-16 rounded-lg object-cover" />
+					<button
+						type="button"
+						onclick={() => (selectedImage = null)}
+						class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/65 text-xs text-white"
+						aria-label={m.chat_image_remove()}
+					>×</button
+					>
+				</div>
+			{/if}
+			<div class="flex items-end gap-2">
+				<input
+					bind:this={imageInput}
+					type="file"
+					accept="image/jpeg,image/png,image/webp,image/gif"
+					class="hidden"
+					onchange={selectImage}
+				/>
+				<button
+					type="button"
+					onclick={() => imageInput?.click()}
+					disabled={sending || preparingImage || !session}
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 disabled:opacity-40"
+					aria-label={preparingImage ? m.chat_image_processing() : m.chat_image_add()}
+				>
+					{#if preparingImage}
+						<span class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-emerald-500"></span>
+					{:else}
+						<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<rect x="3" y="4" width="18" height="16" rx="2" />
+							<circle cx="8.5" cy="9" r="1.5" />
+							<path d="m4 17 4-4 3 3 3-3 6 5" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					{/if}
+				</button>
+				<textarea
+					rows="1"
+					bind:value={input}
+					onkeydown={onKeydown}
+					placeholder={m.chat_placeholder()}
+					class="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400"
+				></textarea>
+				<button
+					onclick={send}
+					disabled={(!input.trim() && !selectedImage) || sending || preparingImage || !session}
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-40"
+					aria-label={m.chat_send()}
+				>
+					<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
+					</svg>
+				</button>
+			</div>
 		</div>
 	</div>
 </div>
