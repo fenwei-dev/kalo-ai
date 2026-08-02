@@ -9,6 +9,8 @@ import { buildModels } from './provider';
 import { localMessageTimestamp } from '$lib/utils/date';
 import { agentTools, type ToolOutcome } from './tools';
 
+const MODEL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+
 export interface ToolCallView {
 	id: string;
 	name: string;
@@ -150,7 +152,12 @@ export async function runTurn(
 			tools: agentTools,
 			messages: history.map(dbToAgentMessage) as AgentMessage[]
 		},
-		streamFn: models.streamSimple.bind(models),
+		streamFn: (activeModel, context, options) =>
+			models.streamSimple(activeModel, context, {
+				...options,
+				timeoutMs: options?.timeoutMs ?? MODEL_REQUEST_TIMEOUT_MS,
+				maxRetryDelayMs: options?.maxRetryDelayMs ?? 60_000
+			}),
 		getApiKey: () => cfg.apiKey,
 		sessionId,
 		toolExecution: 'sequential',

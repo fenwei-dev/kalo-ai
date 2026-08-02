@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
@@ -33,9 +33,22 @@
 	let selectedImage = $state<PreparedImage | null>(null);
 	let preparingImage = $state(false);
 	let imageInput: HTMLInputElement | undefined = $state();
+	let turnController = $state<AbortController | null>(null);
+	let turnSessionId: string | null = null;
+	let turnTimer: ReturnType<typeof setTimeout> | undefined;
+	let turnAbortReason: 'cancelled' | 'timeout' | null = null;
 	let loadGeneration = 0;
 	let creatingNew = false;
+	let destroyed = false;
 	const attemptedUserMessages = new Set<string>();
+
+	onDestroy(() => {
+		destroyed = true;
+		if (turnTimer) clearTimeout(turnTimer);
+		turnAbortReason = 'cancelled';
+		turnController?.abort();
+		turnController = null;
+	});
 
 	let messagesEl: HTMLDivElement | undefined = $state();
 
@@ -72,6 +85,9 @@
 	}
 
 	async function load(id = sessionId) {
+		// A completed turn from a previous route must not invalidate the current
+		// session's in-flight load generation.
+		if (id !== 'new' && id !== sessionId) return;
 		const generation = ++loadGeneration;
 		if (id === 'new') {
 			if (creatingNew) return;
@@ -113,6 +129,10 @@
 	// 切换会话时重新加载；单一入口避免 /chat/new 重复创建。
 	$effect(() => {
 		const id = sessionId;
+		if (turnController && turnSessionId && turnSessionId !== id && !turnController.signal.aborted) {
+			turnAbortReason = 'cancelled';
+			turnController.abort();
+		}
 		if (page.url.pathname.startsWith('/chat/')) {
 			void load(id).catch((error) => showError(error));
 		}
@@ -136,23 +156,74 @@
 		errorMsg = error instanceof Error ? error.message : String(error);
 	}
 
-	async function processAgent(id: string) {
-		await runTurn(id, {
-			onAssistantText: (delta) => (streamText += delta),
-			// Keep the streamed response visible until its persisted copy is loaded.
-			onMessagesChanged: () => load(id),
-			onAssistantMessage: () => (streamText = ''),
-			onError: (message) => (errorMsg = message)
-		});
+	function beginTurn(id: string): AbortController {
+		const controller = new AbortController();
+		turnController = controller;
+		turnSessionId = id;
+		turnAbortReason = null;
+		turnTimer = setTimeout(() => {
+			if (turnController !== controller) return;
+			turnAbortReason = 'timeout';
+			controller.abort();
+		}, 5 * 60 * 1000);
+		return controller;
+	}
+
+	function endTurn(controller: AbortController) {
+		if (turnController !== controller) return;
+		if (turnTimer) clearTimeout(turnTimer);
+		turnTimer = undefined;
+		turnController = null;
+		turnSessionId = null;
+	}
+
+	function cancelTurn() {
+		if (!turnController || turnController.signal.aborted) return;
+		turnAbortReason = 'cancelled';
+		turnController.abort();
+	}
+
+	async function processAgent(id: string, signal: AbortSignal) {
+		await runTurn(
+			id,
+			{
+				onAssistantText: (delta) => {
+					if (id === sessionId) streamText += delta;
+				},
+				// UI refreshes must not block the agent lifecycle or tool execution.
+				onMessagesChanged: () => {
+					void load(id).catch((error) => {
+						if (id === sessionId) showError(error);
+					});
+				},
+				onAssistantMessage: () => {
+					if (id === sessionId) streamText = '';
+				},
+				onError: (message) => {
+					if (id !== sessionId) return;
+					errorMsg =
+						turnAbortReason === 'timeout'
+							? m.chat_request_timeout()
+							: turnAbortReason === 'cancelled'
+								? m.chat_request_cancelled()
+								: message;
+				}
+			},
+			signal
+		);
 	}
 
 	async function finishTurn(id: string) {
+		// Release the composer before refreshing messages. A failed or stalled
+		// refresh must never leave this session permanently locked.
 		sending = false;
 		streamText = '';
+		if (destroyed) return;
+		const refreshId = id === sessionId ? id : sessionId;
 		try {
-			await load(id);
+			await load(refreshId);
 		} catch (error) {
-			showError(error);
+			if (refreshId === sessionId) showError(error);
 		}
 	}
 
@@ -161,11 +232,17 @@
 		sending = true;
 		errorMsg = '';
 		streamText = '';
+		const controller = beginTurn(id);
 		try {
-			await processAgent(id);
+			await processAgent(id, controller.signal);
 		} catch (error) {
-			showError(error);
+			if (id === sessionId) {
+				if (turnAbortReason === 'timeout') errorMsg = m.chat_request_timeout();
+				else if (turnAbortReason === 'cancelled') errorMsg = m.chat_request_cancelled();
+				else showError(error);
+			}
 		} finally {
+			endTurn(controller);
 			await finishTurn(id);
 		}
 	}
@@ -203,6 +280,7 @@
 		// Claim the turn before any IndexedDB work so double taps cannot create an
 		// unprocessed message and the thinking indicator appears immediately.
 		sending = true;
+		const controller = beginTurn(id);
 		input = '';
 		selectedImage = null;
 		errorMsg = '';
@@ -216,22 +294,29 @@
 			persisted = true;
 			attemptedUserMessages.add(userMessage.id);
 			await load(id);
+			controller.signal.throwIfAborted();
 
 			if (activeSession.title === '新对话' || activeSession.title === 'New chat') {
 				const title = text ? (text.length > 16 ? text.slice(0, 16) + '…' : text) : m.chat_image_title();
 				await renameSession(id, title);
+				controller.signal.throwIfAborted();
 				session = { ...activeSession, title };
 				await app.refreshSessions();
 			}
 
-			await processAgent(id);
+			await processAgent(id, controller.signal);
 		} catch (error) {
-			showError(error);
-			if (!persisted) {
-				input = text;
-				selectedImage = image;
+			if (id === sessionId) {
+				if (turnAbortReason === 'timeout') errorMsg = m.chat_request_timeout();
+				else if (turnAbortReason === 'cancelled') errorMsg = m.chat_request_cancelled();
+				else showError(error);
+				if (!persisted) {
+					input = text;
+					selectedImage = image;
+				}
 			}
 		} finally {
+			endTurn(controller);
 			await finishTurn(id);
 		}
 	}
@@ -392,14 +477,18 @@
 					class="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400"
 				></textarea>
 				<button
-					onclick={send}
-					disabled={(!input.trim() && !selectedImage) || sending || preparingImage || !session}
-					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-40"
-					aria-label={m.chat_send()}
+					onclick={sending ? cancelTurn : send}
+					disabled={sending ? !turnController || turnController.signal.aborted : (!input.trim() && !selectedImage) || preparingImage || !session}
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40 {sending ? 'bg-red-500' : 'bg-emerald-500'}"
+					aria-label={sending ? m.chat_stop() : m.chat_send()}
 				>
-					<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
-					</svg>
+					{#if sending}
+						<span class="h-3.5 w-3.5 rounded-sm bg-white"></span>
+					{:else}
+						<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
+						</svg>
+					{/if}
 				</button>
 			</div>
 		</div>

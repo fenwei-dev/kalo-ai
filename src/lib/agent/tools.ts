@@ -408,7 +408,8 @@ export const agentTools: AgentTool[] = toolDefs.map((definition) => ({
 	label: definition.name,
 	// Kalo tools mutate local health data, so preserve the model's source order.
 	executionMode: 'sequential',
-	execute: async (_toolCallId, params) => {
+	execute: async (_toolCallId, params, signal) => {
+		if (signal?.aborted) throw new Error('请求已取消');
 		const outcome = await executeTool(definition.name, params as Record<string, any>);
 		if (!outcome.ok) throw new Error(outcome.error || `${definition.name} 执行失败`);
 		return {
