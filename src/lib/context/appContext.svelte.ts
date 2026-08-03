@@ -46,8 +46,24 @@ class AppState {
 	/** 选中的查看日期（用于饮食/运动翻页），默认今天 */
 	viewDate = $state<string>(localDateISO());
 
-	/** 是否已完成 onboarding（user 非空） */
-	onboarded = $derived(this.user !== null);
+	/** 基础资料是否包含计算代谢所需的有效字段。 */
+	profileConfigured = $derived(
+		!!this.user &&
+		Number.isFinite(this.user.age) && this.user.age >= 13 && this.user.age <= 120 &&
+		Number.isFinite(this.user.height) && this.user.height >= 100 && this.user.height <= 250 &&
+		Number.isFinite(this.user.currentWeight) && this.user.currentWeight >= 25 && this.user.currentWeight <= 400 &&
+		(this.user.gender === 'male' || this.user.gender === 'female') &&
+		['sedentary', 'light', 'moderate', 'active', 'very_active'].includes(this.user.activityLevel)
+	);
+
+	/** AI 配置是否包含发起请求所需的最小字段。 */
+	aiConfigured = $derived(
+		typeof this.aiConfig?.apiKey === 'string' && this.aiConfig.apiKey.trim().length > 0 &&
+		typeof this.aiConfig?.model === 'string' && this.aiConfig.model.trim().length > 0
+	);
+
+	/** 必要资料与 AI 配置都齐全后才算完成 onboarding。 */
+	onboarded = $derived(this.profileConfigured && this.aiConfigured);
 
 	/** 基础代谢 */
 	bmr = $derived(

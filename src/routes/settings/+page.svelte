@@ -89,16 +89,9 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">
-	<AppHeader
-		title={m.settings_title()}
-		subtitle={app.onboarded ? m.settings_subtitle() : m.settings_onboarding_subtitle()}
-	/>
+	<AppHeader title={m.settings_title()} subtitle={m.settings_subtitle()} />
 	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 	<div class="mx-auto max-w-md pt-2">
-		{#if !app.onboarded}
-			<p class="mx-4 mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{m.settings_onboarding_notice()}</p>
-		{/if}
-
 		<LanguageSection />
 		<div class="mx-4 my-3 border-t border-gray-300"></div>
 		<ProfileSection />

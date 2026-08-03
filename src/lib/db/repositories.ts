@@ -36,6 +36,40 @@ export async function saveUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'
 	return user;
 }
 
+export async function saveUserWithWeightEntry(
+	data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
+	date: string
+): Promise<User> {
+	assertWeightDate(date);
+	return db.transaction('rw', db.user, db.weightEntries, async () => {
+		const existingUser = await db.user.get('me');
+		const ts = now();
+		const user: User = {
+			...data,
+			id: 'me',
+			createdAt: existingUser?.createdAt ?? ts,
+			updatedAt: ts
+		};
+		await db.user.put(user);
+
+		const existingWeights = await db.weightEntries.where('date').equals(date).toArray();
+		if (existingWeights.length) {
+			const keep = [...existingWeights].sort((a, b) => b.createdAt - a.createdAt)[0];
+			await db.weightEntries.put({ ...keep, date, weight: data.currentWeight });
+			await db.weightEntries.bulkDelete(existingWeights.filter((item) => item.id !== keep.id).map((item) => item.id));
+		} else {
+			await db.weightEntries.add({
+				id: uid('w_'),
+				date,
+				weight: data.currentWeight,
+				createdAt: ts
+			});
+		}
+		await syncCurrentWeightInTransaction();
+		return (await db.user.get('me')) ?? user;
+	});
+}
+
 export async function updateUser(patch: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<User | undefined> {
 	const existing = await db.user.get('me');
 	if (!existing) return undefined;

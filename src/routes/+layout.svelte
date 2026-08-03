@@ -20,11 +20,22 @@
 		);
 	});
 
-	// 未完成 onboarding 时，强制停留在设置页
+	// 必要配置遗失时回到对应 onboarding 步骤；配置完整后离开引导页。
 	$effect(() => {
-		if (app.ready && !app.onboarded && page.url.pathname !== '/settings') {
-			goto('/settings', { replaceState: true });
+		if (!app.ready) return;
+		const pathname = page.url.pathname;
+
+		if (!app.profileConfigured) {
+			const allowed = pathname === '/onboarding' || pathname === '/onboarding/profile';
+			if (!allowed) void goto('/onboarding', { replaceState: true });
+			return;
 		}
+		if (!app.aiConfigured) {
+			if (pathname !== '/onboarding/ai') void goto('/onboarding/ai', { replaceState: true });
+			return;
+		}
+		// Completed onboarding pages navigate explicitly after their writes finish.
+		// Keeping the guard idle here avoids racing the final welcome-session setup.
 	});
 </script>
 

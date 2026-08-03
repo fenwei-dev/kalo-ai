@@ -37,7 +37,7 @@
 - **AI 页**：主战场，多 session 聊天。
 - **设置页**：基础信息/目标/AI 配置/食物库管理/数据管理。
 
-首次打开且无 profile → **强制跳设置页**完成基础信息。之后所有交互默认在 AI 页。
+首次打开或缺少必要配置 → **强制进入专用 onboarding 流程**，依次完成基础资料与 AI 连接。之后所有交互默认在 AI 页。
 
 ## 四、数据模型
 
@@ -266,13 +266,15 @@ editLibrary({ action: 'add'|'update'|'remove', item })
 ## 八、首次引导流
 
 ```
-首次打开（无 User 记录）
-  → 强制跳设置页，遮罩提示"先填基础信息"
-  → 用户填完基础信息 + （可选）目标
-  → 保存后弹 toast「已算好 TDEE，让卡卡帮你定目标？」
-  → 跳 AI 页，新建首个 session
-  → 卡卡主动开场（"你好，我是卡卡！看到你想减到 Xkg…我们先聊聊？"）
+首次打开或必要配置遗失
+  → /onboarding 欢迎页（语言与本地优先说明）
+  → /onboarding/profile 填写基础资料，创建当天初始体重并计算 BMR/TDEE
+  → /onboarding/ai 配置接口协议、Model ID 与 API Key
+  → 两项配置完整后新建首个 session 并进入 AI 页
+  → 卡卡主动开场（"你好，我是卡卡！你的资料和 AI 连接已经准备好了……"）
 ```
+
+基础资料或 AI 配置任一缺失时，全局路由守卫会自动回到对应引导步骤；设置页只承担完成 onboarding 后的修改与管理。
 
 ## 九、技术栈与关键决策（v2，SvelteKit 版）
 
@@ -385,6 +387,7 @@ src/
 │   ├── chat/
 │   │   ├── +page.svelte           # 无 sessionId → 新建/选最近
 │   │   └── [sessionId]/+page.svelte
+│   ├── onboarding/                # 欢迎、基础资料、AI 连接三步引导
 │   └── settings/
 │       ├── +page.svelte           # 基础信息/目标/AI 配置/数据
 │       └── library/+page.svelte   # 食物库管理子页
