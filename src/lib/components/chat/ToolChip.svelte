@@ -37,6 +37,16 @@
 		<span class="text-base">📚</span>
 		<span class="font-medium">{m.tool_read_library()}</span>
 	</div>
+{:else if tool === 'readUserMemory'}
+	<div class="my-1 flex items-center gap-2 rounded-xl border border-violet-100 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+		<span class="text-base">🧠</span>
+		<span class="font-medium">{m.tool_memory_read()}</span>
+	</div>
+{:else if tool === 'updateUserMemory'}
+	<div class="my-1 flex items-center gap-2 rounded-xl border border-violet-100 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+		<span class="text-base">🧠</span>
+		<span class="font-medium">{args.content ? m.tool_memory_updated() : m.tool_memory_cleared()}</span>
+	</div>
 {:else if tool === 'logFood'}
 	<div class="my-1 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
 		<span class="text-base">🍽️</span>

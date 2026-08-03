@@ -1,7 +1,7 @@
 import { Agent, type AgentMessage, type AgentToolResult } from '@earendil-works/pi-agent-core';
 import type { Api, AssistantMessage, Message, ToolResultMessage } from '@earendil-works/pi-ai';
 import { app } from '$lib/context/appContext.svelte';
-import { addMessage, listMessages } from '$lib/db/repositories';
+import { addMessage, listMessages, markSessionMemoryVersion } from '$lib/db/repositories';
 import type { ContentBlock, Message as DBMessage } from '$lib/db/schema';
 import { getKaloSystemPrompt } from './systemPrompt';
 import { getLocale } from '$lib/paraglide/runtime';
@@ -98,6 +98,18 @@ async function persistToolResult(sessionId: string, message: ToolResultMessage):
 		toolName: message.toolName,
 		isError: message.isError
 	});
+	if (!message.isError && (message.toolName === 'readUserMemory' || message.toolName === 'updateUserMemory')) {
+		const text = message.content
+			.filter((block) => block.type === 'text')
+			.map((block) => block.text)
+			.join('');
+		try {
+			const result = JSON.parse(text) as { version?: unknown };
+			if (typeof result.version === 'number') await markSessionMemoryVersion(sessionId, result.version);
+		} catch {
+			// A malformed memory result should remain visible, but must not advance the session snapshot.
+		}
+	}
 }
 
 function outcomeFromResult(result: AgentToolResult<unknown>, isError: boolean): ToolOutcome {

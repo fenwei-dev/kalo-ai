@@ -41,6 +41,14 @@ export interface AIConfig {
 	updatedAt: number;
 }
 
+/** 单例：Agent 跨会话使用的自由格式 Markdown 用户记忆。 */
+export interface UserMemory {
+	id: 'user-memory';
+	content: string;
+	version: number;
+	updatedAt: number;
+}
+
 export interface FoodEntry {
 	id: string;
 	date: string; // YYYY-MM-DD
@@ -94,6 +102,8 @@ export interface Session {
 	createdAt: number;
 	updatedAt: number;
 	lastMessageAt: number;
+	/** 此会话最近读取或写入成功的全局用户记忆版本。 */
+	memoryVersion?: number;
 }
 
 /** pi-ai 风格的内容块 */
@@ -113,6 +123,8 @@ export interface Message {
 	toolCallId?: string; // role='toolResult' 时关联的 toolCall id
 	toolName?: string;
 	isError?: boolean;
+	/** 由应用在发送边界自动插入，而非模型实际生成。 */
+	synthetic?: boolean;
 	/** Local wall-clock time captured when the message was created. */
 	localTimestamp?: string; // YYYY-MM-DD HH:mm
 	createdAt: number;
@@ -123,6 +135,7 @@ export interface Message {
 class KaloDB extends Dexie {
 	user!: Table<User, string>;
 	aiConfig!: Table<AIConfig, string>;
+	userMemory!: Table<UserMemory, string>;
 	foodEntries!: Table<FoodEntry, string>;
 	exerciseEntries!: Table<ExerciseEntry, string>;
 	weightEntries!: Table<WeightEntry, string>;
@@ -135,6 +148,17 @@ class KaloDB extends Dexie {
 		this.version(1).stores({
 			user: 'id',
 			aiConfig: 'id',
+			foodEntries: 'id, date, [date+time], source',
+			exerciseEntries: 'id, date, source',
+			weightEntries: 'id, date',
+			foodLibrary: 'id, name, category, lastUsedAt',
+			sessions: 'id, updatedAt, lastMessageAt',
+			messages: 'id, sessionId, [sessionId+order], order'
+		});
+		this.version(2).stores({
+			user: 'id',
+			aiConfig: 'id',
+			userMemory: 'id',
 			foodEntries: 'id, date, [date+time], source',
 			exerciseEntries: 'id, date, source',
 			weightEntries: 'id, date',

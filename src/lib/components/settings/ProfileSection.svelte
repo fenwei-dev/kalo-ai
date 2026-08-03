@@ -4,7 +4,7 @@
 	import { app } from '$lib/context/appContext.svelte';
 	import AppDialog from '$lib/components/AppDialog.svelte';
 	import {
-		addMessage, createSession, saveUser, updateUser, upsertWeightEntryForDate, getUser,
+		addMessage, addUserMessageWithMemorySync, createSession, saveUser, updateUser, upsertWeightEntryForDate, getUser,
 		getWeightEntriesByDate
 	} from '$lib/db/repositories';
 	import { calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
@@ -174,9 +174,8 @@
 			onclick={async () => {
 				const english = getLocale() === 'en-us';
 				const session = await createSession(english ? 'Set a weight-loss goal' : '制定减脂目标');
-				await addMessage({
+				await addUserMessageWithMemorySync({
 					sessionId: session.id,
-					role: 'user',
 					content: [{ type: 'text', text: english
 						? 'Based on my profile and healthy weight range, help me set a safe and practical weight-loss goal.'
 						: '请根据我的资料和健康体重区间，帮我制定一个安全、可执行的减脂目标。' }]

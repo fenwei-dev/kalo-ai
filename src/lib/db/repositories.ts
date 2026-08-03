@@ -9,6 +9,7 @@ import type {
 	Message,
 	Session,
 	User,
+	UserMemory,
 	WeightEntry
 } from './schema';
 
@@ -16,6 +17,13 @@ const uid = (prefix = ''): string =>
 	prefix + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36));
 
 const now = (): number => Date.now();
+export const MAX_USER_MEMORY_LENGTH = 8_000;
+
+export interface UserMemorySnapshot {
+	content: string;
+	version: number;
+	updatedAt: number | null;
+}
 
 // ---------- User (singleton, id='me') ----------
 
@@ -289,6 +297,46 @@ export async function deleteLibraryItem(id: string): Promise<void> {
 	await db.foodLibrary.delete(id);
 }
 
+// ---------- Agent memory (singleton, id='user-memory') ----------
+
+export async function getUserMemory(): Promise<UserMemorySnapshot> {
+	const memory = await db.userMemory.get('user-memory');
+	return memory
+		? { content: memory.content, version: memory.version, updatedAt: memory.updatedAt }
+		: { content: '', version: 0, updatedAt: null };
+}
+
+/** Replace the full Markdown memory document with optimistic concurrency protection. */
+export async function updateUserMemory(content: string, expectedVersion: number): Promise<UserMemorySnapshot> {
+	if (content.length > MAX_USER_MEMORY_LENGTH) {
+		throw new Error(`用户记忆不能超过 ${MAX_USER_MEMORY_LENGTH} 个字符`);
+	}
+	return db.transaction('rw', db.userMemory, async () => {
+		const existing = await db.userMemory.get('user-memory');
+		const currentVersion = existing?.version ?? 0;
+		if (currentVersion !== expectedVersion) {
+			throw new Error(`用户记忆已更新（当前版本 ${currentVersion}），请先重新读取后再修改`);
+		}
+		if ((existing?.content ?? '') === content) {
+			return existing
+				? { content: existing.content, version: existing.version, updatedAt: existing.updatedAt }
+				: { content: '', version: 0, updatedAt: null };
+		}
+		const memory: UserMemory = {
+			id: 'user-memory',
+			content,
+			version: currentVersion + 1,
+			updatedAt: now()
+		};
+		await db.userMemory.put(memory);
+		return { content: memory.content, version: memory.version, updatedAt: memory.updatedAt };
+	});
+}
+
+export async function markSessionMemoryVersion(sessionId: string, version: number): Promise<void> {
+	await db.sessions.update(sessionId, { memoryVersion: version });
+}
+
 // ---------- Sessions ----------
 
 export async function createSession(title?: string): Promise<Session> {
@@ -356,6 +404,74 @@ export async function addMessage(
 	});
 }
 
+/**
+ * Persist a real user message and, when global memory changed, append a synthetic
+ * readUserMemory call/result before the first provider request. The whole boundary
+ * is atomic so retries never observe a half-written memory refresh.
+ */
+export async function addUserMessageWithMemorySync(data: {
+	sessionId: string;
+	content: Message['content'];
+	localTimestamp?: string;
+}): Promise<Message> {
+	return db.transaction('rw', db.sessions, db.messages, db.userMemory, async () => {
+		const session = await db.sessions.get(data.sessionId);
+		if (!session) throw new Error('对话不存在或已被删除');
+		let order = await db.messages.where('sessionId').equals(data.sessionId).count();
+		const ts = now();
+		const timestamp = data.localTimestamp ?? localMessageTimestamp(new Date(ts));
+		const userMessage: Message = {
+			id: uid('msg_'),
+			sessionId: data.sessionId,
+			order: order++,
+			role: 'user',
+			content: data.content,
+			localTimestamp: timestamp,
+			createdAt: ts
+		};
+		await db.messages.add(userMessage);
+
+		const memory = await db.userMemory.get('user-memory');
+		const snapshot: UserMemorySnapshot = memory
+			? { content: memory.content, version: memory.version, updatedAt: memory.updatedAt }
+			: { content: '', version: 0, updatedAt: null };
+		if (session.memoryVersion !== snapshot.version) {
+			const toolCallId = uid('memory_');
+			await db.messages.bulkAdd([
+				{
+					id: uid('msg_'),
+					sessionId: data.sessionId,
+					order: order++,
+					role: 'assistant',
+					content: [{ type: 'toolCall', id: toolCallId, name: 'readUserMemory', arguments: {} }],
+					synthetic: true,
+					localTimestamp: timestamp,
+					createdAt: ts
+				},
+				{
+					id: uid('msg_'),
+					sessionId: data.sessionId,
+					order: order++,
+					role: 'toolResult',
+					content: [{ type: 'text', text: JSON.stringify(snapshot) }],
+					toolCallId,
+					toolName: 'readUserMemory',
+					isError: false,
+					synthetic: true,
+					localTimestamp: timestamp,
+					createdAt: ts
+				}
+			]);
+		}
+		await db.sessions.update(data.sessionId, {
+			updatedAt: ts,
+			lastMessageAt: ts,
+			memoryVersion: snapshot.version
+		});
+		return userMessage;
+	});
+}
+
 export async function deleteMessagesFrom(sessionId: string, order: number): Promise<void> {
 	await db.messages.where('[sessionId+order]').between([sessionId, order], [sessionId, Infinity]).delete();
 }
@@ -370,11 +486,12 @@ export async function todayDateStr(): Promise<string> {
 export async function clearAllData(): Promise<void> {
 	await db.transaction(
 		'rw',
-		[db.user, db.aiConfig, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
+		[db.user, db.aiConfig, db.userMemory, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
 		async () => {
 			await Promise.all([
 				db.user.clear(),
 				db.aiConfig.clear(),
+				db.userMemory.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
 				db.weightEntries.clear(),
@@ -387,10 +504,11 @@ export async function clearAllData(): Promise<void> {
 }
 
 export interface KaloBackup {
-	version: 1;
+	version: 1 | 2;
 	exportedAt: number;
 	user: User[];
 	aiConfig: AIConfig[];
+	userMemory?: UserMemory[];
 	foodEntries: FoodEntry[];
 	exerciseEntries: ExerciseEntry[];
 	weightEntries: WeightEntry[];
@@ -403,28 +521,44 @@ export interface KaloBackup {
 export async function importAll(value: unknown): Promise<void> {
 	if (!value || typeof value !== 'object') throw new Error('备份文件不是有效对象');
 	const data = value as Partial<KaloBackup>;
-	const keys: (keyof Omit<KaloBackup, 'version' | 'exportedAt'>)[] = [
+	if (data.version !== 1 && data.version !== 2) throw new Error('备份版本不受支持');
+	const keys = [
 		'user', 'aiConfig', 'foodEntries', 'exerciseEntries', 'weightEntries',
 		'foodLibrary', 'sessions', 'messages'
-	];
+	] as const;
 	for (const key of keys) {
 		if (!Array.isArray(data[key])) throw new Error(`备份缺少 ${key} 数据`);
 	}
 	const user = data.user as User[];
 	const aiConfig = data.aiConfig as AIConfig[];
+	const userMemory = data.version === 2 ? data.userMemory : [];
+	if (data.version === 2 && !Array.isArray(userMemory)) throw new Error('备份缺少 userMemory 数据');
 	if (user.length > 1 || user.some((item) => item?.id !== 'me')) throw new Error('用户资料格式无效');
 	if (aiConfig.length > 1 || aiConfig.some((item) => item?.id !== 'singleton')) throw new Error('AI 配置格式无效');
+	if (
+		(userMemory?.length ?? 0) > 1 ||
+		userMemory?.some((item) =>
+			item?.id !== 'user-memory' ||
+			typeof item.content !== 'string' ||
+			item.content.length > MAX_USER_MEMORY_LENGTH ||
+			!Number.isInteger(item.version) || item.version < 1 ||
+			!Number.isFinite(item.updatedAt)
+		)
+	) {
+		throw new Error('用户记忆格式无效');
+	}
 
 	await db.transaction(
 		'rw',
-		[db.user, db.aiConfig, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
+		[db.user, db.aiConfig, db.userMemory, db.foodEntries, db.exerciseEntries, db.weightEntries, db.foodLibrary, db.sessions, db.messages],
 		async () => {
 			await Promise.all([
-				db.user.clear(), db.aiConfig.clear(), db.foodEntries.clear(), db.exerciseEntries.clear(),
+				db.user.clear(), db.aiConfig.clear(), db.userMemory.clear(), db.foodEntries.clear(), db.exerciseEntries.clear(),
 				db.weightEntries.clear(), db.foodLibrary.clear(), db.sessions.clear(), db.messages.clear()
 			]);
 			await db.user.bulkPut(user);
 			await db.aiConfig.bulkPut(aiConfig);
+			await db.userMemory.bulkPut((userMemory ?? []) as UserMemory[]);
 			await db.foodEntries.bulkPut(data.foodEntries as FoodEntry[]);
 			await db.exerciseEntries.bulkPut(data.exerciseEntries as ExerciseEntry[]);
 			await db.weightEntries.bulkPut(data.weightEntries as WeightEntry[]);
@@ -440,6 +574,7 @@ export async function exportAll(): Promise<Record<string, unknown>> {
 	const [
 		user,
 		aiConfig,
+		userMemory,
 		foodEntries,
 		exerciseEntries,
 		weightEntries,
@@ -449,6 +584,7 @@ export async function exportAll(): Promise<Record<string, unknown>> {
 	] = await Promise.all([
 		db.user.toArray(),
 		db.aiConfig.toArray(),
+		db.userMemory.toArray(),
 		db.foodEntries.toArray(),
 		db.exerciseEntries.toArray(),
 		db.weightEntries.toArray(),
@@ -457,10 +593,11 @@ export async function exportAll(): Promise<Record<string, unknown>> {
 		db.messages.toArray()
 	]);
 	return {
-		version: 1,
+		version: 2,
 		exportedAt: now(),
 		user,
 		aiConfig,
+		userMemory,
 		foodEntries,
 		exerciseEntries,
 		weightEntries,

@@ -41,7 +41,7 @@
 
 ## 四、数据模型
 
-沿用 IndexedDB（Dexie.js）。保留原有核心表，新增 session 相关表（为 undo 预留，但第一版不实现 undo）。
+沿用 IndexedDB（Dexie.js）。保留原有核心表，并持久化 session 历史与跨会话用户记忆。
 
 ### 现有表（保留，字段微调）
 
@@ -71,10 +71,18 @@ FoodLibraryItem {
 // source 字段从 FoodEntry 移除原 description，统一用 name
 // 食物库条目由 agent 自动沉淀 + 用户手动管理
 
+UserMemory {
+  id: 'user-memory',
+  content: string,    // freeform Markdown，最多 8,000 字符
+  version: number,    // 永远递增，清空也创建新版本
+  updatedAt
+}
+
 Session {
   id, title,          // title 由 agent 根据首条消息自动生成
   createdAt, updatedAt,
-  lastMessageAt
+  lastMessageAt,
+  memoryVersion?      // 此 session 最近成功读取/写入的记忆版本
 }
 
 Message {
@@ -101,11 +109,11 @@ type Card =
   | { kind: 'summary', date, intake, burned, balance, macros }
 ```
 
-## 五、Agent 工具面（9 个工具，第一版）
+## 五、Agent 工具面
 
 **设计原则：读少而全（每个返回丰富信息），写各司其职。**
 
-### 读取类（4 个）
+### 读取类
 
 ```typescript
 getProfile()
@@ -127,9 +135,14 @@ getTrends(range: '7d'|'30d'|'90d')
 listLibrary()
 // 返回：食物库全部条目（按使用频率/最近使用排序）
 // 食物库预期不大，无需分页/搜索参数。
+
+readUserMemory()
+// 返回跨 session 的 Markdown 用户记忆、version 与 updatedAt。
+// 每条真实 user 消息保存后，若全局 version 与 Session.memoryVersion 不同，
+// 应用会在首次模型请求前自动追加这组 tool call/result。
 ```
 
-### 写入类（5 个）
+### 写入类
 
 ```typescript
 logFood({ name, calories, protein, carbs, fat, time?, date? })
@@ -155,6 +168,10 @@ updateProfile({ fields })
 editLibrary({ action: 'add'|'update'|'remove', item })
 // 手动管理食物库。add/update 传入 FoodLibraryItem 子集。
 // 返回：操作结果。
+
+updateUserMemory({ content, expectedVersion })
+// 乐观锁替换整份 Markdown；只保存用户明确要求或确认的长期偏好、限制与约定。
+// 不复制体重、目标、日志等结构化数据，不保存秘密、短期状态或未经确认的推测。
 ```
 
 ### 不提供独立 analyze 路径
@@ -266,12 +283,17 @@ editLibrary({ action: 'add'|'update'|'remove', item })
 - 搜索。
 - 说明：条目主要由卡卡自动沉淀，这里用于纠偏。
 
-**D. 偏好页**
+**D. 卡卡的记忆页**
+- 查看、编辑、预览与清空跨会话 Markdown 记忆。
+- 明确记忆快照会发送给当前模型服务，并包含在完整备份中。
+
+**E. 偏好页**
 - 当前仅提供界面与 Agent 回复语言切换，后续承载主题、单位等应用偏好。
 
-**E. 数据与隐私页**
+**F. 数据与隐私页**
 - 导出 JSON / 导入 JSON / 清空数据。
-- 明确完整备份包含健康数据、聊天图片与明文 API Key。
+- 备份格式升级为 v2 并包含 UserMemory；导入继续兼容无记忆字段的 v1 备份。
+- 明确完整备份包含健康数据、聊天图片、卡卡的记忆与明文 API Key。
 
 ## 八、首次引导流
 
@@ -403,6 +425,7 @@ src/
 │       ├── profile/+page.svelte   # 基础资料 + 减脂目标
 │       ├── ai/+page.svelte        # 模型、接口与 API Key
 │       ├── preferences/+page.svelte # 语言等应用偏好
+│       ├── memory/+page.svelte    # 跨会话 Markdown 用户记忆
 │       ├── data/+page.svelte      # 备份、恢复、隐私与清空
 │       └── library/+page.svelte   # 食物库管理
 ├── app.html

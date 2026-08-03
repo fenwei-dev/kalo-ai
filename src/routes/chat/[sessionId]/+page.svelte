@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { app } from '$lib/context/appContext.svelte';
 	import {
-		addMessage,
+		addUserMessageWithMemorySync,
 		createSession,
 		getSession,
 		listMessages,
@@ -119,7 +119,10 @@
 	async function triggerPendingTurn(id: string, loaded: DBMessage[]) {
 		if (sending || !app.aiConfig) return;
 		const lastUserIndex = loaded.findLastIndex((message) => message.role === 'user');
-		if (lastUserIndex < 0 || loaded.slice(lastUserIndex + 1).some((message) => message.role === 'assistant')) return;
+		if (
+			lastUserIndex < 0 ||
+			loaded.slice(lastUserIndex + 1).some((message) => message.role === 'assistant' && !message.synthetic)
+		) return;
 		const userMessage = loaded[lastUserIndex];
 		if (attemptedUserMessages.has(userMessage.id)) return;
 		attemptedUserMessages.add(userMessage.id);
@@ -290,7 +293,7 @@
 			const content: ContentBlock[] = [];
 			if (text) content.push({ type: 'text', text });
 			if (image) content.push({ type: 'image', data: image.data, mimeType: image.mimeType });
-			const userMessage = await addMessage({ sessionId: id, role: 'user', content });
+			const userMessage = await addUserMessageWithMemorySync({ sessionId: id, content });
 			persisted = true;
 			attemptedUserMessages.add(userMessage.id);
 			await load(id);

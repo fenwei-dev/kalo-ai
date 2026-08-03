@@ -19,11 +19,13 @@ import {
 	getFoodEntriesByDate,
 	getFoodEntriesSince,
 	getUser,
+	getUserMemory,
 	getLibraryItem,
 	getWeightEntries,
 	getWeightEntriesByDate,
 	listLibrary,
 	updateUser,
+	updateUserMemory,
 	upsertLibraryItem,
 	deleteLibraryItem,
 	saveUser
@@ -67,6 +69,19 @@ export const toolDefs: Tool[] = [
 		name: 'listLibrary',
 		description: '列出用户食物库的全部条目（按使用频率/最近使用排序）。用户提到常吃食物或「跟昨天一样」时用来匹配。',
 		parameters: Type.Object({})
+	},
+	{
+		name: 'readUserMemory',
+		description: '读取跨会话持久化的 Markdown 用户记忆及版本。新用户消息前通常已自动同步；仅在需要确认其他会话或设置页是否刚更新记忆、或写入发生版本冲突时主动调用。',
+		parameters: Type.Object({})
+	},
+	{
+		name: 'updateUserMemory',
+		description: '替换完整的跨会话 Markdown 用户记忆。只保存用户明确要求记住或确认的长期偏好、限制、生活节奏和沟通约定；保留仍有效的旧内容，删除过时和重复项。禁止保存 API Key、密码、短期状态、已有结构化工具覆盖的数据或未经确认的推测。写入前必须基于最新记忆版本。',
+		parameters: Type.Object({
+			content: Type.String({ maxLength: 8000, description: '完整 Markdown 文档；清空时传空字符串' }),
+			expectedVersion: Type.Integer({ minimum: 0, description: '最近一次 readUserMemory 或 updateUserMemory 返回的版本' })
+		})
 	},
 	{
 		name: 'logFood',
@@ -247,6 +262,15 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 
 			case 'listLibrary': {
 				return { ok: true, data: await listLibrary() };
+			}
+
+			case 'readUserMemory': {
+				return { ok: true, data: await getUserMemory() };
+			}
+
+			case 'updateUserMemory': {
+				const memory = await updateUserMemory(args.content as string, args.expectedVersion as number);
+				return { ok: true, data: memory };
 			}
 
 			case 'logFood': {
