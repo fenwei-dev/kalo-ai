@@ -234,12 +234,18 @@ editLibrary({ action: 'add'|'update'|'remove', item })
 
 ### 3. 设置页
 
-**A. 基础信息卡**
+`/settings` 仅作为分组导航入口，不显示具体资料值。功能拆分为 `/settings/profile`、`/settings/ai`、`/settings/library`、`/settings/preferences` 与 `/settings/data`。
+
+**A. 资料与目标页**
+
+基础资料与减脂目标保留在同一页，但分成两个清晰区域。
+
+**基础信息区域**
 - 性别 / 年龄 / 身高 / 当前体重 / 活动水平（5 档）。
 - 实时展示：BMR（Mifflin-St Jeor）+ TDEE（公式）。
 - 自适应 TDEE 展示（置信度条），若已有数据。
 
-**B. 目标设定卡**
+**目标设定区域**
 - 目标体重 + 目标日期输入。
 - 实时计算并展示：
   - 每周减重量 = (当前 - 目标) / 周数
@@ -250,18 +256,22 @@ editLibrary({ action: 'add'|'update'|'remove', item })
     - 每日缺口 > 1000kcal 或低于 BMR → 警告
 - 「让卡卡推荐」按钮 → 跳 AI 页新建 session，agent 给方案。
 
-**C. AI 配置卡**
+**B. AI 配置页**
 - API Key（一键授权 + 手动输入 + 显示/隐藏）。
 - 模型选择（动态拉取列表）。
 
-**D. 食物库管理子页**（从设置页进入）
+**C. 食物库管理页**（从设置页进入）
 - 列表（按 category 分组或最近使用排序）。
 - 增/删/改/合并去重。
 - 搜索。
 - 说明：条目主要由卡卡自动沉淀，这里用于纠偏。
 
-**E. 数据管理**
+**D. 偏好页**
+- 当前仅提供界面与 Agent 回复语言切换，后续承载主题、单位等应用偏好。
+
+**E. 数据与隐私页**
 - 导出 JSON / 导入 JSON / 清空数据。
+- 明确完整备份包含健康数据、聊天图片与明文 API Key。
 
 ## 八、首次引导流
 
@@ -389,8 +399,12 @@ src/
 │   │   └── [sessionId]/+page.svelte
 │   ├── onboarding/                # 欢迎、基础资料、AI 连接三步引导
 │   └── settings/
-│       ├── +page.svelte           # 基础信息/目标/AI 配置/数据
-│       └── library/+page.svelte   # 食物库管理子页
+│       ├── +page.svelte           # 仅显示分组设置入口
+│       ├── profile/+page.svelte   # 基础资料 + 减脂目标
+│       ├── ai/+page.svelte        # 模型、接口与 API Key
+│       ├── preferences/+page.svelte # 语言等应用偏好
+│       ├── data/+page.svelte      # 备份、恢复、隐私与清空
+│       └── library/+page.svelte   # 食物库管理
 ├── app.html
 ├── app.d.ts
 └── hooks.server.ts                # Paraglide 中间件（已有）
@@ -402,7 +416,7 @@ src/
 2. **数据层**：Dexie schema（含新表）+ repositories + appContext（runes）。
 3. **计算层**：calculations（补目标缺口/安全判定）+ librarySync + trends（从旧项目移植）。
 4. **Agent 层**：provider.ts（用户配置→pi-ai）+ systemPrompt + AgentTool 工具集 + client（pi-agent-core 生命周期与 Dexie 适配）。
-5. **设置页**：基础信息 + 目标设定（实时算每周减重/缺口/安全提示）+ AI 配置（BYO endpoint）+ 食物库子页 + 首次引导守卫。
+5. **设置页**：主导航页 + 资料与目标、AI、食物库、偏好、数据与隐私子页。
 6. **AI 页**：session 管理（Konsta Messages/Messagebar）+ 卡片渲染 + 三种输入 + tool-call 消息渲染。
 7. **首页**：状态条 + 今日时间线（只读）+ 主动消息入口 + 趋势图。
 8. **收尾**：主动消息生成器、i18n 文案、图标、PWA 测试。

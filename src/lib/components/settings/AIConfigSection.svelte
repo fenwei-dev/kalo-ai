@@ -5,6 +5,8 @@
 	import type { ApiType } from '$lib/db/schema';
 	import * as m from '$lib/paraglide/messages';
 
+	let { showTitle = true }: { showTitle?: boolean } = $props();
+
 	const c = app.aiConfig;
 	let apiType = $state<ApiType>(c?.apiType ?? 'openai-completions');
 	let baseUrl = $state<string>(c?.baseUrl ?? '');
@@ -46,7 +48,7 @@
 	}
 </script>
 
-<BlockTitle>{m.ai_title()}</BlockTitle>
+{#if showTitle}<BlockTitle>{m.ai_title()}</BlockTitle>{/if}
 
 <Block inset>
 	<div class="mb-2 text-xs text-gray-500">{m.ai_protocol()}</div>
