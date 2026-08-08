@@ -50,12 +50,12 @@ export const toolDefs: Tool[] = [
 	{
 		name: 'getProfile',
 		description:
-			'获取用户的完整画像：基础信息、BMR、TDEE（公式值与自适应值）、当前目标与健康判定、健康体重推荐区间。回答任何关于用户身体数据或目标的问题前先调用。',
+			'获取用户的完整画像：基础信息、BMR、公式 TDEE、趋势自适应 TDEE、置信度、当前实际采用的混合 TDEE、目标与健康判定、健康体重推荐区间。回答任何关于用户身体数据、热量预算或目标的问题前先调用；必须区分 formulaTDEE、adaptiveTDEE 与 effectiveTDEE，不要把趋势估算说成简单公式结果。',
 		parameters: Type.Object({})
 	},
 	{
 		name: 'getTodayLog',
-		description: '获取某日的全部记录（饮食/运动/体重）及当日热量汇总与剩余预算。',
+		description: '获取某日的全部记录（饮食/运动/体重）及当日热量汇总、剩余预算，并明确返回公式 TDEE、趋势自适应 TDEE、置信度和当前采用值。',
 		parameters: Type.Object({ date: dateParam })
 	},
 	{
@@ -163,6 +163,24 @@ export const toolDefs: Tool[] = [
 
 // ---------- handlers ----------
 
+function tdeeBreakdown(formulaTDEE: number, effectiveValue: number, adaptiveTDEE?: number, adaptiveConfidence?: number) {
+	const usesAdaptive =
+		typeof adaptiveTDEE === 'number' &&
+		Number.isFinite(adaptiveTDEE) &&
+		(adaptiveConfidence ?? 0) >= 0.45;
+	return {
+		formulaTDEE,
+		formulaTDEEMethod: 'mifflin_st_jeor_bmr_times_activity_multiplier',
+		adaptiveTDEE: adaptiveTDEE ?? null,
+		adaptiveConfidence: adaptiveConfidence ?? null,
+		adaptiveTDEEMethod: adaptiveTDEE != null
+			? 'empirical_14_day_intake_and_theil_sen_weight_trend_estimate'
+			: null,
+		effectiveTDEE: effectiveValue,
+		tdeeMethod: usesAdaptive ? 'confidence_weighted_adaptive_blend' : 'formula_only'
+	};
+}
+
 export interface ToolOutcome {
 	ok: boolean;
 	data: unknown;
@@ -187,6 +205,7 @@ function profileSnapshot() {
 		tdee
 	});
 	const range = healthWeightRange(u.height);
+	const tdeeDetails = tdeeBreakdown(formulaTDEE, tdee, u.adaptiveTDEE, u.adaptiveConfidence);
 	return {
 		onboarded: true,
 		age: u.age,
@@ -196,8 +215,7 @@ function profileSnapshot() {
 		activityLevel: u.activityLevel,
 		bmr,
 		tdee,
-		adaptiveTDEE: u.adaptiveTDEE,
-		adaptiveConfidence: u.adaptiveConfidence,
+		...tdeeDetails,
 		target: u.targetWeight
 			? { targetWeight: u.targetWeight, targetDate: u.targetDate, ...goal }
 			: null,
@@ -230,6 +248,12 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				const summary = summarizeDay(food);
 				const burned = exercise.reduce((s, e) => s + e.caloriesBurned, 0);
 				const budget = app.tdee ? app.tdee - (app.goalPlan.dailyDeficit ?? 500) : 0;
+				const tdeeDetails = tdeeBreakdown(
+					app.formulaTDEE,
+					app.tdee,
+					app.user?.adaptiveTDEE,
+					app.user?.adaptiveConfidence
+				);
 				return {
 					ok: true,
 					data: {
@@ -239,6 +263,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 						weights,
 						summary: { ...summary, burned, net: summary.intake - summary.tef - burned },
 						tdee: app.tdee,
+						...tdeeDetails,
 						dailyBudget: budget,
 						remaining: budget ? budget - summary.intake : null
 					}

@@ -9,6 +9,7 @@ import {
 } from '$lib/db/repositories';
 import type { AIConfig, ExerciseEntry, FoodEntry, Session, User, WeightEntry } from '$lib/db/schema';
 import { localDateISO } from '$lib/utils/date';
+import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
 import {
 	calculateBMR,
 	calculateGoalPlan,
@@ -73,7 +74,7 @@ class AppState {
 	/** 公式 TDEE（未含自适应） */
 	formulaTDEE = $derived(this.user ? calculateTDEE(this.bmr, this.user.activityLevel) : 0);
 
-	/** 实际日消耗（优先自适应值） */
+	/** 用于推荐的日消耗（公式值与可靠的趋势估算渐进混合） */
 	tdee = $derived(
 		effectiveTDEE({
 			adaptiveTDEE: this.user?.adaptiveTDEE,
@@ -108,6 +109,9 @@ class AppState {
 
 	/** Reload all global state after an import or destructive operation. */
 	async reload() {
+		// Re-evaluate estimates produced by older algorithm versions immediately,
+		// rather than leaving a potentially inflated calorie budget until the next weigh-in.
+		await recomputeAdaptiveTDEE();
 		this.user = (await getUser()) ?? null;
 		this.aiConfig = (await getAIConfig()) ?? null;
 		this.sessions = await listSessions();

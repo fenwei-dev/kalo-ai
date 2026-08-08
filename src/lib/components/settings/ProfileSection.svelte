@@ -150,7 +150,11 @@
 		</div>
 		{#if app.user?.adaptiveTDEE != null}
 			<div class="mt-2 text-center text-xs text-gray-500">
-				{m.profile_adaptive_tdee({ value: Math.round(app.user.adaptiveTDEE), confidence: Math.round((app.user.adaptiveConfidence ?? 0) * 100) })}
+				{m.profile_adaptive_tdee({ value: Math.round(app.user.adaptiveTDEE), effective: app.tdee, confidence: Math.round((app.user.adaptiveConfidence ?? 0) * 100) })}
+			</div>
+		{:else if app.user}
+			<div class="mt-2 text-center text-xs leading-relaxed text-gray-400">
+				{m.profile_adaptive_pending()}
 			</div>
 		{/if}
 	</Block>

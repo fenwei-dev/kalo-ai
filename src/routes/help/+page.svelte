@@ -62,6 +62,20 @@
 			<BlockTitle>{m.help_ios_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_ios_body()}</p></Block>
 
+			<BlockTitle>{m.help_adaptive_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_adaptive_intro()}</p>
+				<div class="my-3 overflow-x-auto whitespace-nowrap rounded-xl bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 [-webkit-overflow-scrolling:touch]">
+					{m.help_adaptive_formula()}
+				</div>
+				<ul class="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-gray-600">
+					<li>{m.help_adaptive_data()}</li>
+					<li>{m.help_adaptive_trend()}</li>
+					<li>{m.help_adaptive_usage()}</li>
+				</ul>
+				<p class="mt-3 text-xs leading-relaxed text-amber-700">{m.help_adaptive_caution()}</p>
+			</Block>
+
 			<BlockTitle>{m.help_security_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-amber-700">{m.help_security_body()}</p></Block>
 

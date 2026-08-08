@@ -8,7 +8,8 @@ import {
 	healthWeightRange,
 	bmi,
 	KCAL_PER_KG,
-	ACTIVITY_MULTIPLIERS
+	ACTIVITY_MULTIPLIERS,
+	effectiveTDEE
 } from '../src/lib/utils/calculations';
 
 test('BMR (Mifflin-St Jeor) - male', () => {
@@ -99,4 +100,15 @@ test('Activity multipliers are complete', () => {
 	expect(ACTIVITY_MULTIPLIERS.sedentary).toBe(1.2);
 	expect(ACTIVITY_MULTIPLIERS.very_active).toBe(1.9);
 	expect(Object.keys(ACTIVITY_MULTIPLIERS)).toHaveLength(5);
+});
+
+test('effective TDEE ignores low-confidence adaptive estimates', () => {
+	expect(effectiveTDEE({ formulaTDEE: 2200, adaptiveTDEE: 2800, adaptiveConfidence: 0.44 })).toBe(2200);
+});
+
+test('effective TDEE blends and bounds high adaptive estimates conservatively', () => {
+	// Even a legacy 4,000 kcal estimate at maximum confidence can raise the
+	// recommendation by only 11.25% (75% of the +15% adaptive bound).
+	expect(effectiveTDEE({ formulaTDEE: 2000, adaptiveTDEE: 4000, adaptiveConfidence: 0.9 })).toBe(2225);
+	expect(effectiveTDEE({ formulaTDEE: 2000, adaptiveTDEE: 2200, adaptiveConfidence: 0.6 })).toBe(2060);
 });

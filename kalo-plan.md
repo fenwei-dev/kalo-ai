@@ -157,6 +157,9 @@ logExercise({ description, duration, caloriesBurned, time?, date? })
 
 logWeight({ weight, date? })
 // 写入 WeightEntry。触发自适应 TDEE 重算。
+// 自适应估算使用最近 14 天（至少 12 天实际跨度）、至少 5 次称重与 ≥85% 饮食覆盖；
+// 体重趋势采用 Theil–Sen 中位斜率，避免首尾单次水分波动放大结果。
+// 经验值相对公式 TDEE 做合理边界，并按置信度渐进混合，不能低置信度直接替代公式值。
 // 返回：entry + 重算后的 adaptiveTDEE（若有变化）。
 
 updateProfile({ fields })

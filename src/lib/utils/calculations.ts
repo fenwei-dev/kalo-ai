@@ -47,16 +47,35 @@ export function calculateTEF(protein: number, carbs: number, fat: number): numbe
 	return Math.round(proteinTEF + carbsTEF + fatTEF);
 }
 
-/** 实际日消耗（取自适应值，否则用公式值） */
+/**
+ * Recommendation TDEE. Empirical data gradually influences the formula instead
+ * of abruptly replacing it after a low confidence threshold. Upward adaptation
+ * is deliberately conservative because an inflated calorie budget can directly
+ * undermine a weight-loss plan.
+ */
 export function effectiveTDEE(opts: {
 	adaptiveTDEE?: number;
 	adaptiveConfidence?: number;
 	formulaTDEE: number;
 }): number {
-	if (typeof opts.adaptiveTDEE === 'number' && (opts.adaptiveConfidence ?? 0) >= 0.3) {
-		return Math.round(opts.adaptiveTDEE);
+	const confidence = opts.adaptiveConfidence ?? 0;
+	if (
+		typeof opts.adaptiveTDEE !== 'number' ||
+		!Number.isFinite(opts.adaptiveTDEE) ||
+		!Number.isFinite(opts.formulaTDEE) ||
+		confidence < 0.45
+	) {
+		return opts.formulaTDEE;
 	}
-	return opts.formulaTDEE;
+
+	// Also constrain estimates saved by older app versions immediately, before
+	// the next weigh-in has a chance to recompute them with the robust algorithm.
+	const boundedAdaptive = Math.min(
+		opts.formulaTDEE * 1.15,
+		Math.max(opts.formulaTDEE * 0.7, opts.adaptiveTDEE)
+	);
+	const blendWeight = Math.min(0.75, Math.max(0, ((confidence - 0.4) / 0.5) * 0.75));
+	return Math.round(opts.formulaTDEE * (1 - blendWeight) + boundedAdaptive * blendWeight);
 }
 
 export function calculateWeightProgress(start: number, current: number, target: number): number {
