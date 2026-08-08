@@ -351,7 +351,7 @@ updateUserMemory({ content, expectedVersion })
 
 ### 9.5 AI 集成：@earendil-works/pi-agent-core + @earendil-works/pi-ai（关键）
 
-- **库**：`@earendil-works/pi-agent-core` 0.83.x 负责 Agent 状态、tool-calling 循环、工具校验/执行与生命周期事件；底层使用 `@earendil-works/pi-ai` 0.83.x 统一不同 LLM provider 的流式 API。完全取代原 Pollinations 封装。
+- **库**：`@earendil-works/pi-agent-core` 0.84.x 负责 Agent 状态、tool-calling 循环、工具校验/执行与生命周期事件；底层使用 `@earendil-works/pi-ai` 0.84.x 统一不同 LLM provider 的流式 API。完全取代原 Pollinations 封装。
 - **浏览器直连**（已调研确认可行）：`createModels()` → `createProvider()` 注册用户自配端点 → `models.complete(model, context, { apiKey })`。每个请求显式传 apiKey，key 仅存本地（Dexie 的 AIConfig 表）。**明确告知用户：CORS 取决于其 endpoint，部分代理/网关可能需要支持 CORS。**
 - **用户在设置页配置（AI 配置卡）**：
   - API 类型三选一：`openai-completions` / `openai-responses` / `anthropic-messages`
