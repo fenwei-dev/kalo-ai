@@ -63,18 +63,24 @@
 			<BlockTitle>{m.help_ios_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_ios_body()}</p></Block>
 
-			<BlockTitle>{m.help_adaptive_title()}</BlockTitle>
+			<BlockTitle>{m.help_tdee_title()}</BlockTitle>
 			<Block inset strong>
-				<p class="text-sm leading-relaxed text-gray-600">{m.help_adaptive_intro()}</p>
-				<div class="my-3 overflow-x-auto whitespace-nowrap rounded-xl bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 [-webkit-overflow-scrolling:touch]">
-					{m.help_adaptive_formula()}
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_tdee_intro()}</p>
+				<div class="mt-3 space-y-2">
+					<div class="rounded-xl bg-gray-50 px-3 py-2.5">
+						<p class="text-sm font-medium text-gray-800">{m.help_tdee_formula_name()}</p>
+						<p class="mt-0.5 text-xs leading-relaxed text-gray-500">{m.help_tdee_formula_body()}</p>
+					</div>
+					<div class="rounded-xl bg-violet-50 px-3 py-2.5">
+						<p class="text-sm font-medium text-violet-800">{m.help_tdee_adaptive_name()}</p>
+						<p class="mt-0.5 text-xs leading-relaxed text-violet-700">{m.help_tdee_adaptive_body()}</p>
+					</div>
+					<div class="rounded-xl bg-emerald-50 px-3 py-2.5">
+						<p class="text-sm font-medium text-emerald-800">{m.help_tdee_effective_name()}</p>
+						<p class="mt-0.5 text-xs leading-relaxed text-emerald-700">{m.help_tdee_effective_body()}</p>
+					</div>
 				</div>
-				<ul class="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-gray-600">
-					<li>{m.help_adaptive_data()}</li>
-					<li>{m.help_adaptive_trend()}</li>
-					<li>{m.help_adaptive_usage()}</li>
-				</ul>
-				<p class="mt-3 text-xs leading-relaxed text-amber-700">{m.help_adaptive_caution()}</p>
+				<p class="mt-3 text-xs leading-relaxed text-amber-700">{m.help_tdee_caution()}</p>
 			</Block>
 
 			<BlockTitle>{m.help_security_title()}</BlockTitle>
