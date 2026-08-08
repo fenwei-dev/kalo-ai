@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Dialog, DialogButton } from 'konsta/svelte';
 	import { app } from '$lib/context/appContext.svelte';
@@ -30,6 +31,22 @@
 	let dateLabel = $derived(formatViewDate(app.viewDate));
 	let dateDialogOpen = $state(false);
 	let pendingDate = $state(app.viewDate);
+
+	// App context is a long-lived cache. Refresh when entering or refocusing the
+	// dashboard so writes from chat, settings, app resume, or another tab are visible.
+	onMount(() => {
+		const refresh = () => void app.refreshToday();
+		const refreshWhenVisible = () => {
+			if (document.visibilityState === 'visible') refresh();
+		};
+		refresh();
+		window.addEventListener('focus', refresh);
+		document.addEventListener('visibilitychange', refreshWhenVisible);
+		return () => {
+			window.removeEventListener('focus', refresh);
+			document.removeEventListener('visibilitychange', refreshWhenVisible);
+		};
+	});
 
 	function formatViewDate(value: string): string {
 		if (value === localDateISO()) return m.home_selected_today();

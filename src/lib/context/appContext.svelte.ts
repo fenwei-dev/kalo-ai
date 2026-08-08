@@ -26,6 +26,8 @@ export interface TodayData {
 const emptyToday: TodayData = { food: [], exercise: [], weights: [] };
 
 class AppState {
+	private todayLoadGeneration = 0;
+
 	/** 是否已完成初始化加载 */
 	ready = $state(false);
 
@@ -124,12 +126,15 @@ class AppState {
 	}
 
 	async refreshToday() {
+		const generation = ++this.todayLoadGeneration;
+		const viewDate = this.viewDate;
 		const [food, exercise, weights, weightHistory] = await Promise.all([
-			getFoodEntriesByDate(this.viewDate),
-			getExerciseEntriesByDate(this.viewDate),
-			getWeightEntriesByDate(this.viewDate),
+			getFoodEntriesByDate(viewDate),
+			getExerciseEntriesByDate(viewDate),
+			getWeightEntriesByDate(viewDate),
 			getWeightEntries()
 		]);
+		if (generation !== this.todayLoadGeneration || viewDate !== this.viewDate) return;
 		this.today = { food, exercise, weights };
 		this.weightHistory = weightHistory;
 	}

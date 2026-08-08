@@ -223,6 +223,13 @@ function profileSnapshot() {
 	};
 }
 
+async function refreshAfterWeightMutation(): Promise<void> {
+	await recomputeAdaptiveTDEE();
+	const fresh = await getUser();
+	if (fresh) app.user = fresh;
+	await app.refreshToday();
+}
+
 function summarizeDay(entries: { calories: number; protein: number; carbs: number; fat: number; tef: number }[]) {
 	const intake = entries.reduce((s, e) => s + e.calories, 0);
 	const protein = entries.reduce((s, e) => s + e.protein, 0);
@@ -334,13 +341,10 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 				return { ok: true, data: { entry } };
 			}
 
-						case 'logWeight': {
+			case 'logWeight': {
 				const date = (args.date as string) || localDateISO();
 				const entry = await addWeightEntry({ date, weight: args.weight });
-				await recomputeAdaptiveTDEE();
-				// 重新读取最新的 user（含自适应 TDEE）到全局状态
-				const fresh = await getUser();
-				if (fresh) app.user = fresh;
+				await refreshAfterWeightMutation();
 				return { ok: true, data: { entry } };
 			}
 
@@ -374,10 +378,7 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 						return { ok: false, data: null, error: '记录 id 与体重数值不匹配，已拒绝删除' };
 					}
 					await deleteWeightEntry(id);
-					await recomputeAdaptiveTDEE();
-					const fresh = await getUser();
-					if (fresh) app.user = fresh;
-					await app.refreshToday();
+					await refreshAfterWeightMutation();
 					return { ok: true, data: { deleted: { type, id, weight: entry.weight, date: entry.date } } };
 				}
 				return { ok: false, data: null, error: `不支持的记录类型：${type}` };
@@ -410,9 +411,12 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
 					app.user = await saveUser({ ...required, targetWeight: patch.targetWeight, targetDate: patch.targetDate });
 					weightRecord = await upsertWeightEntryForDate({ date: localDateISO(), weight: required.currentWeight });
 				}
-				if (weightRecord) await recomputeAdaptiveTDEE();
-				const fresh = await getUser();
-				if (fresh) app.user = fresh;
+				if (weightRecord) {
+					await refreshAfterWeightMutation();
+				} else {
+					const fresh = await getUser();
+					if (fresh) app.user = fresh;
+				}
 				return { ok: true, data: { ...profileSnapshot(), weightRecord } };
 			}
 
