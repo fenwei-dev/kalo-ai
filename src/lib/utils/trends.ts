@@ -22,8 +22,9 @@ export function buildTrendSummary(opts: {
 		.map((entry) => ({ date: entry.date, value: entry.weight }));
 	const insights: string[] = [];
 
-	if (weights.length >= 2) {
-		const change = round(weights.at(-1)!.value - weights[0].value, 1);
+	const latestWeight = weights.at(-1);
+	if (weights.length >= 2 && latestWeight) {
+		const change = round(latestWeight.value - weights[0].value, 1);
 		if (Math.abs(change) < 0.3 && opts.days >= 14)
 			insights.push("近期体重变化小于 0.3kg，可能处于平台期");
 		else

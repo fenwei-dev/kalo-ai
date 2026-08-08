@@ -20,5 +20,6 @@ body {
 input,
 textarea,
 select {
+	/* biome-ignore lint/complexity/noImportantStyles: iOS Safari zoom prevention must override component utility classes. */
 	font-size: 16px !important;
 }

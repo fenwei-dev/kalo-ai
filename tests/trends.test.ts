@@ -1,18 +1,45 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
+import type {
+	ExerciseEntry,
+	FoodEntry,
+	WeightEntry,
+} from "../src/lib/db/schema";
 import { buildTrendSummary } from "../src/lib/utils/trends";
 
-const food = (date: string, calories: number) =>
-	({ date, calories, createdAt: 0 }) as any;
-const exercise = (date: string, duration: number, caloriesBurned: number) =>
-	({
-		date,
-		duration,
-		caloriesBurned,
-		createdAt: 0,
-	}) as any;
-const weight = (date: string, value: number) =>
-	({ date, weight: value, createdAt: 0 }) as any;
+const food = (date: string, calories: number): FoodEntry => ({
+	id: `food-${date}-${calories}`,
+	date,
+	time: "12:00",
+	name: "Test food",
+	calories,
+	protein: 0,
+	carbs: 0,
+	fat: 0,
+	tef: 0,
+	source: "manual",
+	createdAt: 0,
+});
+const exercise = (
+	date: string,
+	duration: number,
+	caloriesBurned: number,
+): ExerciseEntry => ({
+	id: `exercise-${date}-${duration}`,
+	date,
+	time: "18:00",
+	description: "Test exercise",
+	duration,
+	caloriesBurned,
+	source: "manual",
+	createdAt: 0,
+});
+const weight = (date: string, value: number): WeightEntry => ({
+	id: `weight-${date}`,
+	date,
+	weight: value,
+	createdAt: 0,
+});
 
 test("trend summary aggregates food and exercise by date", () => {
 	const summary = buildTrendSummary({

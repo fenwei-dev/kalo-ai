@@ -114,14 +114,27 @@ export interface Session {
 	memoryVersion?: number;
 }
 
-/** pi-ai 风格的内容块 */
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+export interface JsonObject {
+	[key: string]: JsonValue;
+}
+
+/** pi-ai 风格的内容块；所有持久化字段都必须可结构化克隆。 */
 export type ContentBlock =
-	| { type: "text"; text: string }
+	| { type: "text"; text: string; textSignature?: string }
+	| {
+			type: "thinking";
+			thinking: string;
+			thinkingSignature?: string;
+			redacted?: boolean;
+	  }
 	| {
 			type: "toolCall";
 			id: string;
 			name: string;
-			arguments: Record<string, any>;
+			arguments: JsonObject;
+			thoughtSignature?: string;
 	  }
 	| { type: "image"; data: string; mimeType: string };
 

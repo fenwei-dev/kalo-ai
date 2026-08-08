@@ -36,10 +36,11 @@ test("adaptive TDEE moves down when logged intake predicts more loss than the ro
 	});
 
 	expect(estimate).not.toBeNull();
-	expect(estimate!.rawTDEE).toBeLessThan(1900);
-	expect(estimate!.tdee).toBeLessThan(2200);
-	expect(estimate!.spanDays).toBe(14);
-	expect(estimate!.intakeCoverage).toBe(1);
+	if (!estimate) throw new Error("Expected an adaptive TDEE estimate");
+	expect(estimate.rawTDEE).toBeLessThan(1900);
+	expect(estimate.tdee).toBeLessThan(2200);
+	expect(estimate.spanDays).toBe(14);
+	expect(estimate.intakeCoverage).toBe(1);
 });
 
 test("robust weight slope ignores misleading high and low endpoint readings", () => {
@@ -60,10 +61,11 @@ test("robust weight slope ignores misleading high and low endpoint readings", ()
 	});
 
 	expect(estimate).not.toBeNull();
+	if (!estimate) throw new Error("Expected an adaptive TDEE estimate");
 	// Endpoint-only math would infer 2,900 kcal. The median trend sees the
 	// stable middle of the series and stays near the 1,800 kcal intake.
-	expect(estimate!.rawTDEE).toBe(1800);
-	expect(estimate!.tdee).toBe(1800);
+	expect(estimate.rawTDEE).toBe(1800);
+	expect(estimate.tdee).toBe(1800);
 });
 
 test("adaptive TDEE requires enough time, weigh-ins, and intake coverage", () => {

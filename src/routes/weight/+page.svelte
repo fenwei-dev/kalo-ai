@@ -40,20 +40,16 @@
 			(a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt,
 		),
 	);
-	let visible = $derived(
-		range === "all"
-			? sorted
-			: sorted.filter(
-					(entry) =>
-						entry.date >=
-						localDateOffset(-(rangeDays[range as Exclude<Range, "all">] - 1)),
-				),
-	);
+	let visible = $derived.by(() => {
+		if (range === "all") return sorted;
+		const startDate = localDateOffset(-(rangeDays[range] - 1));
+		return sorted.filter((entry) => entry.date >= startDate);
+	});
 	let points = $derived(buildPoints(visible));
 	let current = $derived(sorted.at(-1)?.weight ?? null);
 	let change = $derived(
 		visible.length >= 2
-			? round(visible.at(-1)!.weight - visible[0].weight)
+			? round(visible[visible.length - 1].weight - visible[0].weight)
 			: null,
 	);
 	let goalDistance = $derived(

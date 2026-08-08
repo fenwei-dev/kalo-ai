@@ -35,8 +35,8 @@ export function buildModels(cfg: AIConfig): BuiltModels {
 	const model: Model<Api> = {
 		id: cfg.model,
 		name: cfg.model,
-		api: cfg.apiType as Api,
-		provider: "kalo" as any,
+		api: cfg.apiType,
+		provider: "kalo",
 		baseUrl,
 		reasoning: false,
 		input: ["text", "image"],

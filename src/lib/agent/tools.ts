@@ -1,5 +1,10 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
-import { StringEnum, type Tool, Type } from "@earendil-works/pi-ai";
+import {
+	type Static,
+	StringEnum,
+	type Tool,
+	Type,
+} from "@earendil-works/pi-ai";
 import { app } from "$lib/context/appContext.svelte";
 import {
 	addExerciseEntry,
@@ -30,7 +35,6 @@ import {
 	upsertLibraryItem,
 	upsertWeightEntryForDate,
 } from "$lib/db/repositories";
-import type { ActivityLevel, FoodCategory, Gender } from "$lib/db/schema";
 import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
 import {
 	calculateBMR,
@@ -51,7 +55,7 @@ const dateParam = Type.Optional(
 	}),
 );
 
-export const toolDefs: Tool[] = [
+export const toolDefs = [
 	{
 		name: "getProfile",
 		description:
@@ -69,7 +73,7 @@ export const toolDefs: Tool[] = [
 		description:
 			"获取指定范围的体重/摄入/运动趋势，并附带自动检测的洞察（平台期、摄入异常、目标达成预测、趋势方向）。",
 		parameters: Type.Object({
-			range: StringEnum(["7d", "30d", "90d"], { default: "30d" }),
+			range: StringEnum(["7d", "30d", "90d"] as const, { default: "30d" }),
 		}),
 	},
 	{
@@ -168,7 +172,7 @@ export const toolDefs: Tool[] = [
 			"更新用户资料或目标（任意子集）。日常称重应使用 logWeight；currentWeight 仅用于首次建档或用户明确修改资料基线。传 currentWeight 时会创建或更新今天的体重记录，并同步最新记录到 Profile。改目标后会实时重算计划。",
 		parameters: Type.Object({
 			age: Type.Optional(Type.Number({ minimum: 13, maximum: 120 })),
-			gender: Type.Optional(StringEnum(["male", "female"])),
+			gender: Type.Optional(StringEnum(["male", "female"] as const)),
 			height: Type.Optional(
 				Type.Number({ minimum: 100, maximum: 250, description: "cm" }),
 			),
@@ -176,7 +180,13 @@ export const toolDefs: Tool[] = [
 				Type.Number({ minimum: 25, maximum: 400, description: "kg" }),
 			),
 			activityLevel: Type.Optional(
-				StringEnum(["sedentary", "light", "moderate", "active", "very_active"]),
+				StringEnum([
+					"sedentary",
+					"light",
+					"moderate",
+					"active",
+					"very_active",
+				] as const),
 			),
 			targetWeight: Type.Optional(
 				Type.Number({ minimum: 25, maximum: 400, description: "kg" }),
@@ -189,7 +199,7 @@ export const toolDefs: Tool[] = [
 		description:
 			'删除一条饮食、运动或体重记录。必须先调用 getTodayLog 找到准确记录，并传入 id 及用于二次核对的 expectedLabel。饮食填食物名称，运动填运动描述，体重填数值字符串（如 "72.5"）。不匹配时会拒绝删除。',
 		parameters: Type.Object({
-			type: StringEnum(["food", "exercise", "weight"]),
+			type: StringEnum(["food", "exercise", "weight"] as const),
 			id: Type.String({ description: "getTodayLog 返回的准确记录 id" }),
 			expectedLabel: Type.String({
 				description: "用于防误删：食物名称、运动描述或体重数值",
@@ -202,12 +212,12 @@ export const toolDefs: Tool[] = [
 		description:
 			"仅在用户明确要求保存、修改或删除常用食物时管理食物库。删除前必须先调用 listLibrary，并同时提供准确的 id 和 name；两者不匹配会拒绝删除。",
 		parameters: Type.Object({
-			action: StringEnum(["add", "update", "remove"]),
+			action: StringEnum(["add", "update", "remove"] as const),
 			item: Type.Object({
 				id: Type.Optional(Type.String()),
 				name: Type.String(),
 				category: Type.Optional(
-					StringEnum(["meal", "snack", "drink", "fruit", "other"]),
+					StringEnum(["meal", "snack", "drink", "fruit", "other"] as const),
 				),
 				calories: Type.Optional(Type.Number()),
 				protein: Type.Optional(Type.Number()),
@@ -216,7 +226,13 @@ export const toolDefs: Tool[] = [
 			}),
 		}),
 	},
-];
+] as const satisfies readonly Tool[];
+
+type ToolDefinition = (typeof toolDefs)[number];
+type ToolRequestFor<D extends ToolDefinition> = D extends ToolDefinition
+	? { name: D["name"]; args: Static<D["parameters"]> }
+	: never;
+type ToolRequest = ToolRequestFor<ToolDefinition>;
 
 // ---------- handlers ----------
 
@@ -248,7 +264,7 @@ function tdeeBreakdown(
 
 export interface ToolOutcome {
 	ok: boolean;
-	data: unknown;
+	data: object | string | null;
 	error?: string;
 }
 
@@ -317,17 +333,15 @@ function summarizeDay(
 	return { intake, protein, carbs, fat, tef };
 }
 
-export async function executeTool(
-	name: string,
-	args: Record<string, any>,
-): Promise<ToolOutcome> {
+export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 	try {
-		switch (name) {
+		switch (request.name) {
 			case "getProfile":
 				return { ok: true, data: profileSnapshot() };
 
 			case "getTodayLog": {
-				const date = (args.date as string) || localDateISO();
+				const args = request.args;
+				const date = args.date || localDateISO();
 				const [food, exercise, weights] = await Promise.all([
 					getFoodEntriesByDate(date),
 					getExerciseEntriesByDate(date),
@@ -365,6 +379,7 @@ export async function executeTool(
 			}
 
 			case "getTrends": {
+				const args = request.args;
 				const days = args.range === "7d" ? 7 : args.range === "90d" ? 90 : 30;
 				const since = localDateOffset(-days);
 				const [food, exercise, allWeights] = await Promise.all([
@@ -392,14 +407,16 @@ export async function executeTool(
 			}
 
 			case "updateUserMemory": {
+				const args = request.args;
 				const memory = await updateUserMemory(
-					args.content as string,
-					args.expectedVersion as number,
+					args.content,
+					args.expectedVersion,
 				);
 				return { ok: true, data: memory };
 			}
 
 			case "logFood": {
+				const args = request.args;
 				const {
 					replaceEntryId,
 					name: fname,
@@ -437,8 +454,9 @@ export async function executeTool(
 			}
 
 			case "logExercise": {
+				const args = request.args;
 				const entry = await addExerciseEntry({
-					date: (args.date as string) || localDateISO(),
+					date: args.date || localDateISO(),
 					time: args.time || new Date().toTimeString().slice(0, 5),
 					description: args.description,
 					duration: args.duration,
@@ -450,18 +468,16 @@ export async function executeTool(
 			}
 
 			case "logWeight": {
-				const date = (args.date as string) || localDateISO();
+				const args = request.args;
+				const date = args.date || localDateISO();
 				const entry = await addWeightEntry({ date, weight: args.weight });
 				await refreshAfterWeightMutation();
 				return { ok: true, data: { entry } };
 			}
 
 			case "deleteLog": {
-				const { type, id, expectedLabel } = args as {
-					type: string;
-					id: string;
-					expectedLabel: string;
-				};
+				const args = request.args;
+				const { type, id, expectedLabel } = args;
 				const expected = expectedLabel.trim().toLocaleLowerCase();
 				if (type === "food") {
 					const entry = await getFoodEntry(id);
@@ -539,7 +555,8 @@ export async function executeTool(
 			}
 
 			case "updateProfile": {
-				const patch: Record<string, any> = { ...args };
+				const args = request.args;
+				const patch: typeof args & { calculatedBMR?: number } = { ...args };
 				let weightRecord:
 					| Awaited<ReturnType<typeof upsertWeightEntryForDate>>
 					| undefined;
@@ -563,15 +580,15 @@ export async function executeTool(
 				} else {
 					const required = {
 						age: patch.age ?? 30,
-						gender: (patch.gender as Gender) ?? "male",
+						gender: patch.gender ?? "male",
 						height: patch.height ?? 170,
 						currentWeight: patch.currentWeight ?? 70,
-						activityLevel: (patch.activityLevel as ActivityLevel) ?? "moderate",
+						activityLevel: patch.activityLevel ?? "moderate",
 						calculatedBMR: calculateBMR(
 							patch.currentWeight ?? 70,
 							patch.height ?? 170,
 							patch.age ?? 30,
-							(patch.gender as Gender) ?? "male",
+							patch.gender ?? "male",
 						),
 					};
 					app.user = await saveUser({
@@ -594,6 +611,7 @@ export async function executeTool(
 			}
 
 			case "editLibrary": {
+				const args = request.args;
 				const { action, item } = args;
 				if (action === "remove") {
 					if (!item.id)
@@ -632,7 +650,7 @@ export async function executeTool(
 				const result = await upsertLibraryItem({
 					id: item.id,
 					name: item.name,
-					category: (item.category as FoodCategory) ?? "meal",
+					category: item.category ?? "meal",
 					calories: item.calories,
 					protein: item.protein,
 					carbs: item.carbs,
@@ -641,8 +659,10 @@ export async function executeTool(
 				return { ok: true, data: { item: result } };
 			}
 
-			default:
-				return { ok: false, data: null, error: `未知工具：${name}` };
+			default: {
+				const unhandled: never = request;
+				throw new Error(`未知工具：${String(unhandled)}`);
+			}
 		}
 	} catch (e) {
 		return {
@@ -653,23 +673,34 @@ export async function executeTool(
 	}
 }
 
-/** pi-agent-core tools keep validation, execution and error reporting in one place. */
-export const agentTools: AgentTool[] = toolDefs.map((definition) => ({
-	...definition,
-	label: definition.name,
-	// Kalo tools mutate local health data, so preserve the model's source order.
-	executionMode: "sequential",
-	execute: async (_toolCallId, params, signal) => {
-		if (signal?.aborted) throw new Error("请求已取消");
-		const outcome = await executeTool(
-			definition.name,
-			params as Record<string, any>,
-		);
-		if (!outcome.ok)
-			throw new Error(outcome.error || `${definition.name} 执行失败`);
-		return {
-			content: [{ type: "text", text: JSON.stringify(outcome.data ?? null) }],
-			details: outcome,
-		};
-	},
-}));
+/** Connect each TypeBox schema directly to its statically inferred execute params. */
+function createAgentTool<D extends ToolDefinition>(
+	definition: D,
+): AgentTool<D["parameters"], ToolOutcome> {
+	return {
+		...definition,
+		label: definition.name,
+		// Kalo tools mutate local health data, so preserve the model's source order.
+		executionMode: "sequential",
+		execute: async (_toolCallId, params, signal) => {
+			if (signal?.aborted) throw new Error("请求已取消");
+			// AgentTool<D["parameters"]> has already validated params against this
+			// exact definition; this assertion only preserves that generic correlation.
+			const request = {
+				name: definition.name,
+				args: params,
+			} as ToolRequestFor<D>;
+			const outcome = await executeTool(request);
+			if (!outcome.ok)
+				throw new Error(outcome.error || `${definition.name} 执行失败`);
+			return {
+				content: [{ type: "text", text: JSON.stringify(outcome.data ?? null) }],
+				details: outcome,
+			};
+		},
+	};
+}
+
+export const agentTools = toolDefs.map((definition) =>
+	createAgentTool(definition),
+);

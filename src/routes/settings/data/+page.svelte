@@ -38,7 +38,8 @@
 	}
 
 	async function handleImport(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
+		if (!(event.currentTarget instanceof HTMLInputElement)) return;
+		const input = event.currentTarget;
 		const file = input.files?.[0];
 		if (!file) return;
 		importing = true;

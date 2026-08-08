@@ -1,10 +1,5 @@
-import {
-	Agent,
-	type AgentMessage,
-	type AgentToolResult,
-} from "@earendil-works/pi-agent-core";
+import { Agent, type AgentToolResult } from "@earendil-works/pi-agent-core";
 import type {
-	Api,
 	AssistantMessage,
 	Message,
 	ToolResultMessage,
@@ -15,7 +10,12 @@ import {
 	listMessages,
 	markSessionMemoryVersion,
 } from "$lib/db/repositories";
-import type { ContentBlock, Message as DBMessage } from "$lib/db/schema";
+import type {
+	ContentBlock,
+	Message as DBMessage,
+	JsonObject,
+	JsonValue,
+} from "$lib/db/schema";
 import { getLocale } from "$lib/paraglide/runtime";
 import { localMessageTimestamp } from "$lib/utils/date";
 import { buildModels } from "./provider";
@@ -27,7 +27,7 @@ const MODEL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 export interface ToolCallView {
 	id: string;
 	name: string;
-	arguments: Record<string, any>;
+	arguments: JsonObject;
 }
 
 export interface TurnCallbacks {
@@ -46,6 +46,46 @@ function ensureConfig() {
 	if (!app.aiConfig.apiKey) throw new Error("API Key 为空，请去「设置」配置。");
 	return app.aiConfig;
 }
+
+function toJsonValue(value: unknown): JsonValue | undefined {
+	if (value === null || typeof value === "string" || typeof value === "boolean")
+		return value;
+	if (typeof value === "number")
+		return Number.isFinite(value) ? value : undefined;
+	if (Array.isArray(value))
+		return value.map((item) => toJsonValue(item) ?? null);
+	if (typeof value === "object") {
+		const result: JsonObject = {};
+		for (const [key, item] of Object.entries(value)) {
+			const converted = toJsonValue(item);
+			if (converted !== undefined) result[key] = converted;
+		}
+		return result;
+	}
+	return undefined;
+}
+
+function toJsonObject(value: unknown): JsonObject {
+	const converted = toJsonValue(value);
+	return converted && !Array.isArray(converted) && typeof converted === "object"
+		? converted
+		: {};
+}
+
+const isUserContent = (
+	block: ContentBlock,
+): block is Extract<ContentBlock, { type: "text" } | { type: "image" }> =>
+	block.type === "text" || block.type === "image";
+
+const isAssistantContent = (
+	block: ContentBlock,
+): block is Extract<
+	ContentBlock,
+	{ type: "text" } | { type: "thinking" } | { type: "toolCall" }
+> =>
+	block.type === "text" ||
+	block.type === "thinking" ||
+	block.type === "toolCall";
 
 /** DB messages are rehydrated into the metadata-rich messages expected by pi-agent-core. */
 function dbToAgentMessage(message: DBMessage): Message {
@@ -68,22 +108,22 @@ function dbToAgentMessage(message: DBMessage): Message {
 				text: `[Message sent at ${sentAt} local time]\n[User attached an image without text.]`,
 			});
 		}
-		return { role: "user", content: content as any, timestamp };
+		return { role: "user", content: content.filter(isUserContent), timestamp };
 	}
 	if (message.role === "toolResult") {
 		return {
 			role: "toolResult",
 			toolCallId: message.toolCallId ?? "",
 			toolName: message.toolName ?? "",
-			content: message.content as any,
+			content: message.content.filter(isUserContent),
 			isError: !!message.isError,
 			timestamp,
 		};
 	}
 	return {
 		role: "assistant",
-		content: message.content as any,
-		api: (app.aiConfig?.apiType ?? "openai-completions") as Api,
+		content: message.content.filter(isAssistantContent),
+		api: app.aiConfig?.apiType ?? "openai-completions",
 		provider: "kalo",
 		model: app.aiConfig?.model ?? "kalo",
 		usage: {
@@ -106,7 +146,11 @@ async function persistAssistant(
 	await addMessage({
 		sessionId,
 		role: "assistant",
-		content: message.content as ContentBlock[],
+		content: message.content.map((block) =>
+			block.type === "toolCall"
+				? { ...block, arguments: toJsonObject(block.arguments) }
+				: block,
+		),
 	});
 }
 
@@ -117,7 +161,7 @@ async function persistToolResult(
 	await addMessage({
 		sessionId,
 		role: "toolResult",
-		content: message.content as ContentBlock[],
+		content: message.content.map((block) => ({ ...block })),
 		toolCallId: message.toolCallId,
 		toolName: message.toolName,
 		isError: message.isError,
@@ -132,9 +176,12 @@ async function persistToolResult(
 			.map((block) => block.text)
 			.join("");
 		try {
-			const result = JSON.parse(text) as { version?: unknown };
-			if (typeof result.version === "number")
-				await markSessionMemoryVersion(sessionId, result.version);
+			const result = toJsonValue(JSON.parse(text));
+			if (result && !Array.isArray(result) && typeof result === "object") {
+				const version = result.version;
+				if (typeof version === "number")
+					await markSessionMemoryVersion(sessionId, version);
+			}
 		} catch {
 			// A malformed memory result should remain visible, but must not advance the session snapshot.
 		}
@@ -142,25 +189,18 @@ async function persistToolResult(
 }
 
 function outcomeFromResult(
-	result: AgentToolResult<unknown>,
+	result: AgentToolResult<ToolOutcome>,
 	isError: boolean,
 ): ToolOutcome {
 	const details = result.details;
-	if (
-		details &&
-		typeof details === "object" &&
-		"ok" in details &&
-		typeof (details as ToolOutcome).ok === "boolean"
-	) {
-		return details as ToolOutcome;
-	}
+	if (details) return details;
 	const text = result.content
 		.filter((block) => block.type === "text")
 		.map((block) => block.text)
 		.join("\n");
 	return isError
 		? { ok: false, data: null, error: text || "工具执行失败" }
-		: { ok: true, data: details ?? text };
+		: { ok: true, data: text };
 }
 
 /**
@@ -194,7 +234,7 @@ export async function runTurn(
 			systemPrompt: getKaloSystemPrompt(getLocale()),
 			model,
 			tools: agentTools,
-			messages: history.map(dbToAgentMessage) as AgentMessage[],
+			messages: history.map(dbToAgentMessage),
 		},
 		streamFn: (activeModel, context, options) =>
 			models.streamSimple(activeModel, context, {
@@ -241,7 +281,7 @@ export async function runTurn(
 				cb.onToolCall?.({
 					id: event.toolCallId,
 					name: event.toolName,
-					arguments: event.args,
+					arguments: toJsonObject(event.args),
 				});
 				break;
 

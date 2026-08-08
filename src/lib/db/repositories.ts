@@ -1,4 +1,8 @@
 import { getLocale } from "$lib/paraglide/runtime";
+import { type KaloBackupV2, parseKaloBackup } from "./backup";
+
+export type { KaloBackup, KaloBackupV1, KaloBackupV2 } from "./backup";
+
 import { localDateISO, localMessageTimestamp } from "$lib/utils/date";
 import type {
 	AIConfig,
@@ -119,8 +123,9 @@ export async function updateAIConfig(
 	patch: Partial<Omit<AIConfig, "id">>,
 ): Promise<AIConfig | undefined> {
 	const existing = await db.aiConfig.get("singleton");
+	if (!existing) return undefined;
 	const cfg: AIConfig = {
-		...(existing ?? ({} as AIConfig)),
+		...existing,
 		...patch,
 		id: "singleton",
 		updatedAt: now(),
@@ -645,63 +650,10 @@ export async function clearAllData(): Promise<void> {
 	);
 }
 
-export interface KaloBackup {
-	version: 1 | 2;
-	exportedAt: number;
-	user: User[];
-	aiConfig: AIConfig[];
-	userMemory?: UserMemory[];
-	foodEntries: FoodEntry[];
-	exerciseEntries: ExerciseEntry[];
-	weightEntries: WeightEntry[];
-	foodLibrary: FoodLibraryItem[];
-	sessions: Session[];
-	messages: Message[];
-}
-
 /** Validate and atomically replace all app data from a Kalo backup. */
 export async function importAll(value: unknown): Promise<void> {
-	if (!value || typeof value !== "object")
-		throw new Error("备份文件不是有效对象");
-	const data = value as Partial<KaloBackup>;
-	if (data.version !== 1 && data.version !== 2)
-		throw new Error("备份版本不受支持");
-	const keys = [
-		"user",
-		"aiConfig",
-		"foodEntries",
-		"exerciseEntries",
-		"weightEntries",
-		"foodLibrary",
-		"sessions",
-		"messages",
-	] as const;
-	for (const key of keys) {
-		if (!Array.isArray(data[key])) throw new Error(`备份缺少 ${key} 数据`);
-	}
-	const user = data.user as User[];
-	const aiConfig = data.aiConfig as AIConfig[];
-	const userMemory = data.version === 2 ? data.userMemory : [];
-	if (data.version === 2 && !Array.isArray(userMemory))
-		throw new Error("备份缺少 userMemory 数据");
-	if (user.length > 1 || user.some((item) => item?.id !== "me"))
-		throw new Error("用户资料格式无效");
-	if (aiConfig.length > 1 || aiConfig.some((item) => item?.id !== "singleton"))
-		throw new Error("AI 配置格式无效");
-	if (
-		(userMemory?.length ?? 0) > 1 ||
-		userMemory?.some(
-			(item) =>
-				item?.id !== "user-memory" ||
-				typeof item.content !== "string" ||
-				item.content.length > MAX_USER_MEMORY_LENGTH ||
-				!Number.isInteger(item.version) ||
-				item.version < 1 ||
-				!Number.isFinite(item.updatedAt),
-		)
-	) {
-		throw new Error("用户记忆格式无效");
-	}
+	const data = parseKaloBackup(value, MAX_USER_MEMORY_LENGTH);
+	const { user, aiConfig, userMemory } = data;
 
 	await db.transaction(
 		"rw",
@@ -730,19 +682,19 @@ export async function importAll(value: unknown): Promise<void> {
 			]);
 			await db.user.bulkPut(user);
 			await db.aiConfig.bulkPut(aiConfig);
-			await db.userMemory.bulkPut((userMemory ?? []) as UserMemory[]);
-			await db.foodEntries.bulkPut(data.foodEntries as FoodEntry[]);
-			await db.exerciseEntries.bulkPut(data.exerciseEntries as ExerciseEntry[]);
-			await db.weightEntries.bulkPut(data.weightEntries as WeightEntry[]);
-			await db.foodLibrary.bulkPut(data.foodLibrary as FoodLibraryItem[]);
-			await db.sessions.bulkPut(data.sessions as Session[]);
-			await db.messages.bulkPut(data.messages as Message[]);
+			await db.userMemory.bulkPut(userMemory);
+			await db.foodEntries.bulkPut(data.foodEntries);
+			await db.exerciseEntries.bulkPut(data.exerciseEntries);
+			await db.weightEntries.bulkPut(data.weightEntries);
+			await db.foodLibrary.bulkPut(data.foodLibrary);
+			await db.sessions.bulkPut(data.sessions);
+			await db.messages.bulkPut(data.messages);
 		},
 	);
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<Record<string, unknown>> {
+export async function exportAll(): Promise<KaloBackupV2> {
 	const [
 		user,
 		aiConfig,

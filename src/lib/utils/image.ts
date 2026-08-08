@@ -4,6 +4,8 @@ export const SUPPORTED_IMAGE_TYPES = [
 	"image/webp",
 	"image/gif",
 ] as const;
+export type SupportedImageType = (typeof SUPPORTED_IMAGE_TYPES)[number];
+
 export const MAX_IMAGE_SOURCE_BYTES = 12 * 1024 * 1024;
 export const MAX_IMAGE_ENCODED_BYTES = 2 * 1024 * 1024;
 export const MAX_IMAGE_DIMENSION = 1600;
@@ -22,7 +24,7 @@ export class ImagePreparationError extends Error {
 
 export interface PreparedImage {
 	data: string;
-	mimeType: string;
+	mimeType: SupportedImageType;
 	width: number;
 	height: number;
 	encodedBytes: number;
@@ -38,6 +40,10 @@ interface DecodedImage {
 function normalizedMimeType(type: string): string {
 	const normalized = type.split(";")[0]?.trim().toLowerCase();
 	return normalized === "image/jpg" ? "image/jpeg" : normalized;
+}
+
+function isSupportedImageType(value: string): value is SupportedImageType {
+	return SUPPORTED_IMAGE_TYPES.some((type) => type === value);
 }
 
 async function decodeImage(file: File): Promise<DecodedImage> {
@@ -112,11 +118,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 /** Resize and re-encode an upload so repeated multimodal turns stay mobile-friendly. */
 export async function prepareImage(file: File): Promise<PreparedImage> {
 	const mimeType = normalizedMimeType(file.type);
-	if (
-		!SUPPORTED_IMAGE_TYPES.includes(
-			mimeType as (typeof SUPPORTED_IMAGE_TYPES)[number],
-		)
-	) {
+	if (!isSupportedImageType(mimeType)) {
 		throw new ImagePreparationError("unsupported");
 	}
 	if (file.size > MAX_IMAGE_SOURCE_BYTES)
@@ -135,7 +137,10 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
 		const qualities = [0.84, 0.74, 0.64, 0.54];
 
 		for (let sizeAttempt = 0; sizeAttempt < 7; sizeAttempt++) {
-			let smallest: Blob | null = null;
+			let smallest: {
+				blob: Blob;
+				mimeType: "image/webp" | "image/jpeg";
+			} | null = null;
 			for (const quality of qualities) {
 				for (const outputType of ["image/webp", "image/jpeg"] as const) {
 					const candidate = await canvasBlob(
@@ -146,12 +151,17 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
 						quality,
 					);
 					if (!candidate) continue;
-					if (!smallest || candidate.size < smallest.size) smallest = candidate;
+					if (!smallest || candidate.size < smallest.blob.size) {
+						smallest = { blob: candidate, mimeType: outputType };
+					}
 					const encodedBytes = Math.ceil(candidate.size / 3) * 4;
 					if (encodedBytes <= MAX_IMAGE_ENCODED_BYTES) {
+						const candidateType = normalizedMimeType(candidate.type);
 						return {
 							data: await blobToBase64(candidate),
-							mimeType: normalizedMimeType(candidate.type) || outputType,
+							mimeType: isSupportedImageType(candidateType)
+								? candidateType
+								: outputType,
 							width,
 							height,
 							encodedBytes,
@@ -162,14 +172,14 @@ export async function prepareImage(file: File): Promise<PreparedImage> {
 
 			if (
 				smallest &&
-				Math.ceil(smallest.size / 3) * 4 <= MAX_IMAGE_ENCODED_BYTES
+				Math.ceil(smallest.blob.size / 3) * 4 <= MAX_IMAGE_ENCODED_BYTES
 			) {
 				return {
-					data: await blobToBase64(smallest),
-					mimeType: normalizedMimeType(smallest.type),
+					data: await blobToBase64(smallest.blob),
+					mimeType: smallest.mimeType,
 					width,
 					height,
-					encodedBytes: Math.ceil(smallest.size / 3) * 4,
+					encodedBytes: Math.ceil(smallest.blob.size / 3) * 4,
 				};
 			}
 			width = Math.max(1, Math.round(width * 0.75));

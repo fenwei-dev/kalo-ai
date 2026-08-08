@@ -58,15 +58,14 @@
 
 	function blocksText(blocks: ContentBlock[]): string {
 		return blocks
-			.filter((b) => b.type === "text")
-			.map((b) => (b as any).text)
+			.flatMap((block) => (block.type === "text" ? [block.text] : []))
 			.join("");
 	}
 	function imageBlocks(blocks: ContentBlock[]) {
-		return blocks.filter((block) => block.type === "image") as Extract<
-			ContentBlock,
-			{ type: "image" }
-		>[];
+		return blocks.filter(
+			(block): block is Extract<ContentBlock, { type: "image" }> =>
+				block.type === "image",
+		);
 	}
 	function imageSource(
 		image: Extract<ContentBlock, { type: "image" }> | PreparedImage,
@@ -74,10 +73,10 @@
 		return `data:${image.mimeType};base64,${image.data}`;
 	}
 	function toolCalls(blocks: ContentBlock[]) {
-		return blocks.filter((b) => b.type === "toolCall") as Extract<
-			ContentBlock,
-			{ type: "toolCall" }
-		>[];
+		return blocks.filter(
+			(block): block is Extract<ContentBlock, { type: "toolCall" }> =>
+				block.type === "toolCall",
+		);
 	}
 	function toolResult(
 		callId: string,
@@ -285,7 +284,8 @@
 	}
 
 	async function selectImage(event: Event) {
-		const target = event.currentTarget as HTMLInputElement;
+		if (!(event.currentTarget instanceof HTMLInputElement)) return;
+		const target = event.currentTarget;
 		const file = target.files?.[0];
 		target.value = "";
 		if (!file || sending || preparingImage) return;
@@ -341,7 +341,7 @@
 			) {
 				const title = text
 					? text.length > 16
-						? text.slice(0, 16) + "…"
+						? `${text.slice(0, 16)}…`
 						: text
 					: m.chat_image_title();
 				await renameSession(id, title);

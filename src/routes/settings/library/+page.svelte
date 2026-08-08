@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import AppHeader from "$lib/components/AppHeader.svelte";
-	import { app } from "$lib/context/appContext.svelte";
 	import {
 		deleteLibraryItem,
 		listLibrary,
@@ -61,7 +60,7 @@
 			await upsertLibraryItem({
 				id: editing.id,
 				name: editing.name,
-				category: (editing.category as FoodCategory) ?? "meal",
+				category: editing.category ?? "meal",
 				calories: +editing.calories,
 				protein: editing.protein != null ? +editing.protein : undefined,
 				carbs: editing.carbs != null ? +editing.carbs : undefined,

@@ -62,9 +62,11 @@ test("a changed memory snapshot is appended after the user message only once per
 		name: "readUserMemory",
 	});
 	expect(messages[1].synthetic).toBe(true);
-	expect(
-		JSON.parse((messages[2].content[0] as { type: "text"; text: string }).text),
-	).toMatchObject({
+	const initialMemoryContent = messages[2].content[0];
+	if (initialMemoryContent?.type !== "text") {
+		throw new Error("Expected an initial text memory tool result");
+	}
+	expect(JSON.parse(initialMemoryContent.text)).toMatchObject({
 		content: "",
 		version: 0,
 	});
@@ -93,15 +95,33 @@ test("a changed memory snapshot is appended after the user message only once per
 		"assistant",
 		"toolResult",
 	]);
-	expect(
-		JSON.parse(
-			(messages.at(-1)!.content[0] as { type: "text"; text: string }).text,
-		),
-	).toMatchObject({
+	const latestMessage = messages.at(-1);
+	const latestContent = latestMessage?.content[0];
+	if (latestContent?.type !== "text") {
+		throw new Error("Expected a text memory tool result");
+	}
+	expect(JSON.parse(latestContent.text)).toMatchObject({
 		content: "## Routine\n- Runs on Friday",
 		version: 1,
 	});
 	expect((await getSession(session.id))?.memoryVersion).toBe(1);
+});
+
+test("backup imports reject malformed entity arrays", async () => {
+	await expect(
+		repositories.importAll({
+			version: 1,
+			exportedAt: Date.now(),
+			user: [],
+			aiConfig: [],
+			foodEntries: [{ date: "2026-01-01", calories: 500 }],
+			exerciseEntries: [],
+			weightEntries: [],
+			foodLibrary: [],
+			sessions: [],
+			messages: [],
+		}),
+	).rejects.toThrow("foodEntries 数据格式无效");
 });
 
 test("backups include memory while version 1 backups remain importable", async () => {

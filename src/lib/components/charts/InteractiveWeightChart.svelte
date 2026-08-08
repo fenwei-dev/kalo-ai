@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { LineChart } from "layerchart";
+	import type { ComponentProps } from "svelte";
 	import { getLocale } from "$lib/paraglide/runtime";
 
 	export interface WeightPoint {
@@ -25,9 +26,9 @@
 		month: "short",
 		day: "numeric",
 	});
-	const formatDate = (value: unknown) =>
-		dateFormatter.format(new Date(value as string | number | Date));
-	const formatWeight = (value: unknown) => `${Number(value).toFixed(1)} kg`;
+	const formatDate = (value: string | number | Date) =>
+		dateFormatter.format(new Date(value));
+	const formatWeight = (value: number) => `${value.toFixed(1)} kg`;
 
 	let yDomain = $derived(
 		data.length
@@ -51,7 +52,10 @@
 			color: "#64748b",
 		},
 	]);
-	let annotations: any = $derived(
+	type LineChartAnnotations = NonNullable<
+		ComponentProps<typeof LineChart>["annotations"]
+	>;
+	let annotations: LineChartAnnotations = $derived(
 		targetWeight == null
 			? []
 			: [

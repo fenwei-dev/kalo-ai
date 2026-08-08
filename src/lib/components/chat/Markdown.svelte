@@ -6,9 +6,13 @@
 		$props();
 
 	marked.setOptions({ breaks: true, gfm: true });
-	const html = $derived(
-		DOMPurify.sanitize(marked.parse(content, { async: false }) as string),
-	);
+	function renderMarkdown(value: string): string {
+		const rendered = marked.parse(value, { async: false });
+		if (typeof rendered !== "string")
+			throw new Error("Markdown rendering unexpectedly became asynchronous");
+		return DOMPurify.sanitize(rendered);
+	}
+	const html = $derived(renderMarkdown(content));
 </script>
 
 <div class="markdown {className}">{@html html}</div>
