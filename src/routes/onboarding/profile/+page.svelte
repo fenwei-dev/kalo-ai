@@ -1,78 +1,101 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import { getUser, saveUserWithWeightEntry } from '$lib/db/repositories';
-	import type { ActivityLevel, Gender } from '$lib/db/schema';
-	import { calculateBMR, calculateTDEE } from '$lib/utils/calculations';
-	import { localDateISO } from '$lib/utils/date';
-	import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
-	import { onboardingDestination } from '$lib/utils/onboarding';
-	import * as m from '$lib/paraglide/messages';
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import { app } from "$lib/context/appContext.svelte";
+	import { getUser, saveUserWithWeightEntry } from "$lib/db/repositories";
+	import type { ActivityLevel, Gender } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
+	import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
+	import { calculateBMR, calculateTDEE } from "$lib/utils/calculations";
+	import { localDateISO } from "$lib/utils/date";
+	import { onboardingDestination } from "$lib/utils/onboarding";
 
-	const activities: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+	const activities: ActivityLevel[] = [
+		"sedentary",
+		"light",
+		"moderate",
+		"active",
+		"very_active",
+	];
 	const activityLabel = (value: ActivityLevel) =>
 		({
 			sedentary: m.activity_sedentary(),
 			light: m.activity_light(),
 			moderate: m.activity_moderate(),
 			active: m.activity_active(),
-			very_active: m.activity_very_active()
+			very_active: m.activity_very_active(),
 		})[value];
 
 	const existing = app.user;
-	let gender = $state<Gender>(existing?.gender === 'female' ? 'female' : 'male');
-	let age = $state(existing?.age != null ? String(existing.age) : '');
-	let height = $state(existing?.height != null ? String(existing.height) : '');
-	let currentWeight = $state(existing?.currentWeight != null ? String(existing.currentWeight) : '');
+	let gender = $state<Gender>(
+		existing?.gender === "female" ? "female" : "male",
+	);
+	let age = $state(existing?.age != null ? String(existing.age) : "");
+	let height = $state(existing?.height != null ? String(existing.height) : "");
+	let currentWeight = $state(
+		existing?.currentWeight != null ? String(existing.currentWeight) : "",
+	);
 	let activityLevel = $state<ActivityLevel>(
-		existing && ['sedentary', 'light', 'moderate', 'active', 'very_active'].includes(existing.activityLevel)
+		existing &&
+			["sedentary", "light", "moderate", "active", "very_active"].includes(
+				existing.activityLevel,
+			)
 			? existing.activityLevel
-			: 'moderate'
+			: "moderate",
 	);
 	let saving = $state(false);
-	let errorMsg = $state('');
+	let errorMsg = $state("");
 
 	let valid = $derived(
 		Number.isFinite(+age) &&
-		+age >= 13 &&
-		+age <= 120 &&
-		Number.isFinite(+height) &&
-		+height >= 100 &&
-		+height <= 250 &&
-		Number.isFinite(+currentWeight) &&
-		+currentWeight >= 25 &&
-		+currentWeight <= 400
+			+age >= 13 &&
+			+age <= 120 &&
+			Number.isFinite(+height) &&
+			+height >= 100 &&
+			+height <= 250 &&
+			Number.isFinite(+currentWeight) &&
+			+currentWeight >= 25 &&
+			+currentWeight <= 400,
 	);
-	let bmr = $derived(valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0);
+	let bmr = $derived(
+		valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0,
+	);
 	let tdee = $derived(valid ? calculateTDEE(bmr, activityLevel) : 0);
 
 	onMount(() => {
-		if (app.profileConfigured) void goto(app.aiConfigured ? '/' : '/onboarding/ai', { replaceState: true });
+		if (app.profileConfigured)
+			void goto(app.aiConfigured ? "/" : "/onboarding/ai", {
+				replaceState: true,
+			});
 	});
 
 	async function save() {
 		if (!valid || saving) return;
 		saving = true;
-		errorMsg = '';
+		errorMsg = "";
 		try {
-			const savedUser = await saveUserWithWeightEntry({
-				age: +age,
-				gender,
-				height: +height,
-				currentWeight: +currentWeight,
-				activityLevel,
-				calculatedBMR: bmr,
-				targetWeight: existing?.targetWeight,
-				targetDate: existing?.targetDate,
-				adaptiveTDEE: existing?.adaptiveTDEE,
-				adaptiveConfidence: existing?.adaptiveConfidence
-			}, localDateISO());
+			const savedUser = await saveUserWithWeightEntry(
+				{
+					age: +age,
+					gender,
+					height: +height,
+					currentWeight: +currentWeight,
+					activityLevel,
+					calculatedBMR: bmr,
+					targetWeight: existing?.targetWeight,
+					targetDate: existing?.targetDate,
+					adaptiveTDEE: existing?.adaptiveTDEE,
+					adaptiveConfidence: existing?.adaptiveConfidence,
+				},
+				localDateISO(),
+			);
 			await recomputeAdaptiveTDEE();
 			const freshUser = (await getUser()) ?? savedUser;
 			await app.refreshToday();
 			app.user = freshUser;
-			const destination = app.aiConfigured ? await onboardingDestination() : '/onboarding/ai';
+			const destination = app.aiConfigured
+				? await onboardingDestination()
+				: "/onboarding/ai";
 			await goto(destination);
 		} catch (error) {
 			errorMsg = error instanceof Error ? error.message : String(error);

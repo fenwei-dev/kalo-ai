@@ -1,7 +1,7 @@
 <script lang="ts">
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import LanguageSection from '$lib/components/settings/LanguageSection.svelte';
-	import * as m from '$lib/paraglide/messages';
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import LanguageSection from "$lib/components/settings/LanguageSection.svelte";
+	import * as m from "$lib/paraglide/messages";
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden pb-16">

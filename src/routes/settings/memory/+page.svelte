@@ -1,23 +1,27 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Block, BlockTitle, Button } from 'konsta/svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import AppDialog from '$lib/components/AppDialog.svelte';
-	import Markdown from '$lib/components/chat/Markdown.svelte';
+	import { Block, BlockTitle, Button } from "konsta/svelte";
+	import { onMount } from "svelte";
+	import AppDialog from "$lib/components/AppDialog.svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import Markdown from "$lib/components/chat/Markdown.svelte";
 	import {
 		getUserMemory,
-		updateUserMemory,
 		MAX_USER_MEMORY_LENGTH,
-		type UserMemorySnapshot
-	} from '$lib/db/repositories';
-	import * as m from '$lib/paraglide/messages';
+		type UserMemorySnapshot,
+		updateUserMemory,
+	} from "$lib/db/repositories";
+	import * as m from "$lib/paraglide/messages";
 
-	let memory = $state<UserMemorySnapshot>({ content: '', version: 0, updatedAt: null });
-	let content = $state('');
+	let memory = $state<UserMemorySnapshot>({
+		content: "",
+		version: 0,
+		updatedAt: null,
+	});
+	let content = $state("");
 	let loading = $state(true);
 	let saving = $state(false);
 	let saved = $state(false);
-	let error = $state('');
+	let error = $state("");
 	let confirmingClear = $state(false);
 	let overLimit = $derived(content.length > MAX_USER_MEMORY_LENGTH);
 	let changed = $derived(content !== memory.content);
@@ -29,7 +33,7 @@
 		try {
 			memory = await getUserMemory();
 			content = memory.content;
-			error = '';
+			error = "";
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : String(cause);
 		} finally {
@@ -41,7 +45,7 @@
 		if (saving || nextContent.length > MAX_USER_MEMORY_LENGTH) return;
 		saving = true;
 		saved = false;
-		error = '';
+		error = "";
 		try {
 			memory = await updateUserMemory(nextContent, memory.version);
 			content = memory.content;
@@ -56,7 +60,7 @@
 
 	async function clearMemory() {
 		confirmingClear = false;
-		await save('');
+		await save("");
 	}
 </script>
 

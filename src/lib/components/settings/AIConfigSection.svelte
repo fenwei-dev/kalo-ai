@@ -1,28 +1,35 @@
 <script lang="ts">
-	import { List, ListInput, Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
-	import { app } from '$lib/context/appContext.svelte';
-	import { saveAIConfig, updateAIConfig } from '$lib/db/repositories';
-	import type { ApiType } from '$lib/db/schema';
-	import * as m from '$lib/paraglide/messages';
+	import {
+		Block,
+		BlockTitle,
+		List,
+		ListInput,
+		Segmented,
+		SegmentedButton,
+	} from "konsta/svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import { saveAIConfig, updateAIConfig } from "$lib/db/repositories";
+	import type { ApiType } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
 
 	let { showTitle = true }: { showTitle?: boolean } = $props();
 
 	const c = app.aiConfig;
-	let apiType = $state<ApiType>(c?.apiType ?? 'openai-completions');
-	let baseUrl = $state<string>(c?.baseUrl ?? '');
-	let apiKey = $state<string>(c?.apiKey ?? '');
-	let model = $state<string>(c?.model ?? 'gpt-4o-mini');
+	let apiType = $state<ApiType>(c?.apiType ?? "openai-completions");
+	let baseUrl = $state<string>(c?.baseUrl ?? "");
+	let apiKey = $state<string>(c?.apiKey ?? "");
+	let model = $state<string>(c?.model ?? "gpt-4o-mini");
 	let showKey = $state(false);
 
 	let saving = $state(false);
 	let saved = $state(false);
 
-	let valid = $derived(apiKey.trim() !== '' && model.trim() !== '');
+	let valid = $derived(apiKey.trim() !== "" && model.trim() !== "");
 
 	const apiTypes: { id: ApiType; label: string }[] = [
-		{ id: 'openai-completions', label: 'Completions' },
-		{ id: 'openai-responses', label: 'Responses' },
-		{ id: 'anthropic-messages', label: 'Anthropic' }
+		{ id: "openai-completions", label: "Completions" },
+		{ id: "openai-responses", label: "Responses" },
+		{ id: "anthropic-messages", label: "Anthropic" },
 	];
 
 	async function save() {
@@ -33,7 +40,7 @@
 				apiType,
 				baseUrl: baseUrl.trim() || undefined,
 				apiKey: apiKey.trim(),
-				model: model.trim()
+				model: model.trim(),
 			};
 			if (app.aiConfig) {
 				app.aiConfig = (await updateAIConfig(data)) ?? null;

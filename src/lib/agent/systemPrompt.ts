@@ -69,6 +69,6 @@ const EN_PROMPT = `You are Kalo, the user's personal fat-loss coach. Use tools t
 - Always respond in natural English. Never expose raw JSON to the user.
 - Call tools only when needed; answer advice or explanation questions directly.`;
 
-export function getKaloSystemPrompt(locale: 'zh-cn' | 'en-us'): string {
-	return locale === 'en-us' ? EN_PROMPT : ZH_PROMPT;
+export function getKaloSystemPrompt(locale: "zh-cn" | "en-us"): string {
+	return locale === "en-us" ? EN_PROMPT : ZH_PROMPT;
 }

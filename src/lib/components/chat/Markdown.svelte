@@ -1,11 +1,14 @@
 <script lang="ts">
-	import DOMPurify from 'dompurify';
-	import { marked } from 'marked';
+	import DOMPurify from "dompurify";
+	import { marked } from "marked";
 
-	let { content, class: className = '' }: { content: string; class?: string } = $props();
+	let { content, class: className = "" }: { content: string; class?: string } =
+		$props();
 
 	marked.setOptions({ breaks: true, gfm: true });
-	const html = $derived(DOMPurify.sanitize(marked.parse(content, { async: false }) as string));
+	const html = $derived(
+		DOMPurify.sanitize(marked.parse(content, { async: false }) as string),
+	);
 </script>
 
 <div class="markdown {className}">{@html html}</div>

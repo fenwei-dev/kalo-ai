@@ -1,7 +1,13 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages';
+	import * as m from "$lib/paraglide/messages";
+
 	// 把一次工具调用渲染成一张小卡片。基于 args（卡卡估算后传入的数值）。
-	let { tool, args, failed = false, error = '' }: {
+	let {
+		tool,
+		args,
+		failed = false,
+		error = "",
+	}: {
 		tool: string;
 		args: Record<string, any>;
 		failed?: boolean;

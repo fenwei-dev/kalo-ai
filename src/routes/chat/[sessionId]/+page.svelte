@@ -1,34 +1,38 @@
 <script lang="ts">
-	import { onDestroy, tick } from 'svelte';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
+	import { onDestroy, tick } from "svelte";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import { runTurn } from "$lib/agent/client";
+	import Markdown from "$lib/components/chat/Markdown.svelte";
+	import SessionDrawer from "$lib/components/chat/SessionDrawer.svelte";
+	import ToolChip from "$lib/components/chat/ToolChip.svelte";
+	import { app } from "$lib/context/appContext.svelte";
 	import {
 		addUserMessageWithMemorySync,
 		createSession,
 		getSession,
 		listMessages,
-		renameSession
-	} from '$lib/db/repositories';
-	import type { ContentBlock, Message as DBMessage, Session } from '$lib/db/schema';
-	import { runTurn } from '$lib/agent/client';
-	import ToolChip from '$lib/components/chat/ToolChip.svelte';
-	import Markdown from '$lib/components/chat/Markdown.svelte';
-	import SessionDrawer from '$lib/components/chat/SessionDrawer.svelte';
-	import * as m from '$lib/paraglide/messages';
+		renameSession,
+	} from "$lib/db/repositories";
+	import type {
+		ContentBlock,
+		Message as DBMessage,
+		Session,
+	} from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
 	import {
 		ImagePreparationError,
+		type PreparedImage,
 		prepareImage,
-		type PreparedImage
-	} from '$lib/utils/image';
+	} from "$lib/utils/image";
 
-	let sessionId = $derived(page.params.sessionId ?? '');
+	let sessionId = $derived(page.params.sessionId ?? "");
 	let session = $state<Session | null>(null);
 	let messages = $state<DBMessage[]>([]);
-	let input = $state('');
+	let input = $state("");
 	let sending = $state(false);
-	let streamText = $state('');
-	let errorMsg = $state('');
+	let streamText = $state("");
+	let errorMsg = $state("");
 	let drawerOpen = $state(false);
 	let selectedImage = $state<PreparedImage | null>(null);
 	let preparingImage = $state(false);
@@ -36,7 +40,7 @@
 	let turnController = $state<AbortController | null>(null);
 	let turnSessionId: string | null = null;
 	let turnTimer: ReturnType<typeof setTimeout> | undefined;
-	let turnAbortReason: 'cancelled' | 'timeout' | null = null;
+	let turnAbortReason: "cancelled" | "timeout" | null = null;
 	let loadGeneration = 0;
 	let creatingNew = false;
 	let destroyed = false;
@@ -45,7 +49,7 @@
 	onDestroy(() => {
 		destroyed = true;
 		if (turnTimer) clearTimeout(turnTimer);
-		turnAbortReason = 'cancelled';
+		turnAbortReason = "cancelled";
 		turnController?.abort();
 		turnController = null;
 	});
@@ -53,27 +57,36 @@
 	let messagesEl: HTMLDivElement | undefined = $state();
 
 	function blocksText(blocks: ContentBlock[]): string {
-		return blocks.filter((b) => b.type === 'text').map((b) => (b as any).text).join('');
+		return blocks
+			.filter((b) => b.type === "text")
+			.map((b) => (b as any).text)
+			.join("");
 	}
 	function imageBlocks(blocks: ContentBlock[]) {
-		return blocks.filter((block) => block.type === 'image') as Extract<
+		return blocks.filter((block) => block.type === "image") as Extract<
 			ContentBlock,
-			{ type: 'image' }
+			{ type: "image" }
 		>[];
 	}
-	function imageSource(image: Extract<ContentBlock, { type: 'image' }> | PreparedImage) {
+	function imageSource(
+		image: Extract<ContentBlock, { type: "image" }> | PreparedImage,
+	) {
 		return `data:${image.mimeType};base64,${image.data}`;
 	}
 	function toolCalls(blocks: ContentBlock[]) {
-		return blocks.filter((b) => b.type === 'toolCall') as Extract<
+		return blocks.filter((b) => b.type === "toolCall") as Extract<
 			ContentBlock,
-			{ type: 'toolCall' }
+			{ type: "toolCall" }
 		>[];
 	}
-	function toolResult(callId: string): { failed: boolean; error: string } | null {
-		const result = messages.find((m) => m.role === 'toolResult' && m.toolCallId === callId);
+	function toolResult(
+		callId: string,
+	): { failed: boolean; error: string } | null {
+		const result = messages.find(
+			(m) => m.role === "toolResult" && m.toolCallId === callId,
+		);
 		if (!result) return null;
-		let error = '';
+		let error = "";
 		if (result.isError) {
 			try {
 				error = JSON.parse(blocksText(result.content));
@@ -87,9 +100,9 @@
 	async function load(id = sessionId) {
 		// A completed turn from a previous route must not invalidate the current
 		// session's in-flight load generation.
-		if (id !== 'new' && id !== sessionId) return;
+		if (id !== "new" && id !== sessionId) return;
 		const generation = ++loadGeneration;
-		if (id === 'new') {
+		if (id === "new") {
 			if (creatingNew) return;
 			creatingNew = true;
 			try {
@@ -104,7 +117,7 @@
 		const found = (await getSession(id)) ?? null;
 		if (generation !== loadGeneration || id !== sessionId) return;
 		if (!found) {
-			await goto('/chat', { replaceState: true });
+			await goto("/chat", { replaceState: true });
 			return;
 		}
 		session = found;
@@ -118,11 +131,16 @@
 	/** 设置页等入口会预先写入 user 消息；进入会话后自动让卡卡回答。 */
 	async function triggerPendingTurn(id: string, loaded: DBMessage[]) {
 		if (sending || !app.aiConfig) return;
-		const lastUserIndex = loaded.findLastIndex((message) => message.role === 'user');
+		const lastUserIndex = loaded.findLastIndex(
+			(message) => message.role === "user",
+		);
 		if (
 			lastUserIndex < 0 ||
-			loaded.slice(lastUserIndex + 1).some((message) => message.role === 'assistant' && !message.synthetic)
-		) return;
+			loaded
+				.slice(lastUserIndex + 1)
+				.some((message) => message.role === "assistant" && !message.synthetic)
+		)
+			return;
 		const userMessage = loaded[lastUserIndex];
 		if (attemptedUserMessages.has(userMessage.id)) return;
 		attemptedUserMessages.add(userMessage.id);
@@ -132,11 +150,16 @@
 	// 切换会话时重新加载；单一入口避免 /chat/new 重复创建。
 	$effect(() => {
 		const id = sessionId;
-		if (turnController && turnSessionId && turnSessionId !== id && !turnController.signal.aborted) {
-			turnAbortReason = 'cancelled';
+		if (
+			turnController &&
+			turnSessionId &&
+			turnSessionId !== id &&
+			!turnController.signal.aborted
+		) {
+			turnAbortReason = "cancelled";
 			turnController.abort();
 		}
-		if (page.url.pathname.startsWith('/chat/')) {
+		if (page.url.pathname.startsWith("/chat/")) {
 			void load(id).catch((error) => showError(error));
 		}
 	});
@@ -152,7 +175,7 @@
 	async function scrollMessagesToBottom() {
 		await tick();
 		if (!messagesEl) return;
-		messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+		messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
 	}
 
 	function showError(error: unknown) {
@@ -164,11 +187,14 @@
 		turnController = controller;
 		turnSessionId = id;
 		turnAbortReason = null;
-		turnTimer = setTimeout(() => {
-			if (turnController !== controller) return;
-			turnAbortReason = 'timeout';
-			controller.abort();
-		}, 5 * 60 * 1000);
+		turnTimer = setTimeout(
+			() => {
+				if (turnController !== controller) return;
+				turnAbortReason = "timeout";
+				controller.abort();
+			},
+			5 * 60 * 1000,
+		);
 		return controller;
 	}
 
@@ -182,7 +208,7 @@
 
 	function cancelTurn() {
 		if (!turnController || turnController.signal.aborted) return;
-		turnAbortReason = 'cancelled';
+		turnAbortReason = "cancelled";
 		turnController.abort();
 	}
 
@@ -200,19 +226,19 @@
 					});
 				},
 				onAssistantMessage: () => {
-					if (id === sessionId) streamText = '';
+					if (id === sessionId) streamText = "";
 				},
 				onError: (message) => {
 					if (id !== sessionId) return;
 					errorMsg =
-						turnAbortReason === 'timeout'
+						turnAbortReason === "timeout"
 							? m.chat_request_timeout()
-							: turnAbortReason === 'cancelled'
+							: turnAbortReason === "cancelled"
 								? m.chat_request_cancelled()
 								: message;
-				}
+				},
 			},
-			signal
+			signal,
 		);
 	}
 
@@ -220,7 +246,7 @@
 		// Release the composer before refreshing messages. A failed or stalled
 		// refresh must never leave this session permanently locked.
 		sending = false;
-		streamText = '';
+		streamText = "";
 		if (destroyed) return;
 		const refreshId = id === sessionId ? id : sessionId;
 		try {
@@ -233,15 +259,16 @@
 	async function runAgent(id: string) {
 		if (sending) return;
 		sending = true;
-		errorMsg = '';
-		streamText = '';
+		errorMsg = "";
+		streamText = "";
 		const controller = beginTurn(id);
 		try {
 			await processAgent(id, controller.signal);
 		} catch (error) {
 			if (id === sessionId) {
-				if (turnAbortReason === 'timeout') errorMsg = m.chat_request_timeout();
-				else if (turnAbortReason === 'cancelled') errorMsg = m.chat_request_cancelled();
+				if (turnAbortReason === "timeout") errorMsg = m.chat_request_timeout();
+				else if (turnAbortReason === "cancelled")
+					errorMsg = m.chat_request_cancelled();
 				else showError(error);
 			}
 		} finally {
@@ -252,18 +279,18 @@
 
 	function imageErrorMessage(error: unknown): string {
 		if (!(error instanceof ImagePreparationError)) return m.chat_image_failed();
-		if (error.code === 'unsupported') return m.chat_image_unsupported();
-		if (error.code === 'too-large') return m.chat_image_too_large();
+		if (error.code === "unsupported") return m.chat_image_unsupported();
+		if (error.code === "too-large") return m.chat_image_too_large();
 		return m.chat_image_failed();
 	}
 
 	async function selectImage(event: Event) {
 		const target = event.currentTarget as HTMLInputElement;
 		const file = target.files?.[0];
-		target.value = '';
+		target.value = "";
 		if (!file || sending || preparingImage) return;
 		preparingImage = true;
-		errorMsg = '';
+		errorMsg = "";
 		try {
 			selectedImage = await prepareImage(file);
 		} catch (error) {
@@ -278,29 +305,45 @@
 		const image = selectedImage;
 		const activeSession = session;
 		const id = sessionId;
-		if ((!text && !image) || sending || preparingImage || !activeSession) return;
+		if ((!text && !image) || sending || preparingImage || !activeSession)
+			return;
 
 		// Claim the turn before any IndexedDB work so double taps cannot create an
 		// unprocessed message and the thinking indicator appears immediately.
 		sending = true;
 		const controller = beginTurn(id);
-		input = '';
+		input = "";
 		selectedImage = null;
-		errorMsg = '';
-		streamText = '';
+		errorMsg = "";
+		streamText = "";
 		let persisted = false;
 		try {
 			const content: ContentBlock[] = [];
-			if (text) content.push({ type: 'text', text });
-			if (image) content.push({ type: 'image', data: image.data, mimeType: image.mimeType });
-			const userMessage = await addUserMessageWithMemorySync({ sessionId: id, content });
+			if (text) content.push({ type: "text", text });
+			if (image)
+				content.push({
+					type: "image",
+					data: image.data,
+					mimeType: image.mimeType,
+				});
+			const userMessage = await addUserMessageWithMemorySync({
+				sessionId: id,
+				content,
+			});
 			persisted = true;
 			attemptedUserMessages.add(userMessage.id);
 			await load(id);
 			controller.signal.throwIfAborted();
 
-			if (activeSession.title === '新对话' || activeSession.title === 'New chat') {
-				const title = text ? (text.length > 16 ? text.slice(0, 16) + '…' : text) : m.chat_image_title();
+			if (
+				activeSession.title === "新对话" ||
+				activeSession.title === "New chat"
+			) {
+				const title = text
+					? text.length > 16
+						? text.slice(0, 16) + "…"
+						: text
+					: m.chat_image_title();
 				await renameSession(id, title);
 				controller.signal.throwIfAborted();
 				session = { ...activeSession, title };
@@ -310,8 +353,9 @@
 			await processAgent(id, controller.signal);
 		} catch (error) {
 			if (id === sessionId) {
-				if (turnAbortReason === 'timeout') errorMsg = m.chat_request_timeout();
-				else if (turnAbortReason === 'cancelled') errorMsg = m.chat_request_cancelled();
+				if (turnAbortReason === "timeout") errorMsg = m.chat_request_timeout();
+				else if (turnAbortReason === "cancelled")
+					errorMsg = m.chat_request_cancelled();
 				else showError(error);
 				if (!persisted) {
 					input = text;
@@ -325,7 +369,7 @@
 	}
 
 	function onKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
+		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			send();
 		}

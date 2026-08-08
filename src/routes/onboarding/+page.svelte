@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
-	import * as m from '$lib/paraglide/messages';
+	import { goto } from "$app/navigation";
+	import { app } from "$lib/context/appContext.svelte";
+	import * as m from "$lib/paraglide/messages";
+	import { getLocale, type Locale, setLocale } from "$lib/paraglide/runtime";
 
 	let locale = $state<Locale>(getLocale());
 
 	$effect(() => {
-		if (app.onboarded) void goto('/', { replaceState: true });
+		if (app.onboarded) void goto("/", { replaceState: true });
 	});
 
 	function changeLanguage(next: Locale) {

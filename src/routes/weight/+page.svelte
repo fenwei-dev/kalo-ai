@@ -1,39 +1,66 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import InteractiveWeightChart, { type WeightPoint } from '$lib/components/charts/InteractiveWeightChart.svelte';
-	import { getWeightEntries } from '$lib/db/repositories';
-	import type { WeightEntry } from '$lib/db/schema';
-	import { app } from '$lib/context/appContext.svelte';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import * as m from '$lib/paraglide/messages';
-	import { localDateOffset, parseLocalDate } from '$lib/utils/date';
+	import { Block, BlockTitle, Segmented, SegmentedButton } from "konsta/svelte";
+	import { onMount } from "svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import InteractiveWeightChart, {
+		type WeightPoint,
+	} from "$lib/components/charts/InteractiveWeightChart.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import { getWeightEntries } from "$lib/db/repositories";
+	import type { WeightEntry } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
+	import { getLocale } from "$lib/paraglide/runtime";
+	import { localDateOffset, parseLocalDate } from "$lib/utils/date";
 
-	type Range = '7d' | '30d' | '1y' | 'all';
-	let range = $state<Range>('30d');
+	type Range = "7d" | "30d" | "1y" | "all";
+	let range = $state<Range>("30d");
 	let entries = $state<WeightEntry[]>([]);
 	let selected = $state<WeightPoint | null>(null);
 
-	const rangeDays: Record<Exclude<Range, 'all'>, number> = { '7d': 7, '30d': 30, '1y': 365 };
+	const rangeDays: Record<Exclude<Range, "all">, number> = {
+		"7d": 7,
+		"30d": 30,
+		"1y": 365,
+	};
 	const round = (value: number) => Math.round(value * 10) / 10;
-	const signed = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
-	const dateFormat = new Intl.DateTimeFormat(getLocale(), { year: 'numeric', month: 'short', day: 'numeric' });
+	const signed = (value: number) =>
+		`${value > 0 ? "+" : ""}${value.toFixed(1)}`;
+	const dateFormat = new Intl.DateTimeFormat(getLocale(), {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
 
 	onMount(async () => {
 		entries = await getWeightEntries();
 	});
 
-	let sorted = $derived([...entries].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt));
+	let sorted = $derived(
+		[...entries].sort(
+			(a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt,
+		),
+	);
 	let visible = $derived(
-		range === 'all'
+		range === "all"
 			? sorted
-			: sorted.filter((entry) => entry.date >= localDateOffset(-(rangeDays[range as Exclude<Range, 'all'>] - 1)))
+			: sorted.filter(
+					(entry) =>
+						entry.date >=
+						localDateOffset(-(rangeDays[range as Exclude<Range, "all">] - 1)),
+				),
 	);
 	let points = $derived(buildPoints(visible));
 	let current = $derived(sorted.at(-1)?.weight ?? null);
-	let change = $derived(visible.length >= 2 ? round(visible.at(-1)!.weight - visible[0].weight) : null);
-	let goalDistance = $derived(current != null && app.user?.targetWeight != null ? round(current - app.user.targetWeight) : null);
+	let change = $derived(
+		visible.length >= 2
+			? round(visible.at(-1)!.weight - visible[0].weight)
+			: null,
+	);
+	let goalDistance = $derived(
+		current != null && app.user?.targetWeight != null
+			? round(current - app.user.targetWeight)
+			: null,
+	);
 
 	function buildPoints(items: WeightEntry[]): WeightPoint[] {
 		const base = items.map((entry, index) => {
@@ -45,8 +72,15 @@
 		return base.map((point) => {
 			const cutoff = new Date(point.at);
 			cutoff.setDate(cutoff.getDate() - 6);
-			const window = base.filter((candidate) => candidate.at >= cutoff && candidate.at <= point.at);
-			return { ...point, average: round(window.reduce((sum, item) => sum + item.weight, 0) / window.length) };
+			const window = base.filter(
+				(candidate) => candidate.at >= cutoff && candidate.at <= point.at,
+			);
+			return {
+				...point,
+				average: round(
+					window.reduce((sum, item) => sum + item.weight, 0) / window.length,
+				),
+			};
 		});
 	}
 
@@ -63,7 +97,6 @@
 	function displayDate(entry: WeightEntry): string {
 		return dateFormat.format(parseLocalDate(entry.date));
 	}
-
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden">

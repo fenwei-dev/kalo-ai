@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { Block, BlockTitle } from 'konsta/svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import ExternalLink from '$lib/components/ExternalLink.svelte';
-	import * as m from '$lib/paraglide/messages';
+	import { Block, BlockTitle } from "konsta/svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import ExternalLink from "$lib/components/ExternalLink.svelte";
+	import * as m from "$lib/paraglide/messages";
 
 	const links = {
-		openRouterModels: 'https://openrouter.ai/collections/free-models',
-		openRouterFree: 'https://openrouter.ai/openrouter/free',
-		ollama: 'https://github.com/ollama/ollama',
-		llamaCpp: 'https://github.com/ggml-org/llama.cpp',
-		termux: 'https://github.com/termux/termux-app',
-		mnnChat: 'https://github.com/alibaba/MNN/tree/master/apps/Android/MnnLlmChat'
+		openRouterModels: "https://openrouter.ai/collections/free-models",
+		openRouterFree: "https://openrouter.ai/openrouter/free",
+		ollama: "https://github.com/ollama/ollama",
+		llamaCpp: "https://github.com/ggml-org/llama.cpp",
+		termux: "https://github.com/termux/termux-app",
+		mnnChat:
+			"https://github.com/alibaba/MNN/tree/master/apps/Android/MnnLlmChat",
 	};
 </script>
 

@@ -1,10 +1,12 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages';
-	let { weights, height = 48 }: { weights: number[]; height?: number } = $props();
+	import * as m from "$lib/paraglide/messages";
+
+	let { weights, height = 48 }: { weights: number[]; height?: number } =
+		$props();
 
 	let points = $derived.by(() => {
 		const w = weights;
-		if (w.length < 2) return '';
+		if (w.length < 2) return "";
 		const min = Math.min(...w);
 		const max = Math.max(...w);
 		const span = max - min || 1;
@@ -16,10 +18,14 @@
 				const y = H - ((val - min) / span) * (H - 8) - 4;
 				return `${x.toFixed(1)},${y.toFixed(1)}`;
 			})
-			.join(' ');
+			.join(" ");
 	});
 
-	let delta = $derived(weights.length >= 2 ? +(weights[weights.length - 1] - weights[0]).toFixed(1) : 0);
+	let delta = $derived(
+		weights.length >= 2
+			? +(weights[weights.length - 1] - weights[0]).toFixed(1)
+			: 0,
+	);
 </script>
 
 {#if weights.length >= 2}

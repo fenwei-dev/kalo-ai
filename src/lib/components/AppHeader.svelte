@@ -1,14 +1,14 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages';
+	import * as m from "$lib/paraglide/messages";
 
 	let {
 		title,
-		subtitle = '',
+		subtitle = "",
 		backHref,
-		actionLabel = '',
+		actionLabel = "",
 		actionHref,
 		onaction,
-		disabled = false
+		disabled = false,
 	}: {
 		title: string;
 		subtitle?: string;

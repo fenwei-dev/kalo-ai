@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import * as m from '$lib/paraglide/messages';
+	import { page } from "$app/state";
+	import * as m from "$lib/paraglide/messages";
 
 	let { unread = 0 }: { unread?: number } = $props();
 
 	let pathname = $derived(page.url.pathname);
 	let hidden = $derived(
-		pathname === '/about' ||
-		pathname === '/help' ||
-		pathname === '/weight' ||
-		pathname.startsWith('/onboarding')
+		pathname === "/about" ||
+			pathname === "/help" ||
+			pathname === "/weight" ||
+			pathname.startsWith("/onboarding"),
 	);
 
 	const isActive = (href: string) =>
-		href === '/' ? pathname === '/' : pathname.startsWith(href);
+		href === "/" ? pathname === "/" : pathname.startsWith(href);
 </script>
 
 {#if !hidden}

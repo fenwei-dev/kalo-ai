@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import * as m from '$lib/paraglide/messages';
+	import { page } from "$app/state";
+	import * as m from "$lib/paraglide/messages";
 
 	let { children } = $props();
 	let step = $derived(
-		page.url.pathname === '/onboarding/profile' ? 1 : page.url.pathname === '/onboarding/ai' ? 2 : 0
+		page.url.pathname === "/onboarding/profile"
+			? 1
+			: page.url.pathname === "/onboarding/ai"
+				? 2
+				: 0,
 	);
 </script>
 

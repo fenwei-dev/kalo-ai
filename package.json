@@ -10,9 +10,11 @@
 		"deploy": "bun run build && wrangler deploy",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"fmt": "biome check --write"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.7",
 		"@inlang/paraglide-js": "^2.18.2",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.63.0",

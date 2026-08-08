@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Block, BlockTitle } from 'konsta/svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import * as m from '$lib/paraglide/messages';
+	import { Block, BlockTitle } from "konsta/svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import * as m from "$lib/paraglide/messages";
 
-	const githubUrl = 'https://github.com/fenwei-dev/kalo-ai';
-	const version = '0.0.1';
+	const githubUrl = "https://github.com/fenwei-dev/kalo-ai";
+	const version = "0.0.1";
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden">

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { App } from 'konsta/svelte';
-	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
-	import Nav from '$lib/components/Nav.svelte';
-	import { app } from '$lib/context/appContext.svelte';
-	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
-	import { getLocale } from '$lib/paraglide/runtime';
+	import { App } from "konsta/svelte";
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import Nav from "$lib/components/Nav.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import "./layout.css";
+	import favicon from "$lib/assets/favicon.svg";
+	import { getLocale } from "$lib/paraglide/runtime";
 
 	let { children } = $props();
 
@@ -15,8 +15,8 @@
 		document.documentElement.lang = getLocale();
 		app.init();
 		// 注册 PWA service worker
-		import('virtual:pwa-register').then(({ registerSW }) =>
-			registerSW({ immediate: true })
+		import("virtual:pwa-register").then(({ registerSW }) =>
+			registerSW({ immediate: true }),
 		);
 	});
 
@@ -26,12 +26,14 @@
 		const pathname = page.url.pathname;
 
 		if (!app.profileConfigured) {
-			const allowed = pathname === '/onboarding' || pathname === '/onboarding/profile';
-			if (!allowed) void goto('/onboarding', { replaceState: true });
+			const allowed =
+				pathname === "/onboarding" || pathname === "/onboarding/profile";
+			if (!allowed) void goto("/onboarding", { replaceState: true });
 			return;
 		}
 		if (!app.aiConfigured) {
-			if (pathname !== '/onboarding/ai') void goto('/onboarding/ai', { replaceState: true });
+			if (pathname !== "/onboarding/ai")
+				void goto("/onboarding/ai", { replaceState: true });
 			return;
 		}
 		// Completed onboarding pages navigate explicitly after their writes finish.

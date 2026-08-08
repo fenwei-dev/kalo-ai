@@ -1,17 +1,23 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { Dialog, DialogButton } from 'konsta/svelte';
-	import { app } from '$lib/context/appContext.svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import ProgressRing from '$lib/components/charts/ProgressRing.svelte';
-	import WeightSparkline from '$lib/components/charts/WeightSparkline.svelte';
-	import * as m from '$lib/paraglide/messages';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import { localDateISO, localDateOffset, parseLocalDate } from '$lib/utils/date';
+	import { Dialog, DialogButton } from "konsta/svelte";
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import ProgressRing from "$lib/components/charts/ProgressRing.svelte";
+	import WeightSparkline from "$lib/components/charts/WeightSparkline.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import * as m from "$lib/paraglide/messages";
+	import { getLocale } from "$lib/paraglide/runtime";
+	import {
+		localDateISO,
+		localDateOffset,
+		parseLocalDate,
+	} from "$lib/utils/date";
 
 	let intake = $derived(app.today.food.reduce((s, e) => s + e.calories, 0));
-	let burned = $derived(app.today.exercise.reduce((s, e) => s + e.caloriesBurned, 0));
+	let burned = $derived(
+		app.today.exercise.reduce((s, e) => s + e.caloriesBurned, 0),
+	);
 	let protein = $derived(app.today.food.reduce((s, e) => s + e.protein, 0));
 	let carbs = $derived(app.today.food.reduce((s, e) => s + e.carbs, 0));
 	let fat = $derived(app.today.food.reduce((s, e) => s + e.fat, 0));
@@ -22,9 +28,12 @@
 		const start = localDateOffset(-29, parseLocalDate(app.viewDate));
 		const latestByDate = new Map<string, (typeof app.weightHistory)[number]>();
 		for (const entry of app.weightHistory) {
-			if (entry.date >= start && entry.date <= app.viewDate) latestByDate.set(entry.date, entry);
+			if (entry.date >= start && entry.date <= app.viewDate)
+				latestByDate.set(entry.date, entry);
 		}
-		return [...latestByDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+		return [...latestByDate.values()].sort((a, b) =>
+			a.date.localeCompare(b.date),
+		);
 	}
 	let currentDate = $derived(localDateISO());
 	let isToday = $derived(app.viewDate === currentDate);
@@ -37,14 +46,14 @@
 	onMount(() => {
 		const refresh = () => void app.refreshToday();
 		const refreshWhenVisible = () => {
-			if (document.visibilityState === 'visible') refresh();
+			if (document.visibilityState === "visible") refresh();
 		};
 		refresh();
-		window.addEventListener('focus', refresh);
-		document.addEventListener('visibilitychange', refreshWhenVisible);
+		window.addEventListener("focus", refresh);
+		document.addEventListener("visibilitychange", refreshWhenVisible);
 		return () => {
-			window.removeEventListener('focus', refresh);
-			document.removeEventListener('visibilitychange', refreshWhenVisible);
+			window.removeEventListener("focus", refresh);
+			document.removeEventListener("visibilitychange", refreshWhenVisible);
 		};
 	});
 
@@ -52,7 +61,10 @@
 		if (value === localDateISO()) return m.home_selected_today();
 		if (value === localDateOffset(-1)) return m.home_selected_yesterday();
 		return new Intl.DateTimeFormat(getLocale(), {
-			month: 'short', day: 'numeric', weekday: 'short', year: 'numeric'
+			month: "short",
+			day: "numeric",
+			weekday: "short",
+			year: "numeric",
 		}).format(parseLocalDate(value));
 	}
 
@@ -62,7 +74,8 @@
 	}
 
 	async function applyDate() {
-		if (pendingDate && pendingDate <= localDateISO()) await app.setViewDate(pendingDate);
+		if (pendingDate && pendingDate <= localDateISO())
+			await app.setViewDate(pendingDate);
 		dateDialogOpen = false;
 	}
 
@@ -74,9 +87,21 @@
 
 	let todayList = $derived(
 		[
-			...app.today.food.map((f) => ({ kind: 'food' as const, time: f.time, icon: '🍽️', name: f.name, value: `${f.calories} kcal` })),
-			...app.today.exercise.map((e) => ({ kind: 'exercise' as const, time: e.time, icon: '🏃', name: e.description, value: `-${e.caloriesBurned} kcal` }))
-		].sort((a, b) => b.time.localeCompare(a.time))
+			...app.today.food.map((f) => ({
+				kind: "food" as const,
+				time: f.time,
+				icon: "🍽️",
+				name: f.name,
+				value: `${f.calories} kcal`,
+			})),
+			...app.today.exercise.map((e) => ({
+				kind: "exercise" as const,
+				time: e.time,
+				icon: "🏃",
+				name: e.description,
+				value: `-${e.caloriesBurned} kcal`,
+			})),
+		].sort((a, b) => b.time.localeCompare(a.time)),
 	);
 </script>
 

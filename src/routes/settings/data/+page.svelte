@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { Block, BlockTitle, Button } from 'konsta/svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import AppDialog from '$lib/components/AppDialog.svelte';
-	import { app } from '$lib/context/appContext.svelte';
-	import { clearAllData, exportAll, importAll } from '$lib/db/repositories';
-	import { localDateISO } from '$lib/utils/date';
-	import * as m from '$lib/paraglide/messages';
+	import { Block, BlockTitle, Button } from "konsta/svelte";
+	import AppDialog from "$lib/components/AppDialog.svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import { clearAllData, exportAll, importAll } from "$lib/db/repositories";
+	import * as m from "$lib/paraglide/messages";
+	import { localDateISO } from "$lib/utils/date";
 
 	let importing = $state(false);
 	let confirmingClear = $state(false);
 	let exportDialogOpen = $state(false);
 	let importDialogOpen = $state(false);
 	let resultDialogOpen = $state(false);
-	let resultTitle = $state('');
-	let resultMessage = $state('');
+	let resultTitle = $state("");
+	let resultMessage = $state("");
 	let pendingImport: { text: string; input: HTMLInputElement } | null = null;
 
 	async function handleExport() {
@@ -26,9 +26,11 @@
 
 	async function performExport() {
 		const data = await exportAll();
-		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+		const blob = new Blob([JSON.stringify(data, null, 2)], {
+			type: "application/json",
+		});
 		const url = URL.createObjectURL(blob);
-		const anchor = document.createElement('a');
+		const anchor = document.createElement("a");
 		anchor.href = url;
 		anchor.download = `kalo-backup-${localDateISO()}.json`;
 		anchor.click();
@@ -45,7 +47,7 @@
 			importDialogOpen = true;
 		} catch {
 			showResult(m.settings_import_failed_title(), m.settings_import_failed());
-			input.value = '';
+			input.value = "";
 			importing = false;
 		}
 	}
@@ -56,18 +58,21 @@
 		try {
 			await importAll(JSON.parse(text));
 			await app.reload();
-			showResult(m.settings_import_success_title(), m.settings_import_success());
+			showResult(
+				m.settings_import_success_title(),
+				m.settings_import_success(),
+			);
 		} catch {
 			showResult(m.settings_import_failed_title(), m.settings_import_failed());
 		} finally {
 			pendingImport = null;
-			input.value = '';
+			input.value = "";
 			importing = false;
 		}
 	}
 
 	function cancelImport() {
-		if (pendingImport) pendingImport.input.value = '';
+		if (pendingImport) pendingImport.input.value = "";
 		pendingImport = null;
 		importing = false;
 	}

@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { Dialog, DialogButton } from 'konsta/svelte';
-	import * as m from '$lib/paraglide/messages';
+	import { Dialog, DialogButton } from "konsta/svelte";
+	import * as m from "$lib/paraglide/messages";
 
 	let {
 		open = $bindable(false),
 		title,
 		message,
-		kind = 'alert',
+		kind = "alert",
 		confirmLabel,
 		onconfirm,
-		onclose
+		onclose,
 	}: {
 		open: boolean;
 		title: string;
 		message: string;
-		kind?: 'alert' | 'confirm';
+		kind?: "alert" | "confirm";
 		confirmLabel?: string;
 		onconfirm?: () => void | Promise<void>;
 		onclose?: () => void;

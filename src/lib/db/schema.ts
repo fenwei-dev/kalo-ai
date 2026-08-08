@@ -1,22 +1,30 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table } from "dexie";
 
 // ---------- 基础枚举 / 类型 ----------
 
-export type Gender = 'male' | 'female';
-export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+export type Gender = "male" | "female";
+export type ActivityLevel =
+	| "sedentary"
+	| "light"
+	| "moderate"
+	| "active"
+	| "very_active";
 
 /** AI provider 的 API 协议类型，用户在设置页自配 */
-export type ApiType = 'openai-completions' | 'openai-responses' | 'anthropic-messages';
+export type ApiType =
+	| "openai-completions"
+	| "openai-responses"
+	| "anthropic-messages";
 
-export type FoodCategory = 'meal' | 'snack' | 'drink' | 'fruit' | 'other';
-export type FoodSource = 'ai' | 'library' | 'manual';
-export type ExerciseSource = 'manual' | 'health_app' | 'watch';
+export type FoodCategory = "meal" | "snack" | "drink" | "fruit" | "other";
+export type FoodSource = "ai" | "library" | "manual";
+export type ExerciseSource = "manual" | "health_app" | "watch";
 
 // ---------- 实体 ----------
 
 /** 单例：整个 app 只有一条 User 记录，id 固定为 'me' */
 export interface User {
-	id: 'me';
+	id: "me";
 	age: number;
 	gender: Gender;
 	height: number; // cm
@@ -33,7 +41,7 @@ export interface User {
 
 /** 单例：id 固定为 'singleton' */
 export interface AIConfig {
-	id: 'singleton';
+	id: "singleton";
 	apiType: ApiType;
 	baseUrl?: string; // 留空 = 各 API 官方端点
 	apiKey: string;
@@ -43,7 +51,7 @@ export interface AIConfig {
 
 /** 单例：Agent 跨会话使用的自由格式 Markdown 用户记忆。 */
 export interface UserMemory {
-	id: 'user-memory';
+	id: "user-memory";
 	content: string;
 	version: number;
 	updatedAt: number;
@@ -108,11 +116,16 @@ export interface Session {
 
 /** pi-ai 风格的内容块 */
 export type ContentBlock =
-	| { type: 'text'; text: string }
-	| { type: 'toolCall'; id: string; name: string; arguments: Record<string, any> }
-	| { type: 'image'; data: string; mimeType: string };
+	| { type: "text"; text: string }
+	| {
+			type: "toolCall";
+			id: string;
+			name: string;
+			arguments: Record<string, any>;
+	  }
+	| { type: "image"; data: string; mimeType: string };
 
-export type MessageRole = 'user' | 'assistant' | 'toolResult';
+export type MessageRole = "user" | "assistant" | "toolResult";
 
 export interface Message {
 	id: string;
@@ -144,27 +157,27 @@ class KaloDB extends Dexie {
 	messages!: Table<Message, string>;
 
 	constructor() {
-		super('kalo-ai');
+		super("kalo-ai");
 		this.version(1).stores({
-			user: 'id',
-			aiConfig: 'id',
-			foodEntries: 'id, date, [date+time], source',
-			exerciseEntries: 'id, date, source',
-			weightEntries: 'id, date',
-			foodLibrary: 'id, name, category, lastUsedAt',
-			sessions: 'id, updatedAt, lastMessageAt',
-			messages: 'id, sessionId, [sessionId+order], order'
+			user: "id",
+			aiConfig: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
 		});
 		this.version(2).stores({
-			user: 'id',
-			aiConfig: 'id',
-			userMemory: 'id',
-			foodEntries: 'id, date, [date+time], source',
-			exerciseEntries: 'id, date, source',
-			weightEntries: 'id, date',
-			foodLibrary: 'id, name, category, lastUsedAt',
-			sessions: 'id, updatedAt, lastMessageAt',
-			messages: 'id, sessionId, [sessionId+order], order'
+			user: "id",
+			aiConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
 		});
 	}
 }

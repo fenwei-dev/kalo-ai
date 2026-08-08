@@ -1,42 +1,43 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import { saveAIConfig } from '$lib/db/repositories';
-	import type { ApiType } from '$lib/db/schema';
-	import { onboardingDestination } from '$lib/utils/onboarding';
-	import * as m from '$lib/paraglide/messages';
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import { app } from "$lib/context/appContext.svelte";
+	import { saveAIConfig } from "$lib/db/repositories";
+	import type { ApiType } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
+	import { onboardingDestination } from "$lib/utils/onboarding";
 
 	const apiTypes: { id: ApiType; label: string }[] = [
-		{ id: 'openai-completions', label: 'Completions' },
-		{ id: 'openai-responses', label: 'Responses' },
-		{ id: 'anthropic-messages', label: 'Anthropic' }
+		{ id: "openai-completions", label: "Completions" },
+		{ id: "openai-responses", label: "Responses" },
+		{ id: "anthropic-messages", label: "Anthropic" },
 	];
 
-	let apiType = $state<ApiType>('openai-completions');
-	let baseUrl = $state('');
-	let apiKey = $state('');
-	let model = $state('');
+	let apiType = $state<ApiType>("openai-completions");
+	let baseUrl = $state("");
+	let apiKey = $state("");
+	let model = $state("");
 	let showKey = $state(false);
 	let saving = $state(false);
-	let errorMsg = $state('');
-	let valid = $derived(apiKey.trim() !== '' && model.trim() !== '');
+	let errorMsg = $state("");
+	let valid = $derived(apiKey.trim() !== "" && model.trim() !== "");
 
 	onMount(() => {
-		if (!app.profileConfigured) void goto('/onboarding', { replaceState: true });
-		else if (app.aiConfigured) void goto('/', { replaceState: true });
+		if (!app.profileConfigured)
+			void goto("/onboarding", { replaceState: true });
+		else if (app.aiConfigured) void goto("/", { replaceState: true });
 	});
 
 	async function save() {
 		if (!valid || saving) return;
 		saving = true;
-		errorMsg = '';
+		errorMsg = "";
 		try {
 			const config = await saveAIConfig({
 				apiType,
 				baseUrl: baseUrl.trim() || undefined,
 				apiKey: apiKey.trim(),
-				model: model.trim()
+				model: model.trim(),
 			});
 			const destination = await onboardingDestination();
 			app.aiConfig = config;

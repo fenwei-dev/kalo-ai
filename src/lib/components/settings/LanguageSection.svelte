@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
-	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
-	import * as m from '$lib/paraglide/messages';
+	import { Block, BlockTitle, Segmented, SegmentedButton } from "konsta/svelte";
+	import * as m from "$lib/paraglide/messages";
+	import { getLocale, type Locale, setLocale } from "$lib/paraglide/runtime";
 
 	let locale = $state<Locale>(getLocale());
 

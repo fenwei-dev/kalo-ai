@@ -3,8 +3,8 @@
 		current,
 		target,
 		label,
-		sublabel = '',
-		color = '#10b981'
+		sublabel = "",
+		color = "#10b981",
 	}: {
 		current: number;
 		target: number;
@@ -16,7 +16,9 @@
 	const R = 52;
 	const C = 2 * Math.PI * R;
 
-	let pct = $derived(target > 0 ? Math.min(1, Math.max(0, current / target)) : 0);
+	let pct = $derived(
+		target > 0 ? Math.min(1, Math.max(0, current / target)) : 0,
+	);
 	let dash = $derived(pct * C);
 </script>
 

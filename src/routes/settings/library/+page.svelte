@@ -1,25 +1,35 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { app } from '$lib/context/appContext.svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
+	import { onMount } from "svelte";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import { app } from "$lib/context/appContext.svelte";
 	import {
+		deleteLibraryItem,
 		listLibrary,
 		upsertLibraryItem,
-		deleteLibraryItem
-	} from '$lib/db/repositories';
-	import type { FoodCategory, FoodLibraryItem } from '$lib/db/schema';
-	import * as m from '$lib/paraglide/messages';
+	} from "$lib/db/repositories";
+	import type { FoodCategory, FoodLibraryItem } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
 
 	let items = $state<FoodLibraryItem[]>([]);
-	let query = $state('');
+	let query = $state("");
 	let editing = $state<Partial<FoodLibraryItem> | null>(null);
 	let saving = $state(false);
 
-	const categories: FoodCategory[] = ['meal', 'snack', 'drink', 'fruit', 'other'];
-	const categoryLabel = (value: FoodCategory) => ({
-		meal: m.category_meal(), snack: m.category_snack(), drink: m.category_drink(),
-		fruit: m.category_fruit(), other: m.category_other()
-	})[value];
+	const categories: FoodCategory[] = [
+		"meal",
+		"snack",
+		"drink",
+		"fruit",
+		"other",
+	];
+	const categoryLabel = (value: FoodCategory) =>
+		({
+			meal: m.category_meal(),
+			snack: m.category_snack(),
+			drink: m.category_drink(),
+			fruit: m.category_fruit(),
+			other: m.category_other(),
+		})[value];
 
 	onMount(reload);
 	async function reload() {
@@ -28,12 +38,14 @@
 
 	let filtered = $derived(
 		query.trim()
-			? items.filter((i) => i.name.toLowerCase().includes(query.trim().toLowerCase()))
-			: items
+			? items.filter((i) =>
+					i.name.toLowerCase().includes(query.trim().toLowerCase()),
+				)
+			: items,
 	);
 
 	function startNew() {
-		editing = { category: 'meal', calories: 0, name: '' };
+		editing = { category: "meal", calories: 0, name: "" };
 	}
 	function startEdit(i: FoodLibraryItem) {
 		editing = { ...i };
@@ -49,11 +61,11 @@
 			await upsertLibraryItem({
 				id: editing.id,
 				name: editing.name,
-				category: (editing.category as FoodCategory) ?? 'meal',
+				category: (editing.category as FoodCategory) ?? "meal",
 				calories: +editing.calories,
 				protein: editing.protein != null ? +editing.protein : undefined,
 				carbs: editing.carbs != null ? +editing.carbs : undefined,
-				fat: editing.fat != null ? +editing.fat : undefined
+				fat: editing.fat != null ? +editing.fat : undefined,
 			});
 			editing = null;
 			await reload();

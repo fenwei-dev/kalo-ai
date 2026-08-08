@@ -1,21 +1,28 @@
 import {
 	getAIConfig,
-	getUser,
-	listSessions,
-	getFoodEntriesByDate,
 	getExerciseEntriesByDate,
+	getFoodEntriesByDate,
+	getUser,
 	getWeightEntries,
-	getWeightEntriesByDate
-} from '$lib/db/repositories';
-import type { AIConfig, ExerciseEntry, FoodEntry, Session, User, WeightEntry } from '$lib/db/schema';
-import { localDateISO } from '$lib/utils/date';
-import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
+	getWeightEntriesByDate,
+	listSessions,
+} from "$lib/db/repositories";
+import type {
+	AIConfig,
+	ExerciseEntry,
+	FoodEntry,
+	Session,
+	User,
+	WeightEntry,
+} from "$lib/db/schema";
+import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
 import {
 	calculateBMR,
 	calculateGoalPlan,
 	calculateTDEE,
-	effectiveTDEE
-} from '$lib/utils/calculations';
+	effectiveTDEE,
+} from "$lib/utils/calculations";
+import { localDateISO } from "$lib/utils/date";
 
 export interface TodayData {
 	food: FoodEntry[];
@@ -52,17 +59,27 @@ class AppState {
 	/** 基础资料是否包含计算代谢所需的有效字段。 */
 	profileConfigured = $derived(
 		!!this.user &&
-		Number.isFinite(this.user.age) && this.user.age >= 13 && this.user.age <= 120 &&
-		Number.isFinite(this.user.height) && this.user.height >= 100 && this.user.height <= 250 &&
-		Number.isFinite(this.user.currentWeight) && this.user.currentWeight >= 25 && this.user.currentWeight <= 400 &&
-		(this.user.gender === 'male' || this.user.gender === 'female') &&
-		['sedentary', 'light', 'moderate', 'active', 'very_active'].includes(this.user.activityLevel)
+			Number.isFinite(this.user.age) &&
+			this.user.age >= 13 &&
+			this.user.age <= 120 &&
+			Number.isFinite(this.user.height) &&
+			this.user.height >= 100 &&
+			this.user.height <= 250 &&
+			Number.isFinite(this.user.currentWeight) &&
+			this.user.currentWeight >= 25 &&
+			this.user.currentWeight <= 400 &&
+			(this.user.gender === "male" || this.user.gender === "female") &&
+			["sedentary", "light", "moderate", "active", "very_active"].includes(
+				this.user.activityLevel,
+			),
 	);
 
 	/** AI 配置是否包含发起请求所需的最小字段。 */
 	aiConfigured = $derived(
-		typeof this.aiConfig?.apiKey === 'string' && this.aiConfig.apiKey.trim().length > 0 &&
-		typeof this.aiConfig?.model === 'string' && this.aiConfig.model.trim().length > 0
+		typeof this.aiConfig?.apiKey === "string" &&
+			this.aiConfig.apiKey.trim().length > 0 &&
+			typeof this.aiConfig?.model === "string" &&
+			this.aiConfig.model.trim().length > 0,
 	);
 
 	/** 必要资料与 AI 配置都齐全后才算完成 onboarding。 */
@@ -70,19 +87,28 @@ class AppState {
 
 	/** 基础代谢 */
 	bmr = $derived(
-		this.user ? calculateBMR(this.user.currentWeight, this.user.height, this.user.age, this.user.gender) : 0
+		this.user
+			? calculateBMR(
+					this.user.currentWeight,
+					this.user.height,
+					this.user.age,
+					this.user.gender,
+				)
+			: 0,
 	);
 
 	/** 公式 TDEE（未含自适应） */
-	formulaTDEE = $derived(this.user ? calculateTDEE(this.bmr, this.user.activityLevel) : 0);
+	formulaTDEE = $derived(
+		this.user ? calculateTDEE(this.bmr, this.user.activityLevel) : 0,
+	);
 
 	/** 用于推荐的日消耗（公式值与可靠的趋势估算渐进混合） */
 	tdee = $derived(
 		effectiveTDEE({
 			adaptiveTDEE: this.user?.adaptiveTDEE,
 			adaptiveConfidence: this.user?.adaptiveConfidence,
-			formulaTDEE: this.formulaTDEE
-		})
+			formulaTDEE: this.formulaTDEE,
+		}),
 	);
 
 	/** 减重目标计划（每周减重 / 每日缺口 / 安全判定） */
@@ -93,13 +119,20 @@ class AppState {
 					targetWeight: this.user.targetWeight,
 					targetDate: this.user.targetDate,
 					bmr: this.bmr,
-					tdee: this.tdee
+					tdee: this.tdee,
 				})
-			: { weeks: null, weeklyRate: null, dailyDeficit: null, safety: 'unknown' as const }
+			: {
+					weeks: null,
+					weeklyRate: null,
+					dailyDeficit: null,
+					safety: "unknown" as const,
+				},
 	);
 
 	/** 今日热量预算（TDEE - 目标缺口；无目标则默认 -500 缺口） */
-	dailyBudget = $derived(this.tdee ? this.tdee - (this.goalPlan.dailyDeficit ?? 500) : 0);
+	dailyBudget = $derived(
+		this.tdee ? this.tdee - (this.goalPlan.dailyDeficit ?? 500) : 0,
+	);
 
 	// ---------- 加载 ----------
 
@@ -132,9 +165,10 @@ class AppState {
 			getFoodEntriesByDate(viewDate),
 			getExerciseEntriesByDate(viewDate),
 			getWeightEntriesByDate(viewDate),
-			getWeightEntries()
+			getWeightEntries(),
 		]);
-		if (generation !== this.todayLoadGeneration || viewDate !== this.viewDate) return;
+		if (generation !== this.todayLoadGeneration || viewDate !== this.viewDate)
+			return;
 		this.today = { food, exercise, weights };
 		this.weightHistory = weightHistory;
 	}

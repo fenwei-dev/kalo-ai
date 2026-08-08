@@ -1,59 +1,100 @@
 <script lang="ts">
-	import { List, ListInput, Block, BlockTitle, Segmented, SegmentedButton } from 'konsta/svelte';
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import AppDialog from '$lib/components/AppDialog.svelte';
 	import {
-		addMessage, addUserMessageWithMemorySync, createSession, saveUser, updateUser, upsertWeightEntryForDate, getUser,
-		getWeightEntriesByDate
-	} from '$lib/db/repositories';
-	import { calculateBMR, calculateGoalPlan, calculateTDEE } from '$lib/utils/calculations';
-	import type { ActivityLevel, Gender } from '$lib/db/schema';
-	import * as m from '$lib/paraglide/messages';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import { localDateISO } from '$lib/utils/date';
-	import { recomputeAdaptiveTDEE } from '$lib/utils/adaptiveTDEE';
+		Block,
+		BlockTitle,
+		List,
+		ListInput,
+		Segmented,
+		SegmentedButton,
+	} from "konsta/svelte";
+	import { goto } from "$app/navigation";
+	import AppDialog from "$lib/components/AppDialog.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import {
+		addMessage,
+		addUserMessageWithMemorySync,
+		createSession,
+		getUser,
+		getWeightEntriesByDate,
+		saveUser,
+		updateUser,
+		upsertWeightEntryForDate,
+	} from "$lib/db/repositories";
+	import type { ActivityLevel, Gender } from "$lib/db/schema";
+	import * as m from "$lib/paraglide/messages";
+	import { getLocale } from "$lib/paraglide/runtime";
+	import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
+	import {
+		calculateBMR,
+		calculateGoalPlan,
+		calculateTDEE,
+	} from "$lib/utils/calculations";
+	import { localDateISO } from "$lib/utils/date";
 
-	const activities: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
-	const activityLabel = (value: ActivityLevel) => ({
-		sedentary: m.activity_sedentary(), light: m.activity_light(), moderate: m.activity_moderate(),
-		active: m.activity_active(), very_active: m.activity_very_active()
-	})[value];
+	const activities: ActivityLevel[] = [
+		"sedentary",
+		"light",
+		"moderate",
+		"active",
+		"very_active",
+	];
+	const activityLabel = (value: ActivityLevel) =>
+		({
+			sedentary: m.activity_sedentary(),
+			light: m.activity_light(),
+			moderate: m.activity_moderate(),
+			active: m.activity_active(),
+			very_active: m.activity_very_active(),
+		})[value];
 
 	const u = app.user;
-	let gender = $state<Gender>(u?.gender ?? 'male');
-	let age = $state<string>(u ? String(u.age) : '');
-	let height = $state<string>(u ? String(u.height) : '');
-	let currentWeight = $state<string>(u ? String(u.currentWeight) : '');
-	let targetWeight = $state<string>(u?.targetWeight ? String(u.targetWeight) : '');
-	let targetDate = $state<string>(u?.targetDate ?? '');
-	let activityLevel = $state<ActivityLevel>(u?.activityLevel ?? 'moderate');
+	let gender = $state<Gender>(u?.gender ?? "male");
+	let age = $state<string>(u ? String(u.age) : "");
+	let height = $state<string>(u ? String(u.height) : "");
+	let currentWeight = $state<string>(u ? String(u.currentWeight) : "");
+	let targetWeight = $state<string>(
+		u?.targetWeight ? String(u.targetWeight) : "",
+	);
+	let targetDate = $state<string>(u?.targetDate ?? "");
+	let activityLevel = $state<ActivityLevel>(u?.activityLevel ?? "moderate");
 
 	let saving = $state(false);
 	let saved = $state(false);
 	let weightConfirmOpen = $state(false);
-	let weightConfirmMode = $state<'create' | 'update'>('create');
+	let weightConfirmMode = $state<"create" | "update">("create");
 
 	let valid = $derived(
-		Number.isFinite(+age) && +age >= 13 && +age <= 120 &&
-		Number.isFinite(+height) && +height >= 100 && +height <= 250 &&
-		Number.isFinite(+currentWeight) && +currentWeight >= 25 && +currentWeight <= 400
+		Number.isFinite(+age) &&
+			+age >= 13 &&
+			+age <= 120 &&
+			Number.isFinite(+height) &&
+			+height >= 100 &&
+			+height <= 250 &&
+			Number.isFinite(+currentWeight) &&
+			+currentWeight >= 25 &&
+			+currentWeight <= 400,
 	);
 
-	const liveBMR = $derived(valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0);
+	const liveBMR = $derived(
+		valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0,
+	);
 	const liveTDEE = $derived(valid ? calculateTDEE(liveBMR, activityLevel) : 0);
-	const goal = $derived(calculateGoalPlan({
-		currentWeight: +currentWeight,
-		targetWeight: targetWeight ? +targetWeight : undefined,
-		targetDate: targetDate || undefined,
-		bmr: liveBMR,
-		tdee: liveTDEE
-	}));
+	const goal = $derived(
+		calculateGoalPlan({
+			currentWeight: +currentWeight,
+			targetWeight: targetWeight ? +targetWeight : undefined,
+			targetDate: targetDate || undefined,
+			bmr: liveBMR,
+			tdee: liveTDEE,
+		}),
+	);
 
 	async function save() {
 		if (!valid) return;
 		if (app.user && +currentWeight !== app.user.currentWeight) {
-			weightConfirmMode = (await getWeightEntriesByDate(localDateISO())).length ? 'update' : 'create';
+			weightConfirmMode = (await getWeightEntriesByDate(localDateISO())).length
+				? "update"
+				: "create";
 			weightConfirmOpen = true;
 			return;
 		}
@@ -63,7 +104,8 @@
 	async function persistProfile() {
 		if (!valid) return;
 		const firstSave = !app.user;
-		const weightChanged = firstSave || +currentWeight !== app.user?.currentWeight;
+		const weightChanged =
+			firstSave || +currentWeight !== app.user?.currentWeight;
 		saving = true;
 		try {
 			const data = {
@@ -74,26 +116,38 @@
 				targetWeight: targetWeight ? +targetWeight : undefined,
 				targetDate: targetDate || undefined,
 				activityLevel,
-				calculatedBMR: liveBMR
+				calculatedBMR: liveBMR,
 			};
 			if (app.user) app.user = (await updateUser(data)) ?? null;
 			else app.user = await saveUser(data);
 			if (weightChanged) {
-				await upsertWeightEntryForDate({ date: localDateISO(), weight: +currentWeight });
+				await upsertWeightEntryForDate({
+					date: localDateISO(),
+					weight: +currentWeight,
+				});
 				await recomputeAdaptiveTDEE();
 				app.user = (await getUser()) ?? app.user;
 				await app.refreshToday();
 			}
 			if (firstSave) {
-				const english = getLocale() === 'en-us';
-				const session = await createSession(english ? 'Meet Kalo' : '认识卡卡');
-				const target = targetWeight ? (english ? `I see you want to reach ${targetWeight} kg. ` : `看到你想减到 ${targetWeight}kg，`) : '';
+				const english = getLocale() === "en-us";
+				const session = await createSession(english ? "Meet Kalo" : "认识卡卡");
+				const target = targetWeight
+					? english
+						? `I see you want to reach ${targetWeight} kg. `
+						: `看到你想减到 ${targetWeight}kg，`
+					: "";
 				await addMessage({
 					sessionId: session.id,
-					role: 'assistant',
-					content: [{ type: 'text', text: english
-						? `Hi, I'm Kalo! ${target}I've calculated your BMR and daily expenditure. Would you like to discuss your goal or log today's food first?`
-						: `你好，我是卡卡！${target}基础代谢和每日消耗已经算好了。接下来想先聊目标，还是记录今天吃了什么？` }]
+					role: "assistant",
+					content: [
+						{
+							type: "text",
+							text: english
+								? `Hi, I'm Kalo! ${target}I've calculated your BMR and daily expenditure. Would you like to discuss your goal or log today's food first?`
+								: `你好，我是卡卡！${target}基础代谢和每日消耗已经算好了。接下来想先聊目标，还是记录今天吃了什么？`,
+						},
+					],
 				});
 				await app.refreshSessions();
 				await goto(`/chat/${session.id}`);

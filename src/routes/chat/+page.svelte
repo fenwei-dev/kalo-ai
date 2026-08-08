@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import AppHeader from '$lib/components/AppHeader.svelte';
-	import { createSession } from '$lib/db/repositories';
-	import * as m from '$lib/paraglide/messages';
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import AppHeader from "$lib/components/AppHeader.svelte";
+	import { app } from "$lib/context/appContext.svelte";
+	import { createSession } from "$lib/db/repositories";
+	import * as m from "$lib/paraglide/messages";
 
 	let creating = $state(false);
 

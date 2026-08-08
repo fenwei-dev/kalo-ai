@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { app } from '$lib/context/appContext.svelte';
-	import { createSession, deleteSession } from '$lib/db/repositories';
-	import * as m from '$lib/paraglide/messages';
+	import { goto } from "$app/navigation";
+	import { app } from "$lib/context/appContext.svelte";
+	import { createSession, deleteSession } from "$lib/db/repositories";
+	import * as m from "$lib/paraglide/messages";
 
-	let { open = $bindable(), currentId = '' }: { open: boolean; currentId: string } = $props();
+	let {
+		open = $bindable(),
+		currentId = "",
+	}: { open: boolean; currentId: string } = $props();
 
 	let creating = $state(false);
 
@@ -20,7 +23,7 @@
 	async function remove(id: string) {
 		await deleteSession(id);
 		await app.refreshSessions();
-		if (id === currentId) goto('/chat');
+		if (id === currentId) goto("/chat");
 	}
 
 	function pick(id: string) {
