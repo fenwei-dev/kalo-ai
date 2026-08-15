@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import SwipeSessionItem from "$lib/components/chat/SwipeSessionItem.svelte";
 	import { app } from "$lib/context/appContext.svelte";
 	import { createSession, deleteSession } from "$lib/db/repositories";
 	import * as m from "$lib/paraglide/messages";
@@ -10,6 +11,11 @@
 	}: { open: boolean; currentId: string } = $props();
 
 	let creating = $state(false);
+	let revealedId = $state<string | null>(null);
+
+	$effect(() => {
+		if (!open) revealedId = null;
+	});
 
 	async function newSession() {
 		creating = true;
@@ -22,6 +28,7 @@
 
 	async function remove(id: string) {
 		await deleteSession(id);
+		revealedId = null;
 		await app.refreshSessions();
 		if (id === currentId) goto("/chat");
 	}
@@ -64,31 +71,19 @@
 				{m.chat_start_new()}
 			</button>
 		</div>
-		<ul class="px-2 pb-4">
+		<ul class="space-y-0.5 px-2 pb-4">
 			{#each app.sessions as s (s.id)}
 				<li>
-					<button
-						onclick={() => pick(s.id)}
-						class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-gray-50
-							{s.id === currentId ? 'bg-emerald-50' : ''}"
-					>
-						<span class="min-w-0 flex-1">
-							<span class="block truncate text-sm font-medium">{s.title}</span>
-							<span class="block text-xs text-gray-400">{timeAgo(s.lastMessageAt)}</span>
-						</span>
-						<span
-							role="button"
-							tabindex="0"
-							class="ml-2 shrink-0 text-gray-300 hover:text-red-400"
-							onclick={async (e) => {
-								e.stopPropagation();
-								await remove(s.id);
-							}}
-							onkeydown={(e) => e.key === 'Enter' && remove(s.id)}
-						>
-							✕
-						</span>
-					</button>
+					<SwipeSessionItem
+						session={s}
+						timeLabel={timeAgo(s.lastMessageAt)}
+						active={s.id === currentId}
+						compact
+						revealed={revealedId === s.id}
+						onreveal={(id) => (revealedId = id)}
+						onselect={pick}
+						ondelete={remove}
+					/>
 				</li>
 			{:else}
 				<li class="px-3 py-6 text-center text-sm text-gray-400">{m.chat_no_sessions()}</li>

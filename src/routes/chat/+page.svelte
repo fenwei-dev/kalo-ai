@@ -2,11 +2,13 @@
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import AppHeader from "$lib/components/AppHeader.svelte";
+	import SwipeSessionItem from "$lib/components/chat/SwipeSessionItem.svelte";
 	import { app } from "$lib/context/appContext.svelte";
-	import { createSession } from "$lib/db/repositories";
+	import { createSession, deleteSession } from "$lib/db/repositories";
 	import * as m from "$lib/paraglide/messages";
 
 	let creating = $state(false);
+	let revealedId = $state<string | null>(null);
 
 	onMount(() => {
 		app.refreshSessions();
@@ -18,6 +20,12 @@
 		await app.refreshSessions();
 		creating = false;
 		goto(`/chat/${s.id}`);
+	}
+
+	async function removeSession(id: string) {
+		await deleteSession(id);
+		revealedId = null;
+		await app.refreshSessions();
 	}
 
 	function timeAgo(ts: number): string {
@@ -37,15 +45,14 @@
 		<ul class="space-y-2">
 			{#each app.sessions as s (s.id)}
 				<li>
-					<button
-						onclick={() => goto(`/chat/${s.id}`)}
-						class="w-full rounded-2xl bg-white p-4 text-left shadow-sm"
-					>
-						<div class="flex items-center justify-between">
-							<span class="font-medium">{s.title}</span>
-							<span class="text-xs text-gray-400">{timeAgo(s.lastMessageAt)}</span>
-						</div>
-					</button>
+					<SwipeSessionItem
+						session={s}
+						timeLabel={timeAgo(s.lastMessageAt)}
+						revealed={revealedId === s.id}
+						onreveal={(id) => (revealedId = id)}
+						onselect={(id) => goto(`/chat/${id}`)}
+						ondelete={removeSession}
+					/>
 				</li>
 			{:else}
 				<li class="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm">

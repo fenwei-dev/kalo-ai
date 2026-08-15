@@ -72,6 +72,8 @@
 	"chat_list_subtitle": "Choose a conversation or start a new one",
 	"chat_new": "New chat",
 	"chat_no_sessions": "No conversations yet. Start one above.",
+	"chat_delete_session": "Delete conversation “{title}”",
+	"chat_deleting_session": "Deleting…",
 	"chat_session_fallback": "Conversation",
 	"chat_unconfigured": "AI not configured",
 	"chat_empty_title": "Chat with Kalo",

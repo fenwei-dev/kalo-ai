@@ -72,6 +72,8 @@
 	"chat_list_subtitle": "选择一个对话，或开始新的聊天",
 	"chat_new": "新对话",
 	"chat_no_sessions": "还没有对话，点上面开始吧",
+	"chat_delete_session": "删除对话「{title}」",
+	"chat_deleting_session": "删除中…",
 	"chat_session_fallback": "对话",
 	"chat_unconfigured": "未配置 AI",
 	"chat_empty_title": "和卡卡聊聊",
