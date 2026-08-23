@@ -20,6 +20,7 @@
 		Session,
 	} from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
+	import { shouldSubmitChatOnEnter } from "$lib/utils/chatInput";
 	import {
 		ImagePreparationError,
 		type PreparedImage,
@@ -44,6 +45,7 @@
 	let loadGeneration = 0;
 	let creatingNew = false;
 	let destroyed = false;
+	let imeComposing = false;
 	const attemptedUserMessages = new Set<string>();
 
 	onDestroy(() => {
@@ -368,11 +370,10 @@
 		}
 	}
 
-	function onKeydown(e: KeyboardEvent) {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			send();
-		}
+	function onKeydown(event: KeyboardEvent) {
+		if (!shouldSubmitChatOnEnter(event, imeComposing)) return;
+		event.preventDefault();
+		send();
 	}
 </script>
 
@@ -519,6 +520,8 @@
 				<textarea
 					rows="1"
 					bind:value={input}
+					oncompositionstart={() => (imeComposing = true)}
+					oncompositionend={() => (imeComposing = false)}
 					onkeydown={onKeydown}
 					placeholder={m.chat_placeholder()}
 					class="max-h-32 flex-1 resize-none rounded-2xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400"
