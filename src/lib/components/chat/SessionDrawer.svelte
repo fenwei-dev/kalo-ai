@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import SwipeSessionItem from "$lib/components/chat/SwipeSessionItem.svelte";
+	import SwipeListItem from "$lib/components/SwipeListItem.svelte";
 	import { app } from "$lib/context/appContext.svelte";
 	import { createSession, deleteSession } from "$lib/db/repositories";
 	import * as m from "$lib/paraglide/messages";
@@ -74,9 +74,12 @@
 		<ul class="space-y-0.5 px-2 pb-4">
 			{#each app.sessions as s (s.id)}
 				<li>
-					<SwipeSessionItem
-						session={s}
-						timeLabel={timeAgo(s.lastMessageAt)}
+					<SwipeListItem
+						id={s.id}
+						title={s.title}
+						subtitle={timeAgo(s.lastMessageAt)}
+						deleteAriaLabel={m.chat_delete_session({ title: s.title })}
+						deletingLabel={m.chat_deleting_session()}
 						active={s.id === currentId}
 						compact
 						revealed={revealedId === s.id}

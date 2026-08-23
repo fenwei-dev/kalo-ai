@@ -19,7 +19,16 @@ export type ApiType =
 
 export type FoodCategory = "meal" | "snack" | "drink" | "fruit" | "other";
 export type FoodSource = "ai" | "library" | "manual";
-export type ExerciseSource = "manual" | "health_app" | "watch";
+export type ExerciseCategory =
+	| "walking"
+	| "running"
+	| "cycling"
+	| "strength"
+	| "swimming"
+	| "sports"
+	| "other";
+export type ExerciseIntensity = "light" | "moderate" | "vigorous";
+export type ExerciseSource = "manual" | "third_party";
 
 // ---------- 实体 ----------
 
@@ -82,6 +91,8 @@ export interface ExerciseEntry {
 	date: string;
 	time: string;
 	description: string;
+	category?: ExerciseCategory;
+	intensity?: ExerciseIntensity;
 	duration: number; // 分钟
 	caloriesBurned: number;
 	source: ExerciseSource;
@@ -197,6 +208,29 @@ class KaloDB extends Dexie {
 			sessions: "id, updatedAt, lastMessageAt",
 			messages: "id, sessionId, [sessionId+order], order",
 		});
+		this.version(3)
+			.stores({
+				user: "id",
+				aiConfig: "id",
+				userMemory: "id",
+				foodEntries: "id, date, [date+time], source",
+				exerciseEntries: "id, date, source",
+				weightEntries: "id, date",
+				foodLibrary: "id, name, category, lastUsedAt",
+				sessions: "id, updatedAt, lastMessageAt",
+				messages: "id, sessionId, [sessionId+order], order",
+			})
+			.upgrade((transaction) =>
+				transaction
+					.table("exerciseEntries")
+					.toCollection()
+					.modify((entry: { source?: string }) => {
+						entry.source =
+							entry.source === "health_app" || entry.source === "watch"
+								? "third_party"
+								: "manual";
+					}),
+			);
 	}
 }
 

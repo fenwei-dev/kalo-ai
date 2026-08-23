@@ -55,8 +55,8 @@ User {
 
 FoodEntry   { id, date, time, name, calories, protein, carbs, fat, tef,
               source: 'ai'|'library'|'manual', createdAt }
-ExerciseEntry { id, date, time, description, duration, caloriesBurned,
-                source: 'manual'|'health_app'|'watch', createdAt }
+ExerciseEntry { id, date, time, description, category?, intensity?, duration,
+                caloriesBurned, source: 'manual'|'third_party', createdAt }
 WeightEntry { id, date, weight, createdAt }
 AIConfig    { id, apiKey, model, updatedAt }
 ```
@@ -154,8 +154,10 @@ logFood({ name, calories, protein, carbs, fat, time?, date? })
 //         更新 lastUsedAt；若库中已有则比对营养值，差异大则保留库中原值）。
 // 返回：写入的 entry + 是否新增/更新了库条目。
 
-logExercise({ description, duration, caloriesBurned, time?, date? })
-// 返回：写入的 entry。
+logExercise({ replaceEntryId?, category?, intensity?, description,
+              duration, caloriesBurned, time?, date? })
+// 新增或按准确 id 修正已完成运动；禁止未来日期，返回 entry + corrected。
+// 消耗值是参考估算，不直接加回每日饮食预算。
 
 logWeight({ weight, date? })
 // 写入 WeightEntry。触发自适应 TDEE 重算。
@@ -223,6 +225,16 @@ updateUserMemory({ content, expectedVersion })
 
 - **空状态**：无数据时只显示 CTA + 引导文案。
 - **主动消息**：agent 后台生成的消息存入一个"默认/每日 session"或独立表，首页展示未读，点击进 AI 页对应 session。
+
+### 1.1 运动记录页
+
+`/exercise` 从首页运动汇总进入，提供 7 天 / 30 天 / 90 天 / 全部范围：
+
+- 汇总训练次数、总时长、活跃天数和估算消耗。
+- LayerChart 每日运动分钟柱状图。
+- 按日期分组的记录列表，支持新增、编辑和左滑确认删除。
+- 手动表单按当前体重、运动类型、强度和时长使用 MET 估算消耗，也允许用户按设备数据修正。
+- 运动消耗仅用于记录与趋势，不直接增加每日饮食预算，避免和 Formula / Adaptive TDEE 重复计算。
 
 ### 2. AI 页（主战场）
 
@@ -402,6 +414,7 @@ src/
 │   ├── utils/
 │   │   ├── calculations.ts        # BMR/TDEE/TEF/目标缺口/安全判定
 │   │   ├── adaptiveTDEE.ts        # 自适应 TDEE
+│   │   ├── exercise.ts            # MET 运动消耗估算
 │   │   ├── trends.ts              # 趋势分析（平台期/异常/预测）
 │   │   └── librarySync.ts         # logFood 后自动沉淀食物库
 │   ├── context/
@@ -416,6 +429,7 @@ src/
 │   │   └── charts/
 │   │       ├── ProgressRing.svelte
 │   │       ├── WeightTrend.svelte
+│   │       ├── ExerciseMinutesChart.svelte
 │   │       └── CalorieTrend.svelte
 │   ├── paraglide/                 # 自动生成
 │   └── assets/
@@ -423,6 +437,7 @@ src/
 │   ├── +layout.svelte             # Konsta App 包根 + Nav + 引导守卫
 │   ├── +layout.ts                 # prerender=false, ssr=true（但 DB 仅浏览器用）
 │   ├── +page.svelte               # 首页 Dashboard
+│   ├── exercise/+page.svelte      # 运动历史、图表与手动 CRUD
 │   ├── chat/
 │   │   ├── +page.svelte           # 无 sessionId → 新建/选最近
 │   │   └── [sessionId]/+page.svelte

@@ -184,18 +184,58 @@ function isFoodEntry(value: unknown): value is FoodEntry {
 	);
 }
 
-function isExerciseEntry(value: unknown): value is ExerciseEntry {
-	return (
-		isRecord(value) &&
-		isString(value.id) &&
-		isString(value.date) &&
-		isString(value.time) &&
-		isString(value.description) &&
-		isFiniteNumber(value.duration) &&
-		isFiniteNumber(value.caloriesBurned) &&
-		isOneOf(value.source, ["manual", "health_app", "watch"] as const) &&
-		isFiniteNumber(value.createdAt)
-	);
+function parseExerciseEntry(value: unknown): ExerciseEntry | null {
+	if (
+		!isRecord(value) ||
+		!isString(value.id) ||
+		!isString(value.date) ||
+		!isString(value.time) ||
+		!isString(value.description) ||
+		!isOptional(
+			value.category,
+			(item): item is NonNullable<ExerciseEntry["category"]> =>
+				isOneOf(item, [
+					"walking",
+					"running",
+					"cycling",
+					"strength",
+					"swimming",
+					"sports",
+					"other",
+				] as const),
+		) ||
+		!isOptional(
+			value.intensity,
+			(item): item is NonNullable<ExerciseEntry["intensity"]> =>
+				isOneOf(item, ["light", "moderate", "vigorous"] as const),
+		) ||
+		!isFiniteNumber(value.duration) ||
+		!isFiniteNumber(value.caloriesBurned) ||
+		!isOneOf(value.source, [
+			"manual",
+			"third_party",
+			"health_app",
+			"watch",
+		] as const) ||
+		!isFiniteNumber(value.createdAt)
+	) {
+		return null;
+	}
+	return {
+		id: value.id,
+		date: value.date,
+		time: value.time,
+		description: value.description,
+		category: value.category,
+		intensity: value.intensity,
+		duration: value.duration,
+		caloriesBurned: value.caloriesBurned,
+		source:
+			value.source === "health_app" || value.source === "watch"
+				? "third_party"
+				: value.source,
+		createdAt: value.createdAt,
+	};
 }
 
 function isWeightEntry(value: unknown): value is WeightEntry {
@@ -261,6 +301,17 @@ function isMessage(value: unknown): value is Message {
 	);
 }
 
+function requireExerciseEntries(data: DataRecord): ExerciseEntry[] {
+	const value = data.exerciseEntries;
+	if (!Array.isArray(value))
+		throw new Error("备份中的 exerciseEntries 数据格式无效");
+	const entries = value.map(parseExerciseEntry);
+	if (entries.some((entry) => entry === null)) {
+		throw new Error("备份中的 exerciseEntries 数据格式无效");
+	}
+	return entries.filter((entry): entry is ExerciseEntry => entry !== null);
+}
+
 function requireArray<T>(
 	data: DataRecord,
 	key: string,
@@ -301,7 +352,7 @@ export function parseKaloBackup(
 		aiConfig,
 		userMemory,
 		foodEntries: requireArray(value, "foodEntries", isFoodEntry),
-		exerciseEntries: requireArray(value, "exerciseEntries", isExerciseEntry),
+		exerciseEntries: requireExerciseEntries(value),
 		weightEntries: requireArray(value, "weightEntries", isWeightEntry),
 		foodLibrary: requireArray(value, "foodLibrary", isFoodLibraryItem),
 		sessions: requireArray(value, "sessions", isSession),

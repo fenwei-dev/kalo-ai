@@ -9,6 +9,7 @@
 		pathname === "/about" ||
 			pathname === "/help" ||
 			pathname === "/weight" ||
+			pathname === "/exercise" ||
 			pathname.startsWith("/onboarding"),
 	);
 

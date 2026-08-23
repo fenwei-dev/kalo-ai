@@ -184,11 +184,59 @@ export async function getFoodEntry(id: string): Promise<FoodEntry | undefined> {
 
 // ---------- Exercise entries ----------
 
+function assertExerciseEntry(
+	data: Omit<ExerciseEntry, "id" | "createdAt">,
+): void {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date))
+		throw new Error("运动日期格式无效");
+	if (data.date > localDateISO()) throw new Error("不能记录未来日期的运动");
+	if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(data.time))
+		throw new Error("运动时间格式无效");
+	if (!data.description.trim()) throw new Error("运动名称不能为空");
+	if (
+		!Number.isFinite(data.duration) ||
+		data.duration <= 0 ||
+		data.duration > 1440
+	) {
+		throw new Error("运动时长必须在 1–1440 分钟之间");
+	}
+	if (
+		!Number.isFinite(data.caloriesBurned) ||
+		data.caloriesBurned < 0 ||
+		data.caloriesBurned > 10000
+	) {
+		throw new Error("运动消耗必须在 0–10000 kcal 之间");
+	}
+}
+
 export async function addExerciseEntry(
 	data: Omit<ExerciseEntry, "id" | "createdAt">,
 ): Promise<ExerciseEntry> {
-	const entry: ExerciseEntry = { ...data, id: uid("ex_"), createdAt: now() };
+	assertExerciseEntry(data);
+	const entry: ExerciseEntry = {
+		...data,
+		description: data.description.trim(),
+		id: uid("ex_"),
+		createdAt: now(),
+	};
 	await db.exerciseEntries.add(entry);
+	return entry;
+}
+
+export async function updateExerciseEntry(
+	id: string,
+	data: Omit<ExerciseEntry, "id" | "createdAt">,
+): Promise<ExerciseEntry> {
+	assertExerciseEntry(data);
+	const existing = await db.exerciseEntries.get(id);
+	if (!existing) throw new Error("要修正的运动记录不存在");
+	const entry: ExerciseEntry = {
+		...data,
+		description: data.description.trim(),
+		id,
+		createdAt: existing.createdAt,
+	};
+	await db.exerciseEntries.put(entry);
 	return entry;
 }
 
@@ -204,7 +252,19 @@ export async function getExerciseEntriesSince(
 	return db.exerciseEntries.where("date").aboveOrEqual(sinceISO).toArray();
 }
 
+export async function getExerciseEntries(): Promise<ExerciseEntry[]> {
+	const entries = await db.exerciseEntries.orderBy("date").reverse().toArray();
+	return entries.sort(
+		(a, b) =>
+			b.date.localeCompare(a.date) ||
+			b.time.localeCompare(a.time) ||
+			b.createdAt - a.createdAt,
+	);
+}
+
 export async function deleteExerciseEntry(id: string): Promise<void> {
+	if (!(await db.exerciseEntries.get(id)))
+		throw new Error("要删除的运动记录不存在");
 	await db.exerciseEntries.delete(id);
 }
 

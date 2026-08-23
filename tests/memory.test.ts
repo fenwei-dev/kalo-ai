@@ -139,6 +139,75 @@ test("Katch-McArdle profiles require body fat at the repository boundary", async
 	).rejects.toThrow("体脂率");
 });
 
+test("exercise records support correction and reject future dates", async () => {
+	const entry = await repositories.addExerciseEntry({
+		date: "2020-01-01",
+		time: "18:00",
+		description: "Run",
+		category: "running",
+		intensity: "moderate",
+		duration: 30,
+		caloriesBurned: 300,
+		source: "manual",
+	});
+	const corrected = await repositories.updateExerciseEntry(entry.id, {
+		date: "2020-01-01",
+		time: "18:00",
+		description: "Run",
+		category: "running",
+		intensity: "vigorous",
+		duration: 40,
+		caloriesBurned: 420,
+		source: "manual",
+	});
+	expect(corrected).toMatchObject({
+		id: entry.id,
+		duration: 40,
+		caloriesBurned: 420,
+	});
+	expect(await repositories.getExerciseEntries()).toHaveLength(1);
+
+	await expect(
+		repositories.addExerciseEntry({
+			date: "2999-01-01",
+			time: "12:00",
+			description: "Future run",
+			duration: 30,
+			caloriesBurned: 200,
+			source: "manual",
+		}),
+	).rejects.toThrow("未来日期");
+});
+
+test("legacy health and watch exercise sources import as third party", async () => {
+	await repositories.importAll({
+		version: 1,
+		exportedAt: Date.now(),
+		user: [],
+		aiConfig: [],
+		foodEntries: [],
+		exerciseEntries: [
+			{
+				id: "legacy-watch",
+				date: "2020-01-01",
+				time: "08:00",
+				description: "Walk",
+				duration: 20,
+				caloriesBurned: 80,
+				source: "watch",
+				createdAt: 1,
+			},
+		],
+		weightEntries: [],
+		foodLibrary: [],
+		sessions: [],
+		messages: [],
+	});
+	expect(await repositories.getExerciseEntries()).toEqual([
+		expect.objectContaining({ id: "legacy-watch", source: "third_party" }),
+	]);
+});
+
 test("backup imports reject malformed entity arrays", async () => {
 	await expect(
 		repositories.importAll({

@@ -1,13 +1,15 @@
 <script lang="ts">
-	import type { Session } from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
 
 	const DELETE_WIDTH = 80;
 	const DIRECTION_THRESHOLD = 6;
 
 	let {
-		session,
-		timeLabel,
+		id,
+		title,
+		subtitle,
+		deleteAriaLabel,
+		deletingLabel,
 		active = false,
 		compact = false,
 		revealed = false,
@@ -15,8 +17,11 @@
 		onselect,
 		ondelete,
 	}: {
-		session: Session;
-		timeLabel: string;
+		id: string;
+		title: string;
+		subtitle: string;
+		deleteAriaLabel: string;
+		deletingLabel: string;
 		active?: boolean;
 		compact?: boolean;
 		revealed?: boolean;
@@ -41,7 +46,7 @@
 	function settle(open: boolean) {
 		dragging = false;
 		offset = open ? -DELETE_WIDTH : 0;
-		onreveal(open ? session.id : null);
+		onreveal(open ? id : null);
 	}
 
 	function pointerDown(event: PointerEvent) {
@@ -84,7 +89,7 @@
 			return;
 		}
 		if (revealed) settle(false);
-		else onselect(session.id);
+		else onselect(id);
 	}
 
 	function keydown(event: KeyboardEvent) {
@@ -101,7 +106,7 @@
 		if (deleting) return;
 		deleting = true;
 		try {
-			await ondelete(session.id);
+			await ondelete(id);
 		} finally {
 			deleting = false;
 		}
@@ -114,11 +119,11 @@
 		disabled={deleting}
 		tabindex={revealed ? 0 : -1}
 		aria-hidden={!revealed}
-		aria-label={m.chat_delete_session({ title: session.title })}
+		aria-label={deleteAriaLabel}
 		onclick={remove}
 		class="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-red-500 text-sm font-medium text-white disabled:opacity-60"
 	>
-		{deleting ? m.chat_deleting_session() : m.common_delete()}
+		{deleting ? deletingLabel : m.common_delete()}
 	</button>
 
 	<button
@@ -137,8 +142,8 @@
 			: 'bg-white p-4'} {dragging ? '' : 'transition-transform duration-200 ease-out'}"
 	>
 		<span class="min-w-0 flex-1">
-			<span class="block truncate text-sm font-medium">{session.title}</span>
-			<span class="block text-xs text-gray-400">{timeLabel}</span>
+			<span class="block truncate text-sm font-medium">{title}</span>
+			<span class="block text-xs text-gray-400">{subtitle}</span>
 		</span>
 	</button>
 </div>

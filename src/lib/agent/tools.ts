@@ -29,6 +29,7 @@ import {
 	listLibrary,
 	saveUser,
 	syncCurrentWeightFromLatest,
+	updateExerciseEntry,
 	updateFoodEntry,
 	updateUser,
 	updateUserMemory,
@@ -141,8 +142,28 @@ export const toolDefs = [
 	},
 	{
 		name: "logExercise",
-		description: "记录一条运动。",
+		description:
+			"新增或修正一条已完成运动。修正已有记录时先用 getTodayLog 找到 id，并传 replaceEntryId，禁止重复新增。根据运动类型、强度、时长和用户体重合理估算消耗；不确定时说明这是估算。禁止记录未来日期。",
 		parameters: Type.Object({
+			replaceEntryId: Type.Optional(
+				Type.String({
+					description: "要修正的已有 ExerciseEntry id；新增时不传",
+				}),
+			),
+			category: Type.Optional(
+				StringEnum([
+					"walking",
+					"running",
+					"cycling",
+					"strength",
+					"swimming",
+					"sports",
+					"other",
+				] as const),
+			),
+			intensity: Type.Optional(
+				StringEnum(["light", "moderate", "vigorous"] as const),
+			),
 			description: Type.String({ description: "运动描述，如「跑步」" }),
 			duration: Type.Number({
 				minimum: 1,
@@ -488,16 +509,21 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 
 			case "logExercise": {
 				const args = request.args;
-				const entry = await addExerciseEntry({
+				const values = {
 					date: args.date || localDateISO(),
 					time: args.time || new Date().toTimeString().slice(0, 5),
 					description: args.description,
+					category: args.category,
+					intensity: args.intensity,
 					duration: args.duration,
 					caloriesBurned: args.caloriesBurned,
-					source: "manual",
-				});
+					source: "manual" as const,
+				};
+				const entry = args.replaceEntryId
+					? await updateExerciseEntry(args.replaceEntryId, values)
+					: await addExerciseEntry(values);
 				await app.refreshToday();
-				return { ok: true, data: { entry } };
+				return { ok: true, data: { entry, corrected: !!args.replaceEntryId } };
 			}
 
 			case "logWeight": {

@@ -146,7 +146,14 @@
 					<div><div class="font-semibold text-emerald-600">{Math.round(protein)}g</div><div class="text-gray-400">{m.home_protein()}</div></div>
 					<div><div class="font-semibold text-amber-600">{Math.round(carbs)}g</div><div class="text-gray-400">{m.home_carbs()}</div></div>
 					<div><div class="font-semibold text-sky-600">{Math.round(fat)}g</div><div class="text-gray-400">{m.home_fat()}</div></div>
-					<div><div class="font-semibold text-gray-600">{burned}</div><div class="text-gray-400">{m.home_exercise()}</div></div>
+					<a
+						href="/exercise"
+						aria-label={m.home_view_exercise()}
+						class="rounded-lg transition active:bg-blue-50"
+					>
+						<div class="font-semibold text-blue-600">{burned}</div>
+						<div class="text-gray-400">{m.home_exercise()} ›</div>
+					</a>
 				</div>
 			</div>
 
