@@ -15,6 +15,7 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Complete tracking**: Food, exercise, weight, goals, daily summaries, and trend analysis.
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
 - **Bilingual**: Supports Simplified Chinese and English.
+- **Build-time plugins**: Reviewed workspace packages can add Agent tools, bounded System Prompt sections, and schema-driven settings.
 
 ## Monorepo layout
 
@@ -23,7 +24,10 @@ This repository is a Bun workspace:
 ```text
 apps/
   web/       SvelteKit PWA
-packages/    Shared packages added over time
+packages/
+  plugin-sdk/       Stable plugin contract
+  plugin-example/   Disabled-by-default integration example
+  ...               Additional shared and plugin packages
 ```
 
 The root scripts proxy the web workspace, so the usual commands remain unchanged.

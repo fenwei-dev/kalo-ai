@@ -31,6 +31,8 @@
 		"workbox-window": "^7.4.1"
 	},
 	"dependencies": {
+		"@kalo-ai/plugin-example": "workspace:*",
+		"@kalo-ai/plugin-sdk": "workspace:*",
 		"@earendil-works/pi-agent-core": "^0.84.1",
 		"@earendil-works/pi-ai": "^0.84.1",
 		"dexie": "^4.4.4",

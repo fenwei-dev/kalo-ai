@@ -17,12 +17,23 @@ import type {
 	JsonValue,
 } from "$lib/db/schema";
 import { getLocale } from "$lib/paraglide/runtime";
+import { loadPluginRuntime } from "$lib/plugins/manager";
 import { localMessageTimestamp } from "$lib/utils/date";
 import { buildModels } from "./provider";
 import { getKaloSystemPrompt } from "./systemPrompt";
 import { agentTools, type ToolOutcome } from "./tools";
 
 const MODEL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+
+function extendSystemPrompt(
+	basePrompt: string,
+	sections: string[],
+	locale: "zh-cn" | "en-us",
+): string {
+	if (!sections.length) return basePrompt;
+	const heading = locale === "zh-cn" ? "已启用插件" : "Enabled plugins";
+	return `${basePrompt}\n\n## ${heading}\n\n${sections.join("\n\n")}`;
+}
 
 export interface ToolCallView {
 	id: string;
@@ -228,12 +239,22 @@ export async function runTurn(
 	}
 
 	const { models, model } = buildModels(cfg);
+	const locale = getLocale();
+	const pluginRuntime = await loadPluginRuntime(
+		locale,
+		agentTools.map((tool) => tool.name),
+	);
+	const tools = [...agentTools, ...pluginRuntime.tools];
 	let toolTurnCount = 0;
 	const agent = new Agent({
 		initialState: {
-			systemPrompt: getKaloSystemPrompt(getLocale()),
+			systemPrompt: extendSystemPrompt(
+				getKaloSystemPrompt(locale),
+				pluginRuntime.promptSections,
+				locale,
+			),
 			model,
-			tools: agentTools,
+			tools,
 			messages: history.map(dbToAgentMessage),
 		},
 		streamFn: (activeModel, context, options) =>

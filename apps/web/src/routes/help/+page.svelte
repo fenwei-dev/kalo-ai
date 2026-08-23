@@ -30,6 +30,11 @@
 			<BlockTitle>{m.help_api_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_api_body()}</p></Block>
 
+			<BlockTitle>{m.help_plugins_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_plugins_body()}</p>
+			</Block>
+
 			<BlockTitle>{m.help_images_title()}</BlockTitle>
 			<Block inset strong>
 				<p class="text-sm leading-relaxed text-amber-700">{m.help_images_body()}</p>

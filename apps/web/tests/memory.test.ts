@@ -3,11 +3,13 @@ import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 
 let repositories: typeof import("../src/lib/db/repositories");
 let database: typeof import("../src/lib/db/schema");
+let plugins: typeof import("../src/lib/plugins/manager");
 let dates: typeof import("../src/lib/utils/date");
 
 beforeAll(async () => {
 	database = await import("../src/lib/db/schema");
 	repositories = await import("../src/lib/db/repositories");
+	plugins = await import("../src/lib/plugins/manager");
 	dates = await import("../src/lib/utils/date");
 });
 
@@ -107,6 +109,96 @@ test("a changed memory snapshot is appended after the user message only once per
 		version: 1,
 	});
 	expect((await getSession(session.id))?.memoryVersion).toBe(1);
+});
+
+test("enabled plugin contributes tools and a bounded system prompt", async () => {
+	const initial = await plugins.getPluginState("example");
+	expect(initial).toMatchObject({ enabled: false, status: "disabled" });
+	const disabledRuntime = await plugins.loadPluginRuntime("en-us", [
+		"getProfile",
+	]);
+	expect(disabledRuntime).toEqual({ tools: [], promptSections: [] });
+
+	await plugins.savePluginSettings(
+		"example",
+		{
+			prefix: "Plugin test",
+			apiKey: "secret",
+			repeatCount: 2,
+			mode: "bracketed",
+			uppercase: true,
+		},
+		true,
+	);
+	const runtime = await plugins.loadPluginRuntime("en-us", ["getProfile"]);
+	expect(runtime.promptSections).toHaveLength(1);
+	expect(runtime.promptSections[0]).toContain("### Plugin: example");
+	const echo = runtime.tools.find((tool) => tool.name === "example_echo");
+	if (!echo) throw new Error("example_echo was not loaded");
+	const result = await echo.execute("echo-call", { text: "hello" });
+	expect(result.content).toEqual([
+		{
+			type: "text",
+			text: JSON.stringify({ echoed: "Plugin test: [HELLO] [HELLO]" }),
+		},
+	]);
+});
+
+test("plugin configuration migrates to the package config version", async () => {
+	await repositories.savePluginConfig({
+		pluginId: "example",
+		enabled: true,
+		configVersion: 1,
+		config: { prefix: "Legacy", uppercase: true },
+	});
+	const migrated = await plugins.getPluginState("example");
+	expect(migrated).toMatchObject({
+		enabled: true,
+		status: "ready",
+		config: {
+			prefix: "Legacy",
+			apiKey: "",
+			repeatCount: 1,
+			mode: "plain",
+			uppercase: true,
+		},
+	});
+	expect(await repositories.getPluginConfig("example")).toMatchObject({
+		configVersion: 2,
+	});
+});
+
+test("resetting a plugin removes its configuration and scoped data", async () => {
+	await plugins.savePluginSettings(
+		"example",
+		{
+			prefix: "Stored",
+			apiKey: "",
+			repeatCount: 1,
+			mode: "plain",
+			uppercase: false,
+		},
+		true,
+	);
+	await repositories.setPluginData({
+		pluginId: "example",
+		key: "cache",
+		value: { hit: true },
+	});
+	await repositories.setPluginData({
+		pluginId: "other_plugin",
+		key: "cache",
+		value: { retained: true },
+	});
+	const reset = await plugins.resetPluginSettings("example");
+	expect(reset).toMatchObject({ enabled: false, status: "disabled" });
+	expect(await repositories.getPluginConfig("example")).toBeUndefined();
+	expect(await repositories.getPluginData("example", "cache")).toBeUndefined();
+	expect(
+		await repositories.getPluginData("other_plugin", "cache"),
+	).toMatchObject({
+		value: { retained: true },
+	});
 });
 
 test("Katch-McArdle profiles require body fat at the repository boundary", async () => {
@@ -482,6 +574,22 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		calculatedBMR: 1342,
 	});
 	await updateUserMemory("Remember this", 0);
+	await plugins.savePluginSettings(
+		"example",
+		{
+			prefix: "Backup plugin",
+			apiKey: "backup-secret",
+			repeatCount: 3,
+			mode: "plain",
+			uppercase: false,
+		},
+		true,
+	);
+	await repositories.setPluginData({
+		pluginId: "example",
+		key: "sample",
+		value: ["saved", 1],
+	});
 	const backedPlan = await repositories.createTrainingPlan({
 		title: "Backed-up plan",
 		startDate: dates.localDateISO(),
@@ -501,7 +609,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		caloriesBurned: 180,
 	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(3);
+	expect(backup.version).toBe(4);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",
@@ -518,6 +626,26 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 			exerciseEntryId: expect.any(String),
 		}),
 	]);
+	expect(backup.pluginConfigs).toEqual([
+		expect.objectContaining({
+			pluginId: "example",
+			enabled: true,
+			config: {
+				prefix: "Backup plugin",
+				apiKey: "backup-secret",
+				repeatCount: 3,
+				mode: "plain",
+				uppercase: false,
+			},
+		}),
+	]);
+	expect(backup.pluginData).toEqual([
+		expect.objectContaining({
+			pluginId: "example",
+			key: "sample",
+			value: ["saved", 1],
+		}),
+	]);
 	expect(backup.userMemory).toEqual([
 		expect.objectContaining({
 			id: "user-memory",
@@ -531,6 +659,19 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 
 	await repositories.clearAllData();
 	await importAll(backup);
+	expect(await repositories.getPluginConfig("example")).toMatchObject({
+		enabled: true,
+		config: {
+			prefix: "Backup plugin",
+			apiKey: "backup-secret",
+			repeatCount: 3,
+			mode: "plain",
+			uppercase: false,
+		},
+	});
+	expect(await repositories.getPluginData("example", "sample")).toMatchObject({
+		value: ["saved", 1],
+	});
 	expect(await repositories.getTrainingPlans()).toHaveLength(1);
 	const restoredWorkouts = await repositories.getPlannedWorkouts(
 		backup.trainingPlans[0].id,
@@ -565,4 +706,5 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		updatedAt: null,
 	});
 	expect(await repositories.getTrainingPlans()).toEqual([]);
+	expect(await repositories.listPluginConfigs()).toEqual([]);
 });

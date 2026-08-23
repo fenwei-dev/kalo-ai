@@ -168,6 +168,21 @@ export interface JsonObject {
 	[key: string]: JsonValue;
 }
 
+export interface PluginConfigRecord {
+	pluginId: string;
+	enabled: boolean;
+	configVersion: number;
+	config: JsonObject;
+	updatedAt: number;
+}
+
+export interface PluginDataRecord {
+	pluginId: string;
+	key: string;
+	value: JsonValue;
+	updatedAt: number;
+}
+
 /** pi-ai 风格的内容块；所有持久化字段都必须可结构化克隆。 */
 export type ContentBlock =
 	| { type: "text"; text: string; textSignature?: string }
@@ -214,6 +229,8 @@ class KaloDB extends Dexie {
 	exerciseEntries!: Table<ExerciseEntry, string>;
 	trainingPlans!: Table<TrainingPlan, string>;
 	plannedWorkouts!: Table<PlannedWorkout, string>;
+	pluginConfigs!: Table<PluginConfigRecord, string>;
+	pluginData!: Table<PluginDataRecord, [string, string]>;
 	weightEntries!: Table<WeightEntry, string>;
 	foodLibrary!: Table<FoodLibraryItem, string>;
 	sessions!: Table<Session, string>;
@@ -274,6 +291,22 @@ class KaloDB extends Dexie {
 			trainingPlans: "id, status, startDate, updatedAt",
 			plannedWorkouts:
 				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
+		});
+		this.version(5).stores({
+			user: "id",
+			aiConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source, plannedWorkoutId",
+			trainingPlans: "id, status, startDate, updatedAt",
+			plannedWorkouts:
+				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			pluginConfigs: "pluginId, enabled",
+			pluginData: "[pluginId+key], pluginId",
 			weightEntries: "id, date",
 			foodLibrary: "id, name, category, lastUsedAt",
 			sessions: "id, updatedAt, lastMessageAt",

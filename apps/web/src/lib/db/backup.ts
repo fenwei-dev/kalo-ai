@@ -8,6 +8,8 @@ import type {
 	JsonValue,
 	Message,
 	PlannedWorkout,
+	PluginConfigRecord,
+	PluginDataRecord,
 	Session,
 	TrainingPlan,
 	User,
@@ -42,8 +44,18 @@ export interface KaloBackupV3 extends Omit<KaloBackupV2, "version"> {
 	plannedWorkouts: PlannedWorkout[];
 }
 
-export type KaloBackup = KaloBackupV1 | KaloBackupV2 | KaloBackupV3;
-export type ParsedKaloBackup = Omit<KaloBackupV3, "version" | "exportedAt">;
+export interface KaloBackupV4 extends Omit<KaloBackupV3, "version"> {
+	version: 4;
+	pluginConfigs: PluginConfigRecord[];
+	pluginData: PluginDataRecord[];
+}
+
+export type KaloBackup =
+	| KaloBackupV1
+	| KaloBackupV2
+	| KaloBackupV3
+	| KaloBackupV4;
+export type ParsedKaloBackup = Omit<KaloBackupV4, "version" | "exportedAt">;
 
 type DataRecord = Record<string, unknown>;
 type ValueGuard<T> = (value: unknown) => value is T;
@@ -329,6 +341,29 @@ function isFoodLibraryItem(value: unknown): value is FoodLibraryItem {
 	);
 }
 
+function isPluginConfigRecord(value: unknown): value is PluginConfigRecord {
+	return (
+		isRecord(value) &&
+		isString(value.pluginId) &&
+		isBoolean(value.enabled) &&
+		isFiniteNumber(value.configVersion) &&
+		Number.isInteger(value.configVersion) &&
+		value.configVersion >= 1 &&
+		isJsonObject(value.config) &&
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
+function isPluginDataRecord(value: unknown): value is PluginDataRecord {
+	return (
+		isRecord(value) &&
+		isString(value.pluginId) &&
+		isString(value.key) &&
+		isJsonValue(value.value) &&
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
 function isSession(value: unknown): value is Session {
 	return (
 		isRecord(value) &&
@@ -388,7 +423,12 @@ export function parseKaloBackup(
 	maxMemoryLength: number,
 ): ParsedKaloBackup {
 	if (!isRecord(value)) throw new Error("备份文件不是有效对象");
-	if (value.version !== 1 && value.version !== 2 && value.version !== 3)
+	if (
+		value.version !== 1 &&
+		value.version !== 2 &&
+		value.version !== 3 &&
+		value.version !== 4
+	)
 		throw new Error("备份版本不受支持");
 	if (!isFiniteNumber(value.exportedAt))
 		throw new Error("备份导出时间格式无效");
@@ -402,16 +442,36 @@ export function parseKaloBackup(
 				)
 			: [];
 	const trainingPlans =
-		value.version === 3
+		value.version >= 3
 			? requireArray(value, "trainingPlans", isTrainingPlan)
 			: [];
 	const plannedWorkouts =
-		value.version === 3
+		value.version >= 3
 			? requireArray(value, "plannedWorkouts", isPlannedWorkout)
+			: [];
+	const pluginConfigs =
+		value.version === 4
+			? requireArray(value, "pluginConfigs", isPluginConfigRecord)
+			: [];
+	const pluginData =
+		value.version === 4
+			? requireArray(value, "pluginData", isPluginDataRecord)
 			: [];
 	if (user.length > 1) throw new Error("用户资料格式无效");
 	if (aiConfig.length > 1) throw new Error("AI 配置格式无效");
 	if (userMemory.length > 1) throw new Error("用户记忆格式无效");
+	if (
+		new Set(pluginConfigs.map((record) => record.pluginId)).size !==
+		pluginConfigs.length
+	) {
+		throw new Error("插件配置包含重复 pluginId");
+	}
+	if (
+		new Set(pluginData.map((record) => `${record.pluginId}\u0000${record.key}`))
+			.size !== pluginData.length
+	) {
+		throw new Error("插件数据包含重复 key");
+	}
 	if (
 		trainingPlans.filter(
 			(plan) => plan.status === "active" || plan.status === "paused",
@@ -466,6 +526,8 @@ export function parseKaloBackup(
 		userMemory,
 		trainingPlans,
 		plannedWorkouts,
+		pluginConfigs,
+		pluginData,
 		foodEntries: requireArray(value, "foodEntries", isFoodEntry),
 		exerciseEntries,
 		weightEntries: requireArray(value, "weightEntries", isWeightEntry),

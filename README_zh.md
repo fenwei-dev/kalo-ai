@@ -15,6 +15,7 @@
 - **完整追踪**：饮食、运动、体重、目标、每日概览与趋势分析。
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
 - **中英双语**：支持简体中文与 English。
+- **编译期插件**：经过审查的 workspace package 可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置。
 
 ## Monorepo 结构
 
@@ -23,7 +24,10 @@
 ```text
 apps/
   web/       SvelteKit PWA
-packages/    后续加入的共享 package
+packages/
+  plugin-sdk/       稳定插件协议
+  plugin-example/   默认停用的集成示例
+  ...               后续共享与插件 package
 ```
 
 根目录脚本会代理到 web workspace，因此日常命令保持不变。

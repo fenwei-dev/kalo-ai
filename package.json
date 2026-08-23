@@ -12,7 +12,7 @@
 		"dev": "bun run --filter @kalo-ai/web dev",
 		"build": "bun run --filter @kalo-ai/web build",
 		"preview": "bun run --filter @kalo-ai/web preview",
-		"check": "bun run --filter @kalo-ai/web check",
+		"check": "bun run --workspaces check",
 		"check:watch": "bun run --filter @kalo-ai/web check:watch",
 		"test": "bun run --filter @kalo-ai/web test",
 		"fmt": "biome check --write",
@@ -20,6 +20,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.7",
+		"typescript": "^6.0.3",
 		"wrangler": "^4.120.0"
 	}
 }

@@ -16,6 +16,7 @@
 			<BlockTitle>{m.settings_group_ai()}</BlockTitle>
 			<List inset strong>
 				<ListItem href="/settings/ai" title={m.ai_title()} chevron />
+				<ListItem href="/settings/plugins" title={m.plugins_title()} chevron />
 				<ListItem href="/settings/memory" title={m.settings_memory()} chevron />
 				<ListItem href="/settings/library" title={m.settings_library()} chevron />
 			</List>

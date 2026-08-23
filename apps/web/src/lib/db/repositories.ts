@@ -1,12 +1,13 @@
 import { getLocale } from "$lib/paraglide/runtime";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV3, parseKaloBackup } from "./backup";
+import { type KaloBackupV4, parseKaloBackup } from "./backup";
 
 export type {
 	KaloBackup,
 	KaloBackupV1,
 	KaloBackupV2,
 	KaloBackupV3,
+	KaloBackupV4,
 } from "./backup";
 
 import {
@@ -21,6 +22,8 @@ import type {
 	FoodLibraryItem,
 	Message,
 	PlannedWorkout,
+	PluginConfigRecord,
+	PluginDataRecord,
 	Session,
 	TrainingPlan,
 	TrainingPlanStatus,
@@ -156,6 +159,55 @@ export async function updateAIConfig(
 	};
 	await db.aiConfig.put(cfg);
 	return cfg;
+}
+
+// ---------- Plugin configuration and scoped data ----------
+
+export async function listPluginConfigs(): Promise<PluginConfigRecord[]> {
+	return db.pluginConfigs.toArray();
+}
+
+export async function getPluginConfig(
+	pluginId: string,
+): Promise<PluginConfigRecord | undefined> {
+	return db.pluginConfigs.get(pluginId);
+}
+
+export async function savePluginConfig(
+	record: Omit<PluginConfigRecord, "updatedAt">,
+): Promise<PluginConfigRecord> {
+	const saved: PluginConfigRecord = { ...record, updatedAt: now() };
+	await db.pluginConfigs.put(saved);
+	return saved;
+}
+
+export async function deletePluginConfig(pluginId: string): Promise<void> {
+	await db.transaction("rw", [db.pluginConfigs, db.pluginData], async () => {
+		await db.pluginConfigs.delete(pluginId);
+		await db.pluginData.where("pluginId").equals(pluginId).delete();
+	});
+}
+
+export async function getPluginData(
+	pluginId: string,
+	key: string,
+): Promise<PluginDataRecord | undefined> {
+	return db.pluginData.get([pluginId, key]);
+}
+
+export async function setPluginData(
+	record: Omit<PluginDataRecord, "updatedAt">,
+): Promise<PluginDataRecord> {
+	const saved: PluginDataRecord = { ...record, updatedAt: now() };
+	await db.pluginData.put(saved);
+	return saved;
+}
+
+export async function deletePluginData(
+	pluginId: string,
+	key: string,
+): Promise<void> {
+	await db.pluginData.delete([pluginId, key]);
 }
 
 // ---------- Food entries ----------
@@ -1204,6 +1256,8 @@ export async function clearAllData(): Promise<void> {
 			db.exerciseEntries,
 			db.trainingPlans,
 			db.plannedWorkouts,
+			db.pluginConfigs,
+			db.pluginData,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1218,6 +1272,8 @@ export async function clearAllData(): Promise<void> {
 				db.exerciseEntries.clear(),
 				db.trainingPlans.clear(),
 				db.plannedWorkouts.clear(),
+				db.pluginConfigs.clear(),
+				db.pluginData.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1230,7 +1286,15 @@ export async function clearAllData(): Promise<void> {
 /** Validate and atomically replace all app data from a Kalo backup. */
 export async function importAll(value: unknown): Promise<void> {
 	const data = parseKaloBackup(value, MAX_USER_MEMORY_LENGTH);
-	const { user, aiConfig, userMemory, trainingPlans, plannedWorkouts } = data;
+	const {
+		user,
+		aiConfig,
+		userMemory,
+		trainingPlans,
+		plannedWorkouts,
+		pluginConfigs,
+		pluginData,
+	} = data;
 
 	await db.transaction(
 		"rw",
@@ -1242,6 +1306,8 @@ export async function importAll(value: unknown): Promise<void> {
 			db.exerciseEntries,
 			db.trainingPlans,
 			db.plannedWorkouts,
+			db.pluginConfigs,
+			db.pluginData,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1256,6 +1322,8 @@ export async function importAll(value: unknown): Promise<void> {
 				db.exerciseEntries.clear(),
 				db.trainingPlans.clear(),
 				db.plannedWorkouts.clear(),
+				db.pluginConfigs.clear(),
+				db.pluginData.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1268,6 +1336,8 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.exerciseEntries.bulkPut(data.exerciseEntries);
 			await db.trainingPlans.bulkPut(trainingPlans);
 			await db.plannedWorkouts.bulkPut(plannedWorkouts);
+			await db.pluginConfigs.bulkPut(pluginConfigs);
+			await db.pluginData.bulkPut(pluginData);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);
 			await db.sessions.bulkPut(data.sessions);
@@ -1277,7 +1347,7 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV3> {
+export async function exportAll(): Promise<KaloBackupV4> {
 	const [
 		user,
 		aiConfig,
@@ -1286,6 +1356,8 @@ export async function exportAll(): Promise<KaloBackupV3> {
 		exerciseEntries,
 		trainingPlans,
 		plannedWorkouts,
+		pluginConfigs,
+		pluginData,
 		weightEntries,
 		foodLibrary,
 		sessions,
@@ -1298,13 +1370,15 @@ export async function exportAll(): Promise<KaloBackupV3> {
 		db.exerciseEntries.toArray(),
 		db.trainingPlans.toArray(),
 		db.plannedWorkouts.toArray(),
+		db.pluginConfigs.toArray(),
+		db.pluginData.toArray(),
 		db.weightEntries.toArray(),
 		db.foodLibrary.toArray(),
 		db.sessions.toArray(),
 		db.messages.toArray(),
 	]);
 	return {
-		version: 3,
+		version: 4,
 		exportedAt: now(),
 		user,
 		aiConfig,
@@ -1313,6 +1387,8 @@ export async function exportAll(): Promise<KaloBackupV3> {
 		exerciseEntries,
 		trainingPlans,
 		plannedWorkouts,
+		pluginConfigs,
+		pluginData,
 		weightEntries,
 		foodLibrary,
 		sessions,

@@ -344,7 +344,7 @@ updateUserMemory({ content, expectedVersion })
 
 **F. 数据与隐私页**
 - 导出 JSON / 导入 JSON / 清空数据。
-- 备份格式为 v3，包含 UserMemory、TrainingPlan 与 PlannedWorkout；导入继续兼容 v1/v2 备份。
+- 备份格式为 v4，包含 UserMemory、TrainingPlan、PlannedWorkout、PluginConfig 与 PluginData；导入继续兼容 v1–v3 备份。
 - 明确完整备份包含健康数据、聊天图片、卡卡的记忆与明文 API Key。
 
 ## 八、首次引导流
@@ -418,13 +418,23 @@ updateUserMemory({ content, expectedVersion })
 - **图片输入**：聊天支持单张 JPEG/PNG/WebP/GIF，经浏览器端缩放和重编码后作为 `ImageContent` 保存并发送。当前活跃上下文保留历史图片，与 pi coding agent 的上下文语义一致；不单独实现图片摘要或图片专用 compaction。
 - **不再有独立 analyze 路径**：食物估算由主模型在推理时直接产出数值传给 `logFood`。
 
-### 9.6 图表
+### 9.6 编译期插件机制
+
+- `packages/plugin-sdk` 定义 manifest、TypeBox 配置、设置字段、权限声明、AgentTool、System Prompt 扩展与受控 services。
+- 插件作为 `packages/plugin-*` Bun workspace package，由 `apps/web/src/lib/plugins/registry.ts` 在构建时显式注册；不允许运行时安装任意远程代码。
+- 启用插件的工具会和核心 AgentTool 合并；工具名必须以 `${pluginId}_` 开头且全局唯一。
+- 启用插件可提供受长度限制的 Prompt section，在核心 System Prompt 后按稳定顺序追加，从下一轮对话生效。
+- `pluginConfigs` 保存启用状态、配置版本和 JSON 配置；`pluginData` 提供按 pluginId 隔离的私有 KV 存储，两者均进入完整备份。
+- 设置页提供 `/settings/plugins` 与 `/settings/plugins/[pluginId]`，第一版支持 text/password/number/toggle/select schema-driven 配置。
+- 插件代码和 Web App 运行在同一浏览器上下文，不是真正沙箱，因此只集成经过审查的 package，并在 UI 展示声明权限。
+
+### 9.7 图表
 
 - **LayerChart**（Svelte 原生，基于 d3）—— 体重折线、热量柱状、运动趋势。
 - **手搓 SVG** —— 进度环、迷你趋势 sparkline（用库反而麻烦）。
 - ⚠️ 实施前先确认 LayerChart 对 Svelte 5 的兼容性；不兼容则降级为全手搓 SVG（我们图都不复杂）。
 
-### 9.7 PWA
+### 9.8 PWA
 
 - `@vite-pwa/sveltekit` —— manifest + service worker + 缓存策略自动生成。
 - 配置：name=「Kalo AI」、short_name=「Kalo」、theme_color=emerald、standalone、portrait。
@@ -441,11 +451,15 @@ apps/web/src/
 │   │   ├── schema.ts              # Dexie 定义（含 Session/Message/FoodLibraryItem）
 │   │   └── repositories.ts        # 各表数据访问
 │   ├── agent/
-│   │   ├── tools.ts               # 9 工具的 TypeBox schema + handler
+│   │   ├── tools.ts               # 核心 TypeBox AgentTool schema + handler
 │   │   ├── client.ts              # pi-agent-core 适配（事件持久化 + UI 回调）
 │   │   ├── provider.ts            # 用户配置 → createProvider/createModels
 │   │   ├── systemPrompt.ts        # 卡卡人格 + 工具使用指引
 │   │   └── proactive.ts           # 主动消息生成（饭点/睡前/周报/平台期）
+│   ├── plugins/
+│   │   ├── registry.ts            # 构建时显式注册 workspace 插件
+│   │   ├── manager.ts             # 配置、工具与 Prompt 聚合
+│   │   └── services.ts            # 受控 profile/log/storage/fetch 能力
 │   ├── utils/
 │   │   ├── calculations.ts        # BMR/TDEE/TEF/目标缺口/安全判定
 │   │   ├── adaptiveTDEE.ts        # 自适应 TDEE
@@ -483,6 +497,7 @@ apps/web/src/
 │       ├── +page.svelte           # 仅显示分组设置入口
 │       ├── profile/+page.svelte   # 基础资料 + 减脂目标
 │       ├── ai/+page.svelte        # 模型、接口与 API Key
+│       ├── plugins/               # 插件列表与 schema-driven 配置
 │       ├── preferences/+page.svelte # 语言等应用偏好
 │       ├── memory/+page.svelte    # 跨会话 Markdown 用户记忆
 │       ├── data/+page.svelte      # 备份、恢复、隐私与清空
@@ -491,7 +506,9 @@ apps/web/src/
 ├── app.d.ts
 └── hooks.server.ts                # Paraglide 中间件（已有）
 
-packages/                          # 后续共享 package
+packages/
+├── plugin-sdk/                    # 稳定插件协议与 definePlugin
+└── plugin-example/                # 默认停用的工具/Prompt/设置示例
 package.json                       # Bun workspaces + 根代理脚本
 wrangler.jsonc                     # 部署 apps/web/build，SPA fallback
 ```
