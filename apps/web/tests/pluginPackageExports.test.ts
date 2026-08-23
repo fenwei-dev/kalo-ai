@@ -18,7 +18,7 @@ import subwayDefault, {
 import examplePackage from "../../../packages/plugin-example/package.json";
 import kfcPackage from "../../../packages/plugin-kfc-sg/package.json";
 import mcdonaldsPackage from "../../../packages/plugin-mcdonalds-sg/package.json";
-import sdkJsrPackage from "../../../packages/plugin-sdk/deno.json";
+import sdkJsrPackage from "../../../packages/plugin-sdk/jsr.json";
 import sdkNpmPackage from "../../../packages/plugin-sdk/package.json";
 import subwayPackage from "../../../packages/plugin-subway-sg/package.json";
 
@@ -33,10 +33,11 @@ test("bundled plugin packages expose the standard remote package entry points", 
 	expect(kfcKaloPlugin).toBe(kfcSGPlugin);
 });
 
-test("plugin manifests and dual SDK registry metadata keep matching versions", () => {
+test("plugin manifests match package versions and the SDK has one version source", () => {
 	expect(examplePlugin.manifest.version).toBe(examplePackage.version);
 	expect(mcdonaldsSGPlugin.manifest.version).toBe(mcdonaldsPackage.version);
 	expect(subwaySGPlugin.manifest.version).toBe(subwayPackage.version);
 	expect(kfcSGPlugin.manifest.version).toBe(kfcPackage.version);
-	expect(sdkNpmPackage.version).toBe(sdkJsrPackage.version);
+	expect(sdkNpmPackage.version).toMatch(/^\d+\.\d+\.\d+/);
+	expect("version" in sdkJsrPackage).toBe(false);
 });

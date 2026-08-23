@@ -67,23 +67,56 @@ Maintainers can validate both artifacts locally:
 ```bash
 bun run --filter @kalo-ai/plugin-sdk build
 bun run --filter @kalo-ai/plugin-sdk pack:check
-deno publish --dry-run --config packages/plugin-sdk/deno.json
+cd packages/plugin-sdk
+VERSION="$(node -p "require('./package.json').version")"
+deno publish --dry-run --set-version "$VERSION"
+cd ../..
 ```
 
-Publishing requires ownership of the `@kalo-ai` scope in each registry. For an interactive npm publish, run npm directly so Passkey/WebAuthn can use the terminal and browser challenge; `bun run --filter` may capture the child process and suppress that flow:
+`package.json` is the single version source. The standard `jsr.json` deliberately has no version; Deno discovers it from the SDK directory and receives the npm package version through `--set-version`.
+
+### Initial registry bootstrap only
+
+Publishing requires ownership of the `@kalo-ai` scope in each registry. The first npm version must be published interactively because Trusted Publisher settings live on an existing package. Run npm directly so Passkey/WebAuthn can use the terminal and browser challenge; `bun run --filter` may capture the child process and suppress that flow:
 
 ```bash
 cd packages/plugin-sdk
 npm publish --access public
+VERSION="$(node -p "require('./package.json').version")"
+deno publish --set-version "$VERSION"
 cd ../..
-deno publish --config packages/plugin-sdk/deno.json
 ```
 
-The package version in `package.json` and `deno.json` must remain identical. The repository workflow `.github/workflows/publish-plugin-sdk.yml` validates and publishes both registries when a `plugin-sdk-v<version>` tag is pushed or when manually dispatched.
+After the first npm publish, configure the package's Trusted Publisher with GitHub owner `fenwei-dev`, repository `kalo-ai`, workflow filename `publish-plugin-sdk.yml`, no environment, and the `npm publish` allowed action. For JSR, create `@kalo-ai/plugin-sdk` and link it to `fenwei-dev/kalo-ai`.
 
-For npm, the first version must be bootstrapped by an `@kalo-ai` scope owner because Trusted Publisher settings live on an existing package. Log in with a maintainer account, publish `0.1.0` once using the direct interactive command above, then configure the package's Trusted Publisher with GitHub owner `fenwei-dev`, repository `kalo-ai`, workflow filename `publish-plugin-sdk.yml`, no environment, and the `npm publish` allowed action. Subsequent workflow publishes use OIDC and need no npm token.
+Except for this initial bootstrap, **do not publish npm or JSR releases manually**. Local publishing bypasses the normal GitHub OIDC release path, can leave the two registries on different versions, and may omit or complicate provenance. Reserve it for exceptional recovery only.
 
-For JSR, create `@kalo-ai/plugin-sdk` and link it to `fenwei-dev/kalo-ai`; GitHub Actions can then publish with OIDC. Both registry jobs store no long-lived token.
+### Subsequent releases through GitHub Actions
+
+Bump the single npm version source, regenerate the workspace lockfile, and validate both artifacts:
+
+```bash
+cd packages/plugin-sdk
+npm version patch --no-git-tag-version
+cd ../..
+bun install --ignore-scripts
+bun run check
+bun test
+bun run build
+```
+
+Commit and push the release change before tagging it. Then derive the tag from `package.json` so the version is never typed a second time:
+
+```bash
+VERSION="$(node -p "require('./packages/plugin-sdk/package.json').version")"
+git add packages/plugin-sdk/package.json bun.lock
+git commit -m "chore(plugin-sdk): release $VERSION"
+git push origin main
+git tag -a "plugin-sdk-v$VERSION" -m "plugin-sdk v$VERSION"
+git push origin "plugin-sdk-v$VERSION"
+```
+
+The `plugin-sdk-v<version>` tag triggers `.github/workflows/publish-plugin-sdk.yml`, which validates and publishes the same version to npm and JSR with GitHub OIDC and no long-lived registry token. A manual workflow dispatch is available for recovery, but version tags are the recommended, auditable release path.
 
 ## Security boundary
 

@@ -1,6 +1,6 @@
 {
 	"name": "@kalo-ai/plugin-sdk",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Typed SDK for building Kalo AI Agent plugins",
 	"license": "MIT",
 	"private": false,
@@ -42,7 +42,7 @@
 		"prepack": "bun run clean && bun run build",
 		"pack:check": "npm pack --dry-run",
 		"publish:npm": "if [ -t 0 ] && [ -t 1 ]; then npm publish --access public; else echo 'Interactive npm publish needs a TTY. Run: cd packages/plugin-sdk && npm publish --access public' >&2; exit 1; fi",
-		"publish:jsr": "if [ -t 0 ] && [ -t 1 ]; then deno publish --config ./deno.json; else echo 'Interactive JSR publish needs a TTY. Run deno publish directly.' >&2; exit 1; fi"
+		"publish:jsr": "if [ -t 0 ] && [ -t 1 ]; then VERSION=$(node -p \"require('./package.json').version\") && deno publish --set-version \"$VERSION\"; else echo 'Interactive JSR publish needs a TTY. Run deno publish from packages/plugin-sdk with --set-version.' >&2; exit 1; fi"
 	},
 	"dependencies": {
 		"@earendil-works/pi-agent-core": "^0.84.1",

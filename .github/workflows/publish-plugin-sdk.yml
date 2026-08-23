@@ -35,12 +35,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Verify release versions
+      - name: Verify release version
         shell: bash
         run: |
           VERSION="$(jq -r .version packages/plugin-sdk/package.json)"
-          JSR_VERSION="$(jq -r .version packages/plugin-sdk/deno.json)"
-          test "$VERSION" = "$JSR_VERSION"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             test "$GITHUB_REF_NAME" = "plugin-sdk-v$VERSION"
           fi
@@ -52,7 +51,11 @@ jobs:
         run: npm pack --dry-run ./packages/plugin-sdk
 
       - name: Validate JSR package
-        run: deno publish --dry-run --config packages/plugin-sdk/deno.json
+        working-directory: packages/plugin-sdk
+        shell: bash
+        run: |
+          VERSION="$(jq -r .version package.json)"
+          deno publish --dry-run --set-version "$VERSION"
 
   publish-npm:
     needs: validate
@@ -97,4 +100,8 @@ jobs:
           deno-version: v2.x
 
       - name: Publish JSR package with GitHub OIDC
-        run: deno publish --config packages/plugin-sdk/deno.json
+        working-directory: packages/plugin-sdk
+        shell: bash
+        run: |
+          VERSION="$(jq -r .version package.json)"
+          deno publish --set-version "$VERSION"
