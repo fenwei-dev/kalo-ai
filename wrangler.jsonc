@@ -3,7 +3,7 @@
 	"name": "kalo-ai",
 	"compatibility_date": "2026-07-27",
 	"assets": {
-		"directory": "./build",
+		"directory": "./apps/web/build",
 		"not_found_handling": "single-page-application"
 	}
 }

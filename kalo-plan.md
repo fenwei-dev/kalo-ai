@@ -362,7 +362,7 @@ updateUserMemory({ content, expectedVersion })
 
 ## 九、技术栈与关键决策（v2，SvelteKit 版）
 
-项目位于 `../kalo-ai`（与原 `burner` 项目无关，从头重写）。
+项目仓库位于 `../kalo-ai`，采用 Bun monorepo；当前应用 package 位于 `apps/web`。
 
 ### 9.1 核心栈
 
@@ -429,10 +429,12 @@ updateUserMemory({ content, expectedVersion })
 - `@vite-pwa/sveltekit` —— manifest + service worker + 缓存策略自动生成。
 - 配置：name=「Kalo AI」、short_name=「Kalo」、theme_color=emerald、standalone、portrait。
 
-## 十、目录结构（SvelteKit 版）
+## 十、目录结构（Bun Monorepo）
 
-```
-src/
+仓库使用 Bun workspace：当前 Web PWA 位于 `apps/web`，后续共享模块放入 `packages/*`。根目录保留 workspace 脚本、Biome、Wrangler 和项目文档。
+
+```text
+apps/web/src/
 ├── lib/
 │   ├── server/                    # （第一版为空，无业务端点）
 │   ├── db/
@@ -488,6 +490,10 @@ src/
 ├── app.html
 ├── app.d.ts
 └── hooks.server.ts                # Paraglide 中间件（已有）
+
+packages/                          # 后续共享 package
+package.json                       # Bun workspaces + 根代理脚本
+wrangler.jsonc                     # 部署 apps/web/build，SPA fallback
 ```
 
 ## 十一、实施顺序（v2）

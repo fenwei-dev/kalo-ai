@@ -16,6 +16,18 @@
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
 - **中英双语**：支持简体中文与 English。
 
+## Monorepo 结构
+
+本仓库使用 Bun workspace：
+
+```text
+apps/
+  web/       SvelteKit PWA
+packages/    后续加入的共享 package
+```
+
+根目录脚本会代理到 web workspace，因此日常命令保持不变。
+
 ## 开发
 
 ```sh
@@ -23,19 +35,26 @@ bun install
 bun run dev
 ```
 
-检查、测试与构建：
+检查、测试、格式化与构建：
 
 ```sh
 bun run check
 bun test
+bun run fmt
 bun run build
+```
+
+也可以直接运行 web package：
+
+```sh
+bun run --filter @kalo-ai/web dev
 ```
 
 ## 部署
 
-项目使用 SvelteKit adapter-static，构建产物位于 `build/`。
+Web package 使用 SvelteKit adapter-static，构建产物位于 `apps/web/build/`。
 
-Cloudflare 部署：
+根目录的 `wrangler.jsonc` 会部署该目录并提供 SPA fallback。请从仓库根目录部署到 Cloudflare：
 
 ```sh
 bun run deploy

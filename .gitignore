@@ -5,8 +5,8 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
+**/.svelte-kit
+**/build
 
 # OS
 .DS_Store
@@ -25,5 +25,5 @@ issues/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 # Paraglide
-src/lib/paraglide
-project.inlang/cache/
+**/src/lib/paraglide
+**/project.inlang/cache/

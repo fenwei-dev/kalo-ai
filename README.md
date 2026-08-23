@@ -16,6 +16,18 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
 - **Bilingual**: Supports Simplified Chinese and English.
 
+## Monorepo layout
+
+This repository is a Bun workspace:
+
+```text
+apps/
+  web/       SvelteKit PWA
+packages/    Shared packages added over time
+```
+
+The root scripts proxy the web workspace, so the usual commands remain unchanged.
+
 ## Development
 
 ```sh
@@ -23,19 +35,26 @@ bun install
 bun run dev
 ```
 
-Check, test, and build:
+Check, test, format, and build:
 
 ```sh
 bun run check
 bun test
+bun run fmt
 bun run build
+```
+
+To run the web package directly:
+
+```sh
+bun run --filter @kalo-ai/web dev
 ```
 
 ## Deployment
 
-The project uses SvelteKit adapter-static. Production assets are written to `build/`.
+The web package uses SvelteKit adapter-static. Production assets are written to `apps/web/build/`.
 
-Deploy to Cloudflare:
+The root `wrangler.jsonc` serves that directory with SPA fallback. Deploy to Cloudflare from the repository root:
 
 ```sh
 bun run deploy
