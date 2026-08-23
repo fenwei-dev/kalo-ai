@@ -229,6 +229,98 @@ test("enabled plugin contributes tools and a bounded system prompt", async () =>
 	]);
 });
 
+test("user-installed package plugins load disabled and can be removed with their data", async () => {
+	const { definePlugin, Type } = await import("@kalo-ai/plugin-sdk");
+	const remotePlugin = definePlugin({
+		manifest: {
+			id: "remote_fixture",
+			apiVersion: 1,
+			version: "1.0.0",
+			configVersion: 1,
+			name: { "zh-cn": "远程测试", "en-us": "Remote fixture" },
+			description: { "zh-cn": "测试", "en-us": "Test fixture" },
+			defaultEnabled: true,
+		},
+		configSchema: Type.Object({}),
+		defaultConfig: {},
+		createTools: () => [
+			{
+				name: "remote_fixture_ping",
+				label: "Remote ping",
+				description: "Return a remote plugin test value.",
+				parameters: Type.Object({}),
+				executionMode: "parallel",
+				execute: async () => ({
+					content: [{ type: "text", text: "pong" }],
+					details: { ok: true, data: { value: "pong" } },
+				}),
+			},
+		],
+	});
+	const installed = await plugins.installPluginPackage(
+		"npm:@scope/remote-fixture@1.0.0",
+		async () => ({ default: remotePlugin }),
+	);
+	expect(installed).toMatchObject({
+		enabled: false,
+		status: "disabled",
+		source: {
+			type: "npm",
+			packageName: "@scope/remote-fixture",
+			packageVersion: "1.0.0",
+		},
+	});
+	expect(await repositories.listPluginInstallations()).toEqual([
+		expect.objectContaining({
+			pluginId: "remote_fixture",
+			packageName: "@scope/remote-fixture",
+		}),
+	]);
+
+	await plugins.savePluginSettings("remote_fixture", {}, true);
+	const runtime = await plugins.loadPluginRuntime("en-us", []);
+	expect(runtime.tools.map((tool) => tool.name)).toContain(
+		"remote_fixture_ping",
+	);
+	await repositories.setPluginData({
+		pluginId: "remote_fixture",
+		key: "sample",
+		value: { retained: false },
+	});
+	const disabled = await plugins.disableInstalledPlugin("remote_fixture");
+	expect(disabled).toMatchObject({ enabled: false, status: "disabled" });
+	await plugins.removePluginPackage("remote_fixture");
+	expect(await repositories.listPluginInstallations()).toEqual([]);
+	expect(await repositories.getPluginConfig("remote_fixture")).toBeUndefined();
+	expect(
+		await repositories.getPluginData("remote_fixture", "sample"),
+	).toBeUndefined();
+});
+
+test("remote package and plugin manifest versions must match", async () => {
+	const { definePlugin, Type } = await import("@kalo-ai/plugin-sdk");
+	const mismatched = definePlugin({
+		manifest: {
+			id: "remote_mismatch",
+			apiVersion: 1,
+			version: "2.0.0",
+			configVersion: 1,
+			name: { "zh-cn": "版本错误", "en-us": "Version mismatch" },
+			description: { "zh-cn": "测试", "en-us": "Test fixture" },
+		},
+		configSchema: Type.Object({}),
+		defaultConfig: {},
+		createTools: () => [],
+	});
+	await expect(
+		plugins.installPluginPackage(
+			"npm:@scope/version-mismatch@1.0.0",
+			async () => ({ default: mismatched }),
+		),
+	).rejects.toThrow("版本");
+	expect(await repositories.listPluginInstallations()).toEqual([]);
+});
+
 test("plugin configuration migrates to the package config version", async () => {
 	await repositories.savePluginConfig({
 		pluginId: "example",
@@ -675,6 +767,26 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		key: "sample",
 		value: ["saved", 1],
 	});
+	await repositories.savePluginInstallation({
+		pluginId: "backup_remote",
+		registry: "jsr",
+		packageName: "@scope/backup-plugin",
+		packageVersion: "1.2.3",
+		manifest: {
+			id: "backup_remote",
+			apiVersion: 1,
+			version: "1.2.3",
+			configVersion: 1,
+			name: { "zh-cn": "备份插件", "en-us": "Backup plugin" },
+			description: { "zh-cn": "备份测试", "en-us": "Backup test" },
+		},
+	});
+	await repositories.savePluginConfig({
+		pluginId: "backup_remote",
+		enabled: true,
+		configVersion: 1,
+		config: {},
+	});
 	const backedPlan = await repositories.createTrainingPlan({
 		title: "Backed-up plan",
 		startDate: dates.localDateISO(),
@@ -694,7 +806,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		caloriesBurned: 180,
 	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(4);
+	expect(backup.version).toBe(5);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",
@@ -711,24 +823,38 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 			exerciseEntryId: expect.any(String),
 		}),
 	]);
-	expect(backup.pluginConfigs).toEqual([
-		expect.objectContaining({
-			pluginId: "example",
-			enabled: true,
-			config: {
-				prefix: "Backup plugin",
-				apiKey: "backup-secret",
-				repeatCount: 3,
-				mode: "plain",
-				uppercase: false,
-			},
-		}),
-	]);
+	expect(backup.pluginConfigs).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({
+				pluginId: "example",
+				enabled: true,
+				config: {
+					prefix: "Backup plugin",
+					apiKey: "backup-secret",
+					repeatCount: 3,
+					mode: "plain",
+					uppercase: false,
+				},
+			}),
+			expect.objectContaining({
+				pluginId: "backup_remote",
+				enabled: true,
+			}),
+		]),
+	);
 	expect(backup.pluginData).toEqual([
 		expect.objectContaining({
 			pluginId: "example",
 			key: "sample",
 			value: ["saved", 1],
+		}),
+	]);
+	expect(backup.pluginInstallations).toEqual([
+		expect.objectContaining({
+			pluginId: "backup_remote",
+			registry: "jsr",
+			packageName: "@scope/backup-plugin",
+			packageVersion: "1.2.3",
 		}),
 	]);
 	expect(backup.userMemory).toEqual([
@@ -741,6 +867,11 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	const invalidBackup = structuredClone(backup);
 	delete invalidBackup.user[0].bodyFatPercentage;
 	await expect(importAll(invalidBackup)).rejects.toThrow("user 数据格式无效");
+	const invalidPluginBackup = structuredClone(backup);
+	invalidPluginBackup.pluginInstallations[0].packageVersion = "latest";
+	await expect(importAll(invalidPluginBackup)).rejects.toThrow(
+		"pluginInstallations 数据格式无效",
+	);
 
 	await repositories.clearAllData();
 	await importAll(backup);
@@ -756,6 +887,15 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	});
 	expect(await repositories.getPluginData("example", "sample")).toMatchObject({
 		value: ["saved", 1],
+	});
+	expect(await repositories.listPluginInstallations()).toEqual([
+		expect.objectContaining({
+			pluginId: "backup_remote",
+			packageVersion: "1.2.3",
+		}),
+	]);
+	expect(await repositories.getPluginConfig("backup_remote")).toMatchObject({
+		enabled: false,
 	});
 	expect(await repositories.getTrainingPlans()).toHaveLength(1);
 	const restoredWorkouts = await repositories.getPlannedWorkouts(
@@ -792,4 +932,5 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	});
 	expect(await repositories.getTrainingPlans()).toEqual([]);
 	expect(await repositories.listPluginConfigs()).toEqual([]);
+	expect(await repositories.listPluginInstallations()).toEqual([]);
 });

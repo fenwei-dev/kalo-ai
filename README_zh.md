@@ -15,7 +15,7 @@
 - **完整追踪**：饮食、运动、体重、目标、每日概览与趋势分析。
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
 - **中英双语**：支持简体中文与 English。
-- **编译期插件**：经过审查的 workspace package 可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置。
+- **插件系统**：经过审查的集成 package，以及固定到精确版本的 npm/JSR Kalo 插件，都可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置。
 - **新加坡餐厅营养数据**：通过可审查的静态快照，为麦当劳、赛百味和肯德基提供离线 Agent 查询工具。
 
 ## Monorepo 结构
@@ -35,6 +35,18 @@ packages/
 ```
 
 根目录脚本会代理到 web workspace，因此日常命令保持不变。
+
+## npm / JSR 插件 package
+
+用户可以在**设置 → 插件**中导入固定到精确版本的 Kalo 插件 package：
+
+```text
+npm:package@1.2.3
+npm:@scope/package@1.2.3
+jsr:@scope/package@1.2.3
+```
+
+卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。浏览器模块通过 esm.sh 解析；新安装的 package 默认停用，从备份恢复后也必须再次明确启用。package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
 
 ## 开发
 
@@ -71,6 +83,8 @@ bun run deploy
 ## 隐私与免责声明
 
 App 没有业务后端。健康数据及 API Key 仅保存在当前浏览器；AI 请求直接发送到用户配置的服务。API Key 在 IndexedDB 中明文保存，完整备份也会包含密钥。
+
+用户安装的 npm/JSR 插件会通过 esm.sh 获取，并以无沙箱第三方 JavaScript 身份运行在卡卡的同一浏览器上下文中。无论声明了什么权限，它们都可能直接访问本地健康资料、聊天和 AI API Key。请只安装你已独立审查并信任的精确版本。
 
 大语言模型可能因知识错误、过时或幻觉给出不准确信息。本项目不提供医疗、营养或其他专业建议。
 

@@ -10,6 +10,7 @@ import type {
 	PlannedWorkout,
 	PluginConfigRecord,
 	PluginDataRecord,
+	PluginInstallation,
 	Session,
 	TrainingPlan,
 	User,
@@ -50,12 +51,18 @@ export interface KaloBackupV4 extends Omit<KaloBackupV3, "version"> {
 	pluginData: PluginDataRecord[];
 }
 
+export interface KaloBackupV5 extends Omit<KaloBackupV4, "version"> {
+	version: 5;
+	pluginInstallations: PluginInstallation[];
+}
+
 export type KaloBackup =
 	| KaloBackupV1
 	| KaloBackupV2
 	| KaloBackupV3
-	| KaloBackupV4;
-export type ParsedKaloBackup = Omit<KaloBackupV4, "version" | "exportedAt">;
+	| KaloBackupV4
+	| KaloBackupV5;
+export type ParsedKaloBackup = Omit<KaloBackupV5, "version" | "exportedAt">;
 
 type DataRecord = Record<string, unknown>;
 type ValueGuard<T> = (value: unknown) => value is T;
@@ -364,6 +371,87 @@ function isPluginDataRecord(value: unknown): value is PluginDataRecord {
 	);
 }
 
+const PLUGIN_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
+const NPM_PACKAGE_PATTERN =
+	/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
+const JSR_PACKAGE_PATTERN = /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/;
+const EXACT_VERSION_PATTERN =
+	/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+function isPluginManifest(
+	value: unknown,
+): value is PluginInstallation["manifest"] {
+	return (
+		isRecord(value) &&
+		isString(value.id) &&
+		value.id.length <= 64 &&
+		PLUGIN_ID_PATTERN.test(value.id) &&
+		value.apiVersion === 1 &&
+		isString(value.version) &&
+		value.version.length > 0 &&
+		value.version.length <= 100 &&
+		isFiniteNumber(value.configVersion) &&
+		Number.isInteger(value.configVersion) &&
+		value.configVersion >= 1 &&
+		isRecord(value.name) &&
+		isString(value.name["zh-cn"]) &&
+		value.name["zh-cn"].trim().length > 0 &&
+		value.name["zh-cn"].length <= 200 &&
+		isString(value.name["en-us"]) &&
+		value.name["en-us"].trim().length > 0 &&
+		value.name["en-us"].length <= 200 &&
+		isRecord(value.description) &&
+		isString(value.description["zh-cn"]) &&
+		value.description["zh-cn"].trim().length > 0 &&
+		value.description["zh-cn"].length <= 200 &&
+		isString(value.description["en-us"]) &&
+		value.description["en-us"].trim().length > 0 &&
+		value.description["en-us"].length <= 200 &&
+		isOptional(value.defaultEnabled, isBoolean) &&
+		isOptional(
+			value.permissions,
+			(
+				permissions,
+			): permissions is NonNullable<
+				PluginInstallation["manifest"]["permissions"]
+			> =>
+				Array.isArray(permissions) &&
+				permissions.every((permission) =>
+					isOneOf(permission, [
+						"network",
+						"profile.read",
+						"logs.read",
+						"logs.write",
+						"storage",
+					] as const),
+				) &&
+				new Set(permissions).size === permissions.length,
+		)
+	);
+}
+
+function isPluginInstallation(value: unknown): value is PluginInstallation {
+	return (
+		isRecord(value) &&
+		isString(value.pluginId) &&
+		value.pluginId.length <= 64 &&
+		PLUGIN_ID_PATTERN.test(value.pluginId) &&
+		isOneOf(value.registry, ["npm", "jsr"] as const) &&
+		isString(value.packageName) &&
+		value.packageName.length <= 214 &&
+		(value.registry === "npm"
+			? NPM_PACKAGE_PATTERN.test(value.packageName)
+			: JSR_PACKAGE_PATTERN.test(value.packageName)) &&
+		isString(value.packageVersion) &&
+		EXACT_VERSION_PATTERN.test(value.packageVersion) &&
+		isPluginManifest(value.manifest) &&
+		value.manifest.id === value.pluginId &&
+		value.manifest.version === value.packageVersion &&
+		isFiniteNumber(value.installedAt) &&
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
 function isSession(value: unknown): value is Session {
 	return (
 		isRecord(value) &&
@@ -427,7 +515,8 @@ export function parseKaloBackup(
 		value.version !== 1 &&
 		value.version !== 2 &&
 		value.version !== 3 &&
-		value.version !== 4
+		value.version !== 4 &&
+		value.version !== 5
 	)
 		throw new Error("备份版本不受支持");
 	if (!isFiniteNumber(value.exportedAt))
@@ -450,12 +539,16 @@ export function parseKaloBackup(
 			? requireArray(value, "plannedWorkouts", isPlannedWorkout)
 			: [];
 	const pluginConfigs =
-		value.version === 4
+		value.version >= 4
 			? requireArray(value, "pluginConfigs", isPluginConfigRecord)
 			: [];
 	const pluginData =
-		value.version === 4
+		value.version >= 4
 			? requireArray(value, "pluginData", isPluginDataRecord)
+			: [];
+	const pluginInstallations =
+		value.version >= 5
+			? requireArray(value, "pluginInstallations", isPluginInstallation)
 			: [];
 	if (user.length > 1) throw new Error("用户资料格式无效");
 	if (aiConfig.length > 1) throw new Error("AI 配置格式无效");
@@ -471,6 +564,24 @@ export function parseKaloBackup(
 			.size !== pluginData.length
 	) {
 		throw new Error("插件数据包含重复 key");
+	}
+	if (pluginInstallations.length > 10) {
+		throw new Error("已安装插件数量超过上限");
+	}
+	if (
+		new Set(pluginInstallations.map((record) => record.pluginId)).size !==
+		pluginInstallations.length
+	) {
+		throw new Error("已安装插件包含重复 pluginId");
+	}
+	if (
+		new Set(
+			pluginInstallations.map(
+				(record) => `${record.registry}\u0000${record.packageName}`,
+			),
+		).size !== pluginInstallations.length
+	) {
+		throw new Error("已安装插件包含重复 package");
 	}
 	if (
 		trainingPlans.filter(
@@ -528,6 +639,7 @@ export function parseKaloBackup(
 		plannedWorkouts,
 		pluginConfigs,
 		pluginData,
+		pluginInstallations,
 		foodEntries: requireArray(value, "foodEntries", isFoodEntry),
 		exerciseEntries,
 		weightEntries: requireArray(value, "weightEntries", isWeightEntry),

@@ -15,8 +15,11 @@
 	import * as m from "$lib/paraglide/messages";
 	import { getLocale } from "$lib/paraglide/runtime";
 	import {
+		disableInstalledPlugin,
 		getPluginState,
 		type PluginState,
+		pluginSourceLabel,
+		removePluginPackage,
 		resetPluginSettings,
 		savePluginSettings,
 	} from "$lib/plugins/manager";
@@ -29,6 +32,7 @@
 	let saved = $state(false);
 	let error = $state("");
 	let resetDialogOpen = $state(false);
+	let removeDialogOpen = $state(false);
 
 	onMount(() => void load());
 
@@ -109,6 +113,31 @@
 		error = "";
 	}
 
+	async function disableUnavailable() {
+		if (!pluginState || pluginState.source.type === "bundled") return;
+		try {
+			pluginState = await disableInstalledPlugin(
+				pluginState.plugin.manifest.id,
+			);
+			enabled = false;
+			error = "";
+		} catch (cause) {
+			error = cause instanceof Error ? cause.message : String(cause);
+		}
+	}
+
+	async function remove() {
+		if (!pluginState || pluginState.source.type === "bundled") return;
+		try {
+			await removePluginPackage(pluginState.plugin.manifest.id);
+			removeDialogOpen = false;
+			await goto("/settings/plugins", { replaceState: true });
+		} catch (cause) {
+			error = cause instanceof Error ? cause.message : String(cause);
+			removeDialogOpen = false;
+		}
+	}
+
 	function hasSecretField(
 		fields: PluginSettingField<PluginJsonObject>[],
 	): boolean {
@@ -135,25 +164,49 @@
 					<p class="text-sm leading-relaxed text-gray-600">
 						{localize(pluginState.plugin.manifest.description, getLocale())}
 					</p>
-					<div class="mt-3 flex items-center justify-between gap-3">
-						<div>
-							<p class="text-sm font-medium">{m.plugins_enabled()}</p>
-							<p class="text-xs text-gray-400">{m.plugins_changes_next_turn()}</p>
+					<p class="mt-2 break-all text-xs text-gray-400">
+						{m.plugins_source()}: {pluginSourceLabel(pluginState)}
+					</p>
+					{#if pluginState.loadError}
+						<div class="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-relaxed text-red-600">
+							<p>{m.plugins_load_error()}: {pluginState.loadError}</p>
+							{#if pluginState.enabled && pluginState.source.type !== 'bundled'}
+								<button
+									type="button"
+									onclick={disableUnavailable}
+									class="mt-2 font-medium underline"
+								>
+									{m.plugins_disable_unavailable()}
+								</button>
+							{/if}
 						</div>
-						<button
-							type="button"
-							role="switch"
-							aria-label={m.plugins_toggle()}
-							aria-checked={enabled}
-							onclick={() => (enabled = !enabled)}
-							class="relative h-7 w-12 rounded-full transition-colors {enabled ? 'bg-emerald-500' : 'bg-gray-300'}"
-						>
-							<span class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all {enabled ? 'left-6' : 'left-1'}"></span>
-						</button>
-					</div>
+					{/if}
+					{#if pluginState.source.type !== 'bundled'}
+						<p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
+							{m.plugins_remote_detail_risk()}
+						</p>
+					{/if}
+					{#if pluginState.status !== 'load_error'}
+						<div class="mt-3 flex items-center justify-between gap-3">
+							<div>
+								<p class="text-sm font-medium">{m.plugins_enabled()}</p>
+								<p class="text-xs text-gray-400">{m.plugins_changes_next_turn()}</p>
+							</div>
+							<button
+								type="button"
+								role="switch"
+								aria-label={m.plugins_toggle()}
+								aria-checked={enabled}
+								onclick={() => (enabled = !enabled)}
+								class="relative h-7 w-12 rounded-full transition-colors {enabled ? 'bg-emerald-500' : 'bg-gray-300'}"
+							>
+								<span class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all {enabled ? 'left-6' : 'left-1'}"></span>
+							</button>
+						</div>
+					{/if}
 				</Block>
 
-				{#if pluginState.plugin.settings?.fields.length}
+				{#if pluginState.status !== 'load_error' && pluginState.plugin.settings?.fields.length}
 					<BlockTitle>{m.plugins_configuration()}</BlockTitle>
 					<Block inset strong>
 						<div class="space-y-4">
@@ -235,16 +288,23 @@
 				{/if}
 				<Block inset>
 					{#if error}<p class="mb-3 text-xs text-red-500">{error}</p>{/if}
-					<button
-						onclick={save}
-						disabled={saving}
-						class="w-full rounded-full bg-emerald-500 py-3 text-sm font-medium text-white disabled:opacity-50"
-					>
-						{saving ? m.common_saving() : saved ? m.common_saved() : m.common_save()}
-					</button>
-					<button onclick={() => (resetDialogOpen = true)} class="mt-3 w-full text-center text-xs text-red-500">
-						{m.plugins_reset()}
-					</button>
+					{#if pluginState.status !== 'load_error'}
+						<button
+							onclick={save}
+							disabled={saving}
+							class="w-full rounded-full bg-emerald-500 py-3 text-sm font-medium text-white disabled:opacity-50"
+						>
+							{saving ? m.common_saving() : saved ? m.common_saved() : m.common_save()}
+						</button>
+						<button onclick={() => (resetDialogOpen = true)} class="mt-3 w-full text-center text-xs text-red-500">
+							{m.plugins_reset()}
+						</button>
+					{/if}
+					{#if pluginState.source.type !== 'bundled'}
+						<button onclick={() => (removeDialogOpen = true)} class="mt-3 w-full text-center text-xs text-red-600">
+							{m.plugins_remove()}
+						</button>
+					{/if}
 				</Block>
 			{/if}
 		</div>
@@ -257,4 +317,12 @@
 	message={m.plugins_reset_message()}
 	kind="confirm"
 	onconfirm={reset}
+/>
+
+<AppDialog
+	bind:open={removeDialogOpen}
+	title={m.plugins_remove_title()}
+	message={m.plugins_remove_message()}
+	kind="confirm"
+	onconfirm={remove}
 />

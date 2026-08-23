@@ -1,6 +1,6 @@
 import { getLocale } from "$lib/paraglide/runtime";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV4, parseKaloBackup } from "./backup";
+import { type KaloBackupV5, parseKaloBackup } from "./backup";
 
 export type {
 	KaloBackup,
@@ -8,6 +8,7 @@ export type {
 	KaloBackupV2,
 	KaloBackupV3,
 	KaloBackupV4,
+	KaloBackupV5,
 } from "./backup";
 
 import {
@@ -24,6 +25,7 @@ import type {
 	PlannedWorkout,
 	PluginConfigRecord,
 	PluginDataRecord,
+	PluginInstallation,
 	Session,
 	TrainingPlan,
 	TrainingPlanStatus,
@@ -208,6 +210,44 @@ export async function deletePluginData(
 	key: string,
 ): Promise<void> {
 	await db.pluginData.delete([pluginId, key]);
+}
+
+export async function listPluginInstallations(): Promise<PluginInstallation[]> {
+	return db.pluginInstallations.orderBy("installedAt").toArray();
+}
+
+export async function getPluginInstallation(
+	pluginId: string,
+): Promise<PluginInstallation | undefined> {
+	return db.pluginInstallations.get(pluginId);
+}
+
+export async function savePluginInstallation(
+	record: Omit<PluginInstallation, "installedAt" | "updatedAt">,
+): Promise<PluginInstallation> {
+	const existing = await db.pluginInstallations.get(record.pluginId);
+	const timestamp = now();
+	const saved: PluginInstallation = {
+		...record,
+		installedAt: existing?.installedAt ?? timestamp,
+		updatedAt: timestamp,
+	};
+	await db.pluginInstallations.put(saved);
+	return saved;
+}
+
+export async function deletePluginInstallation(
+	pluginId: string,
+): Promise<void> {
+	await db.transaction(
+		"rw",
+		[db.pluginInstallations, db.pluginConfigs, db.pluginData],
+		async () => {
+			await db.pluginInstallations.delete(pluginId);
+			await db.pluginConfigs.delete(pluginId);
+			await db.pluginData.where("pluginId").equals(pluginId).delete();
+		},
+	);
 }
 
 // ---------- Food entries ----------
@@ -1273,6 +1313,7 @@ export async function clearAllData(): Promise<void> {
 			db.plannedWorkouts,
 			db.pluginConfigs,
 			db.pluginData,
+			db.pluginInstallations,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1289,6 +1330,7 @@ export async function clearAllData(): Promise<void> {
 				db.plannedWorkouts.clear(),
 				db.pluginConfigs.clear(),
 				db.pluginData.clear(),
+				db.pluginInstallations.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1309,7 +1351,16 @@ export async function importAll(value: unknown): Promise<void> {
 		plannedWorkouts,
 		pluginConfigs,
 		pluginData,
+		pluginInstallations,
 	} = data;
+	const installedPluginIds = new Set(
+		pluginInstallations.map((installation) => installation.pluginId),
+	);
+	const safePluginConfigs = pluginConfigs.map((config) =>
+		installedPluginIds.has(config.pluginId)
+			? { ...config, enabled: false }
+			: config,
+	);
 
 	await db.transaction(
 		"rw",
@@ -1323,6 +1374,7 @@ export async function importAll(value: unknown): Promise<void> {
 			db.plannedWorkouts,
 			db.pluginConfigs,
 			db.pluginData,
+			db.pluginInstallations,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1339,6 +1391,7 @@ export async function importAll(value: unknown): Promise<void> {
 				db.plannedWorkouts.clear(),
 				db.pluginConfigs.clear(),
 				db.pluginData.clear(),
+				db.pluginInstallations.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1351,8 +1404,9 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.exerciseEntries.bulkPut(data.exerciseEntries);
 			await db.trainingPlans.bulkPut(trainingPlans);
 			await db.plannedWorkouts.bulkPut(plannedWorkouts);
-			await db.pluginConfigs.bulkPut(pluginConfigs);
+			await db.pluginConfigs.bulkPut(safePluginConfigs);
 			await db.pluginData.bulkPut(pluginData);
+			await db.pluginInstallations.bulkPut(pluginInstallations);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);
 			await db.sessions.bulkPut(data.sessions);
@@ -1362,7 +1416,7 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV4> {
+export async function exportAll(): Promise<KaloBackupV5> {
 	const [
 		user,
 		aiConfig,
@@ -1373,6 +1427,7 @@ export async function exportAll(): Promise<KaloBackupV4> {
 		plannedWorkouts,
 		pluginConfigs,
 		pluginData,
+		pluginInstallations,
 		weightEntries,
 		foodLibrary,
 		sessions,
@@ -1387,13 +1442,14 @@ export async function exportAll(): Promise<KaloBackupV4> {
 		db.plannedWorkouts.toArray(),
 		db.pluginConfigs.toArray(),
 		db.pluginData.toArray(),
+		db.pluginInstallations.toArray(),
 		db.weightEntries.toArray(),
 		db.foodLibrary.toArray(),
 		db.sessions.toArray(),
 		db.messages.toArray(),
 	]);
 	return {
-		version: 4,
+		version: 5,
 		exportedAt: now(),
 		user,
 		aiConfig,
@@ -1404,6 +1460,7 @@ export async function exportAll(): Promise<KaloBackupV4> {
 		plannedWorkouts,
 		pluginConfigs,
 		pluginData,
+		pluginInstallations,
 		weightEntries,
 		foodLibrary,
 		sessions,

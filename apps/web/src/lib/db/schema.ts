@@ -1,3 +1,4 @@
+import type { PluginManifest } from "@kalo-ai/plugin-sdk";
 import Dexie, { type Table } from "dexie";
 
 // ---------- 基础枚举 / 类型 ----------
@@ -183,6 +184,19 @@ export interface PluginDataRecord {
 	updatedAt: number;
 }
 
+export type PluginPackageRegistry = "npm" | "jsr";
+
+/** Exact, user-installed package reference and a displayable manifest snapshot. */
+export interface PluginInstallation {
+	pluginId: string;
+	registry: PluginPackageRegistry;
+	packageName: string;
+	packageVersion: string;
+	manifest: PluginManifest;
+	installedAt: number;
+	updatedAt: number;
+}
+
 /** pi-ai 风格的内容块；所有持久化字段都必须可结构化克隆。 */
 export type ContentBlock =
 	| { type: "text"; text: string; textSignature?: string }
@@ -231,6 +245,7 @@ class KaloDB extends Dexie {
 	plannedWorkouts!: Table<PlannedWorkout, string>;
 	pluginConfigs!: Table<PluginConfigRecord, string>;
 	pluginData!: Table<PluginDataRecord, [string, string]>;
+	pluginInstallations!: Table<PluginInstallation, string>;
 	weightEntries!: Table<WeightEntry, string>;
 	foodLibrary!: Table<FoodLibraryItem, string>;
 	sessions!: Table<Session, string>;
@@ -307,6 +322,24 @@ class KaloDB extends Dexie {
 				"id, planId, date, status, exerciseEntryId, [planId+date]",
 			pluginConfigs: "pluginId, enabled",
 			pluginData: "[pluginId+key], pluginId",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
+		});
+		this.version(6).stores({
+			user: "id",
+			aiConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source, plannedWorkoutId",
+			trainingPlans: "id, status, startDate, updatedAt",
+			plannedWorkouts:
+				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			pluginConfigs: "pluginId, enabled",
+			pluginData: "[pluginId+key], pluginId",
+			pluginInstallations:
+				"pluginId, registry, packageName, installedAt, updatedAt",
 			weightEntries: "id, date",
 			foodLibrary: "id, name, category, lastUsedAt",
 			sessions: "id, updatedAt, lastMessageAt",

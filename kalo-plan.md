@@ -344,7 +344,7 @@ updateUserMemory({ content, expectedVersion })
 
 **F. 数据与隐私页**
 - 导出 JSON / 导入 JSON / 清空数据。
-- 备份格式为 v4，包含 UserMemory、TrainingPlan、PlannedWorkout、PluginConfig 与 PluginData；导入继续兼容 v1–v3 备份。
+- 备份格式为 v5，包含 UserMemory、TrainingPlan、PlannedWorkout、PluginConfig、PluginData 与用户安装的精确 npm/JSR package 引用；导入继续兼容 v1–v4 备份。
 - 明确完整备份包含健康数据、聊天图片、卡卡的记忆与明文 API Key。
 
 ## 八、首次引导流
@@ -418,16 +418,18 @@ updateUserMemory({ content, expectedVersion })
 - **图片输入**：聊天支持单张 JPEG/PNG/WebP/GIF，经浏览器端缩放和重编码后作为 `ImageContent` 保存并发送。当前活跃上下文保留历史图片，与 pi coding agent 的上下文语义一致；不单独实现图片摘要或图片专用 compaction。
 - **不再有独立 analyze 路径**：食物估算由主模型在推理时直接产出数值传给 `logFood`。
 
-### 9.6 编译期插件机制
+### 9.6 插件机制
 
 - `packages/plugin-sdk` 定义 manifest、TypeBox 配置、设置字段、权限声明、AgentTool、System Prompt 扩展与受控 services。
-- 插件作为 `packages/plugin-*` Bun workspace package，由 `apps/web/src/lib/plugins/registry.ts` 在构建时显式注册；不允许运行时安装任意远程代码。
+- 经过审查的 `packages/plugin-*` Bun workspace package 由 `apps/web/src/lib/plugins/registry.ts` 在构建时显式注册。
+- 用户也可以安装固定到精确版本的 `npm:package@1.2.3`、`npm:@scope/package@1.2.3` 或 `jsr:@scope/package@1.2.3` Kalo 插件；浏览器通过 esm.sh 动态导入，拒绝 latest、tag、版本范围、URL 与未固定版本。
+- 远程 package 必须 default-export `KaloPlugin`，或导出名为 `kaloPlugin` 的对象；安装后默认停用，用户需明确启用。
 - 启用插件的工具会和核心 AgentTool 合并；工具名必须以 `${pluginId}_` 开头且全局唯一。
 - 启用插件可提供受长度限制的 Prompt section，在核心 System Prompt 后按稳定顺序追加，从下一轮对话生效。
-- `pluginConfigs` 保存启用状态、配置版本和 JSON 配置；`pluginData` 提供按 pluginId 隔离的私有 KV 存储，两者均进入完整备份。
-- 设置页提供 `/settings/plugins` 与 `/settings/plugins/[pluginId]`，第一版支持 text/password/number/toggle/select schema-driven 配置。
-- 插件代码和 Web App 运行在同一浏览器上下文，不是真正沙箱，因此只集成经过审查的 package，并在 UI 展示声明权限。
-- `plugin-mcdonalds-sg` 内置新加坡麦当劳官网营养静态快照，提供 Full Menu / 官网分类 `{id,name}` 列表与准确 ID 营养查询；服务端更新脚本仅在规范化产品或分类数据变化时改写 JSON，定时 GitHub Actions 据此自动创建更新 PR。
+- `pluginConfigs` 保存启用状态、配置版本和 JSON 配置；`pluginData` 提供按 pluginId 隔离的私有 KV；`pluginInstallations` 保存用户安装的 registry、package、精确版本和 manifest 快照，三者均进入完整备份。
+- 设置页提供 `/settings/plugins` 与 `/settings/plugins/[pluginId]`，支持 text/password/number/toggle/select schema-driven 配置、远程 package 安装和移除。
+- 所有插件代码都和 Web App 运行在同一浏览器上下文，并不是真正沙箱。用户安装的第三方代码即使未声明权限，也可能直接访问 IndexedDB、健康资料、聊天与 AI API Key；UI 必须要求显式风险确认，权限声明仅供参考。
+- 内置新加坡麦当劳、赛百味和肯德基营养插件使用离线静态快照；更新脚本仅在规范化官网数据变化时改写 JSON，定时 GitHub Actions 据此自动创建更新 PR。
 
 ### 9.7 图表
 
@@ -459,8 +461,9 @@ apps/web/src/
 │   │   └── proactive.ts           # 主动消息生成（饭点/睡前/周报/平台期）
 │   ├── plugins/
 │   │   ├── registry.ts            # 构建时显式注册 workspace 插件
-│   │   ├── manager.ts             # 配置、工具与 Prompt 聚合
-│   │   └── services.ts            # 受控 profile/log/storage/fetch 能力
+│   │   ├── remote.ts              # npm/JSR 精确版本解析、esm.sh 导入与契约校验
+│   │   ├── manager.ts             # 安装、配置、工具与 Prompt 聚合
+│   │   └── services.ts            # profile/log/storage/fetch 插件能力
 │   ├── utils/
 │   │   ├── calculations.ts        # BMR/TDEE/TEF/目标缺口/安全判定
 │   │   ├── adaptiveTDEE.ts        # 自适应 TDEE
@@ -508,9 +511,11 @@ apps/web/src/
 └── hooks.server.ts                # Paraglide 中间件（已有）
 
 packages/
-├── plugin-sdk/                    # 稳定插件协议与 definePlugin
+├── plugin-sdk/                    # 稳定插件协议、definePlugin 与远程 export 契约
 ├── plugin-example/                # 默认停用的工具/Prompt/设置示例
-└── plugin-mcdonalds-sg/           # 新加坡麦当劳营养静态快照与查询工具
+├── plugin-mcdonalds-sg/           # 新加坡麦当劳营养静态快照与查询工具
+├── plugin-subway-sg/              # 新加坡赛百味营养静态快照与查询工具
+└── plugin-kfc-sg/                 # 新加坡肯德基营养与过敏原查询工具
 package.json                       # Bun workspaces + 根代理脚本
 wrangler.jsonc                     # 部署 apps/web/build，SPA fallback
 ```

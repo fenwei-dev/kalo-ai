@@ -15,7 +15,7 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Complete tracking**: Food, exercise, weight, goals, daily summaries, and trend analysis.
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
 - **Bilingual**: Supports Simplified Chinese and English.
-- **Build-time plugins**: Reviewed workspace packages can add Agent tools, bounded System Prompt sections, and schema-driven settings.
+- **Plugin system**: Reviewed bundled packages and exact-version npm/JSR Kalo plugins can add Agent tools, bounded System Prompt sections, and schema-driven settings.
 - **Singapore restaurant nutrition**: Bundled, offline Agent tools cover McDonald's, Subway, and KFC Singapore using reviewable static snapshots.
 
 ## Monorepo layout
@@ -35,6 +35,18 @@ packages/
 ```
 
 The root scripts proxy the web workspace, so the usual commands remain unchanged.
+
+## npm / JSR plugin packages
+
+From **Settings → Plugins**, users can import Kalo plugin packages pinned to exact versions:
+
+```text
+npm:package@1.2.3
+npm:@scope/package@1.2.3
+jsr:@scope/package@1.2.3
+```
+
+Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Browser modules are resolved through esm.sh, installed packages start disabled, and restored packages must be explicitly re-enabled. See [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package export contract and security boundary.
 
 ## Development
 
@@ -71,6 +83,8 @@ bun run deploy
 ## Privacy and disclaimer
 
 The app has no application backend. Health data and the API key stay in the current browser, while AI requests are sent directly to the user-configured service. The API key is stored in plain text in IndexedDB and is included in full backup exports.
+
+User-installed npm/JSR plugins are fetched through esm.sh and execute as unsandboxed third-party JavaScript in the same browser context as Kalo. They may directly access local health data, chats, and the AI API key regardless of declared permissions. Install only exact versions of code you have independently reviewed and trust.
 
 Large language models may provide inaccurate information because their knowledge can be wrong, outdated, or hallucinated. This project does not provide medical, nutritional, or other professional advice.
 
