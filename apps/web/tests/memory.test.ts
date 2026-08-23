@@ -138,22 +138,32 @@ test("message revert deletion removes the selected range and resets session meta
 });
 
 test("enabled plugin contributes tools and a bounded system prompt", async () => {
-	const mcdonalds = await plugins.getPluginState("mcdonalds_sg");
-	expect(mcdonalds).toMatchObject({ enabled: true, status: "ready" });
+	for (const pluginId of ["mcdonalds_sg", "subway_sg", "kfc_sg"]) {
+		const plugin = await plugins.getPluginState(pluginId);
+		expect(plugin).toMatchObject({ enabled: true, status: "ready" });
+	}
 	const initial = await plugins.getPluginState("example");
 	expect(initial).toMatchObject({ enabled: false, status: "disabled" });
-	const disabledRuntime = await plugins.loadPluginRuntime("en-us", [
+	const defaultRuntime = await plugins.loadPluginRuntime("en-us", [
 		"getProfile",
 	]);
-	expect(disabledRuntime.tools.map((tool) => tool.name)).toEqual([
+	expect(defaultRuntime.tools.map((tool) => tool.name)).toEqual([
 		"mcdonalds_sg_listProducts",
 		"mcdonalds_sg_getNutrition",
+		"subway_sg_listProducts",
+		"subway_sg_getNutrition",
+		"kfc_sg_listProducts",
+		"kfc_sg_getNutrition",
 	]);
-	expect(disabledRuntime.promptSections).toHaveLength(1);
-	expect(disabledRuntime.promptSections[0]).toContain(
-		"### Plugin: mcdonalds_sg",
+	expect(defaultRuntime.promptSections).toHaveLength(3);
+	expect(defaultRuntime.promptSections).toEqual(
+		expect.arrayContaining([
+			expect.stringContaining("### Plugin: mcdonalds_sg"),
+			expect.stringContaining("### Plugin: subway_sg"),
+			expect.stringContaining("### Plugin: kfc_sg"),
+		]),
 	);
-	const mcdList = disabledRuntime.tools.find(
+	const mcdList = defaultRuntime.tools.find(
 		(tool) => tool.name === "mcdonalds_sg_listProducts",
 	);
 	if (!mcdList)
@@ -179,8 +189,8 @@ test("enabled plugin contributes tools and a bounded system prompt", async () =>
 		true,
 	);
 	const runtime = await plugins.loadPluginRuntime("en-us", ["getProfile"]);
-	expect(runtime.promptSections).toHaveLength(2);
-	expect(runtime.promptSections[1]).toContain("### Plugin: example");
+	expect(runtime.promptSections).toHaveLength(4);
+	expect(runtime.promptSections[3]).toContain("### Plugin: example");
 	const echo = runtime.tools.find((tool) => tool.name === "example_echo");
 	if (!echo) throw new Error("example_echo was not loaded");
 	const result = await echo.execute("echo-call", { text: "hello" });

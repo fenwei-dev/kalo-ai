@@ -16,6 +16,7 @@
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
 - **中英双语**：支持简体中文与 English。
 - **编译期插件**：经过审查的 workspace package 可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置。
+- **新加坡餐厅营养数据**：通过可审查的静态快照，为麦当劳、赛百味和肯德基提供离线 Agent 查询工具。
 
 ## Monorepo 结构
 
@@ -25,9 +26,11 @@
 apps/
   web/       SvelteKit PWA
 packages/
-  plugin-sdk/       稳定插件协议
+  plugin-sdk/             稳定插件协议
   plugin-example/         默认停用的集成示例
   plugin-mcdonalds-sg/    新加坡麦当劳营养静态数据工具
+  plugin-subway-sg/       新加坡赛百味营养静态数据工具
+  plugin-kfc-sg/          新加坡肯德基营养与过敏原静态数据工具
   ...                     后续共享与插件 package
 ```
 

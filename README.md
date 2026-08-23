@@ -16,6 +16,7 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
 - **Bilingual**: Supports Simplified Chinese and English.
 - **Build-time plugins**: Reviewed workspace packages can add Agent tools, bounded System Prompt sections, and schema-driven settings.
+- **Singapore restaurant nutrition**: Bundled, offline Agent tools cover McDonald's, Subway, and KFC Singapore using reviewable static snapshots.
 
 ## Monorepo layout
 
@@ -25,9 +26,11 @@ This repository is a Bun workspace:
 apps/
   web/       SvelteKit PWA
 packages/
-  plugin-sdk/       Stable plugin contract
+  plugin-sdk/             Stable plugin contract
   plugin-example/         Disabled-by-default integration example
   plugin-mcdonalds-sg/    McDonald's Singapore nutrition snapshot tools
+  plugin-subway-sg/       Subway Singapore nutrition snapshot tools
+  plugin-kfc-sg/          KFC Singapore nutrition and allergen snapshot tools
   ...                     Additional shared and plugin packages
 ```
 

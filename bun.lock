@@ -17,8 +17,10 @@
         "@earendil-works/pi-agent-core": "^0.84.1",
         "@earendil-works/pi-ai": "^0.84.1",
         "@kalo-ai/plugin-example": "workspace:*",
+        "@kalo-ai/plugin-kfc-sg": "workspace:*",
         "@kalo-ai/plugin-mcdonalds-sg": "workspace:*",
         "@kalo-ai/plugin-sdk": "workspace:*",
+        "@kalo-ai/plugin-subway-sg": "workspace:*",
         "dexie": "^4.4.4",
         "dompurify": "^3.4.13",
         "konsta": "^5.3.0",
@@ -50,6 +52,17 @@
         "@kalo-ai/plugin-sdk": "workspace:*",
       },
     },
+    "packages/plugin-kfc-sg": {
+      "name": "@kalo-ai/plugin-kfc-sg",
+      "version": "0.1.0",
+      "dependencies": {
+        "@kalo-ai/plugin-sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+        "json5": "2.2.3",
+      },
+    },
     "packages/plugin-mcdonalds-sg": {
       "name": "@kalo-ai/plugin-mcdonalds-sg",
       "version": "0.1.0",
@@ -67,6 +80,16 @@
         "@earendil-works/pi-agent-core": "^0.84.1",
         "@earendil-works/pi-ai": "^0.84.1",
         "typebox": "1.3.7",
+      },
+    },
+    "packages/plugin-subway-sg": {
+      "name": "@kalo-ai/plugin-subway-sg",
+      "version": "0.1.0",
+      "dependencies": {
+        "@kalo-ai/plugin-sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
       },
     },
   },
@@ -487,9 +510,13 @@
 
     "@kalo-ai/plugin-example": ["@kalo-ai/plugin-example@workspace:packages/plugin-example"],
 
+    "@kalo-ai/plugin-kfc-sg": ["@kalo-ai/plugin-kfc-sg@workspace:packages/plugin-kfc-sg"],
+
     "@kalo-ai/plugin-mcdonalds-sg": ["@kalo-ai/plugin-mcdonalds-sg@workspace:packages/plugin-mcdonalds-sg"],
 
     "@kalo-ai/plugin-sdk": ["@kalo-ai/plugin-sdk@workspace:packages/plugin-sdk"],
+
+    "@kalo-ai/plugin-subway-sg": ["@kalo-ai/plugin-subway-sg@workspace:packages/plugin-subway-sg"],
 
     "@kalo-ai/web": ["@kalo-ai/web@workspace:apps/web"],
 

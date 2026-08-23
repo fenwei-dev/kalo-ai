@@ -32,8 +32,10 @@
 	},
 	"dependencies": {
 		"@kalo-ai/plugin-example": "workspace:*",
+		"@kalo-ai/plugin-kfc-sg": "workspace:*",
 		"@kalo-ai/plugin-mcdonalds-sg": "workspace:*",
 		"@kalo-ai/plugin-sdk": "workspace:*",
+		"@kalo-ai/plugin-subway-sg": "workspace:*",
 		"@earendil-works/pi-agent-core": "^0.84.1",
 		"@earendil-works/pi-ai": "^0.84.1",
 		"dexie": "^4.4.4",
