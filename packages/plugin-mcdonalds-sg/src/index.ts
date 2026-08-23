@@ -203,3 +203,7 @@ export const mcdonaldsSGPlugin = definePlugin({
 			: `mcdonalds_sg 工具仅适用于新加坡麦当劳产品。mcdonalds_sg_listProducts 的 category 是必填参数；用户要求完整、全部或全量菜单索引时，只调用一次 mcdonalds_sg_listProducts({"category":"all"})，不得拆分分类调用。只有需要缩小索引范围时才传具体官网分类；需要营养信息时再选择准确 ID 并调用 mcdonalds_sg_getNutrition。必须严格区分尺寸与产品变体；用户描述无法对应唯一列表项时要先询问。数值来自日期为 ${snapshot} 的官网标准份量静态快照，实际制作和当前配方可能不同。只有用户明确要求记录时，才把 energyKcal、proteinG、carbohydratesG 和 totalFatG 传给核心 logFood 工具；不得自动记录。`;
 	},
 });
+
+/** Standard registry-package exports; the named alias keeps bundled imports stable. */
+export const kaloPlugin = mcdonaldsSGPlugin;
+export default kaloPlugin;

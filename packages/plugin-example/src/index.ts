@@ -138,3 +138,7 @@ export const examplePlugin = definePlugin({
 			? "The example_echo tool is only for explicit plugin testing requests. Never call it proactively."
 			: "example_echo 工具只用于用户明确提出的插件测试请求，不得主动调用。",
 });
+
+/** Standard registry-package exports; the named alias keeps bundled imports stable. */
+export const kaloPlugin = examplePlugin;
+export default kaloPlugin;

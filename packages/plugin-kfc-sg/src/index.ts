@@ -195,3 +195,7 @@ export const kfcSGPlugin = definePlugin({
 			: `kfc_sg 工具仅适用于新加坡肯德基。kfc_sg_listProducts 的 category 是必填参数；用户要求完整、全部或全量 bundled 索引时，只调用一次 kfc_sg_listProducts({"category":"all"})，不得拆分分类调用。只有需要缩小索引范围时才传具体分类；需要营养信息时再把准确 ID 传给 kfc_sg_getNutrition。必须区分鸡块部位、数量、饮料尺寸、套餐和产品变体，并用份量信息区分官网重名项。这里返回的是营养页面静态快照的完整索引，不一定等于肯德基当前销售菜单。数值来自日期为 ${snapshot} 的新加坡肯德基营养与过敏原静态快照，当前供应和实际制作可能不同。缺少的营养字段表示来源未提供，不得编造。过敏原数组仅供参考，共用厨房可能交叉接触，不得把它当作医疗保证。只有用户明确要求记录时才调用核心 logFood。`;
 	},
 });
+
+/** Standard registry-package exports; the named alias keeps bundled imports stable. */
+export const kaloPlugin = kfcSGPlugin;
+export default kaloPlugin;

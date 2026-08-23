@@ -420,10 +420,10 @@ updateUserMemory({ content, expectedVersion })
 
 ### 9.6 插件机制
 
-- `packages/plugin-sdk` 定义 manifest、TypeBox 配置、设置字段、权限声明、AgentTool、System Prompt 扩展与受控 services。
+- `packages/plugin-sdk` 定义 manifest、TypeBox 配置、设置字段、权限声明、AgentTool、System Prompt 扩展与受控 services；SDK 以同一 `@kalo-ai/plugin-sdk` 名称发布到 npm（编译 ESM + declarations）与 JSR（TypeScript source）。
 - 经过审查的 `packages/plugin-*` Bun workspace package 由 `apps/web/src/lib/plugins/registry.ts` 在构建时显式注册。
 - 用户也可以安装固定到精确版本的 `npm:package@1.2.3`、`npm:@scope/package@1.2.3` 或 `jsr:@scope/package@1.2.3` Kalo 插件；浏览器通过 esm.sh 动态导入，拒绝 latest、tag、版本范围、URL 与未固定版本。
-- 远程 package 必须 default-export `KaloPlugin`，或导出名为 `kaloPlugin` 的对象；安装后默认停用，用户需明确启用。
+- 所有内置与远程插件 package 都同时提供 default export 和名为 `kaloPlugin` 的标准导出；内置 package 可额外保留描述性 alias。安装后默认停用，用户需明确启用。
 - 启用插件的工具会和核心 AgentTool 合并；工具名必须以 `${pluginId}_` 开头且全局唯一。
 - 启用插件可提供受长度限制的 Prompt section，在核心 System Prompt 后按稳定顺序追加，从下一轮对话生效。
 - `pluginConfigs` 保存启用状态、配置版本和 JSON 配置；`pluginData` 提供按 pluginId 隔离的私有 KV；`pluginInstallations` 保存用户安装的 registry、package、精确版本和 manifest 快照，三者均进入完整备份。

@@ -181,3 +181,7 @@ export const subwaySGPlugin = definePlugin({
 			: `subway_sg 工具仅适用于新加坡赛百味。subway_sg_listProducts 的 category 是必填参数；用户要求完整、全部或全量 bundled 索引时，只调用一次 subway_sg_listProducts({"category":"all"})，不得拆分分类调用。只有需要缩小索引范围时才传具体分类；需要营养信息时再把准确 ID 传给 subway_sg_getNutrition。官网没有营养表的产品不会列出，因此这里的完整索引是插件内全部营养产品，并非赛百味所有在售商品。数值来自日期为 ${snapshot} 的官网标准配方与份量快照；面包、芝士、蔬菜、酱料、加料和份量自定义都会改变营养；缺少的营养字段表示来源未提供，不得编造。赛百味说明 Footlong 三明治可近似按所列标准 Sub 数值的两倍估算。只有用户明确要求记录时才调用核心 logFood。`;
 	},
 });
+
+/** Standard registry-package exports; the named alias keeps bundled imports stable. */
+export const kaloPlugin = subwaySGPlugin;
+export default kaloPlugin;

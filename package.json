@@ -8,11 +8,11 @@
 		"packages/*"
 	],
 	"scripts": {
-		"prepare": "bun run --filter @kalo-ai/web prepare",
-		"dev": "bun run --filter @kalo-ai/web dev",
-		"build": "bun run --filter @kalo-ai/web build",
+		"prepare": "bun run --filter @kalo-ai/plugin-sdk build && bun run --filter @kalo-ai/web prepare",
+		"dev": "bun run --filter @kalo-ai/plugin-sdk build && bun run --filter @kalo-ai/web dev",
+		"build": "bun run --filter @kalo-ai/plugin-sdk build && bun run --filter @kalo-ai/web build",
 		"preview": "bun run --filter @kalo-ai/web preview",
-		"check": "bun run --workspaces check",
+		"check": "bun run --filter @kalo-ai/plugin-sdk build && bun run --workspaces check",
 		"check:watch": "bun run --filter @kalo-ai/web check:watch",
 		"test": "bun run --filter @kalo-ai/web test",
 		"fmt": "biome check --write",
