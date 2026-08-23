@@ -1,5 +1,8 @@
 # @kalo-ai/plugin-sdk
 
+[![npm version](https://img.shields.io/npm/v/@kalo-ai/plugin-sdk?logo=npm)](https://www.npmjs.com/package/@kalo-ai/plugin-sdk)
+[![JSR version](https://img.shields.io/jsr/v/@kalo-ai/plugin-sdk?logo=jsr)](https://jsr.io/@kalo-ai/plugin-sdk)
+
 Typed contract for Kalo plugins. A plugin can contribute Agent tools, a bounded System Prompt section, schema-driven settings, and scoped services.
 
 ## Install the SDK

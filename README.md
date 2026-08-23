@@ -48,29 +48,6 @@ jsr:@scope/package@1.2.3
 
 Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Browser modules are resolved through esm.sh, installed packages start disabled, and restored packages must be explicitly re-enabled. See [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package export contract and security boundary.
 
-### Releasing `@kalo-ai/plugin-sdk`
-
-After the initial registry bootstrap, do not publish npm or JSR versions manually. `packages/plugin-sdk/package.json` is the single version source; bump it, validate the repository, commit and push, then create a version tag that triggers the dual-registry GitHub Actions workflow:
-
-```sh
-cd packages/plugin-sdk
-npm version patch --no-git-tag-version
-cd ../..
-bun install --ignore-scripts
-bun run check
-bun test
-bun run build
-
-VERSION="$(node -p "require('./packages/plugin-sdk/package.json').version")"
-git add packages/plugin-sdk/package.json bun.lock
-git commit -m "chore(plugin-sdk): release $VERSION"
-git push origin main
-git tag -a "plugin-sdk-v$VERSION" -m "plugin-sdk v$VERSION"
-git push origin "plugin-sdk-v$VERSION"
-```
-
-The tag publishes the same version to npm and JSR through GitHub OIDC. Full bootstrap, recovery, Passkey, and dry-run instructions are in [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md#publishing-this-sdk).
-
 ## Development
 
 ```sh

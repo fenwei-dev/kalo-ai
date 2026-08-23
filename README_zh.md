@@ -48,29 +48,6 @@ jsr:@scope/package@1.2.3
 
 卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。浏览器模块通过 esm.sh 解析；新安装的 package 默认停用，从备份恢复后也必须再次明确启用。package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
 
-### 发布 `@kalo-ai/plugin-sdk`
-
-完成 registry 初始 bootstrap 后，不应再从本地手动发布 npm 或 JSR 版本。`packages/plugin-sdk/package.json` 是唯一版本源；先 bump、验证、提交并推送，再创建版本 tag 触发 npm/JSR 双 registry GitHub Actions：
-
-```sh
-cd packages/plugin-sdk
-npm version patch --no-git-tag-version
-cd ../..
-bun install --ignore-scripts
-bun run check
-bun test
-bun run build
-
-VERSION="$(node -p "require('./packages/plugin-sdk/package.json').version")"
-git add packages/plugin-sdk/package.json bun.lock
-git commit -m "chore(plugin-sdk): release $VERSION"
-git push origin main
-git tag -a "plugin-sdk-v$VERSION" -m "plugin-sdk v$VERSION"
-git push origin "plugin-sdk-v$VERSION"
-```
-
-该 tag 会通过 GitHub OIDC 向 npm 与 JSR 发布同一版本。完整的 bootstrap、恢复、Passkey 与 dry-run 说明见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md#publishing-this-sdk)。
-
 ## 开发
 
 ```sh
