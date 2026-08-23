@@ -1,17 +1,29 @@
 import { getLocale } from "$lib/paraglide/runtime";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV2, parseKaloBackup } from "./backup";
+import { type KaloBackupV3, parseKaloBackup } from "./backup";
 
-export type { KaloBackup, KaloBackupV1, KaloBackupV2 } from "./backup";
+export type {
+	KaloBackup,
+	KaloBackupV1,
+	KaloBackupV2,
+	KaloBackupV3,
+} from "./backup";
 
-import { localDateISO, localMessageTimestamp } from "$lib/utils/date";
+import {
+	localDateISO,
+	localMessageTimestamp,
+	localTimeHHMM,
+} from "$lib/utils/date";
 import type {
 	AIConfig,
 	ExerciseEntry,
 	FoodEntry,
 	FoodLibraryItem,
 	Message,
+	PlannedWorkout,
 	Session,
+	TrainingPlan,
+	TrainingPlanStatus,
 	User,
 	UserMemory,
 	WeightEntry,
@@ -233,6 +245,7 @@ export async function updateExerciseEntry(
 	const entry: ExerciseEntry = {
 		...data,
 		description: data.description.trim(),
+		plannedWorkoutId: existing.plannedWorkoutId,
 		id,
 		createdAt: existing.createdAt,
 	};
@@ -263,15 +276,503 @@ export async function getExerciseEntries(): Promise<ExerciseEntry[]> {
 }
 
 export async function deleteExerciseEntry(id: string): Promise<void> {
-	if (!(await db.exerciseEntries.get(id)))
-		throw new Error("要删除的运动记录不存在");
-	await db.exerciseEntries.delete(id);
+	await db.transaction(
+		"rw",
+		[db.exerciseEntries, db.plannedWorkouts, db.trainingPlans],
+		async () => {
+			const exercise = await db.exerciseEntries.get(id);
+			if (!exercise) throw new Error("要删除的运动记录不存在");
+			await db.exerciseEntries.delete(id);
+			if (exercise.plannedWorkoutId) {
+				const workout = await db.plannedWorkouts.get(exercise.plannedWorkoutId);
+				if (workout?.exerciseEntryId === id) {
+					await db.plannedWorkouts.update(workout.id, {
+						status: "planned",
+						exerciseEntryId: undefined,
+						updatedAt: now(),
+					});
+					await reconcileTrainingPlanStatus(workout.planId);
+				}
+			}
+		},
+	);
 }
 
 export async function getExerciseEntry(
 	id: string,
 ): Promise<ExerciseEntry | undefined> {
 	return db.exerciseEntries.get(id);
+}
+
+// ---------- Training plans ----------
+
+export interface PlannedWorkoutDraft {
+	date: string;
+	time?: string;
+	category: PlannedWorkout["category"];
+	description: string;
+	intensity: PlannedWorkout["intensity"];
+	plannedDuration: number;
+	estimatedCalories?: number;
+	notes?: string;
+}
+
+export interface CreateTrainingPlanInput {
+	title: string;
+	goal?: string;
+	startDate: string;
+	endDate?: string;
+	workouts?: PlannedWorkoutDraft[];
+}
+
+function assertCalendarDate(date: string, label: string): void {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`${label}格式无效`);
+}
+
+function assertFutureOrToday(date: string, label: string): void {
+	assertCalendarDate(date, label);
+	if (date < localDateISO()) throw new Error(`${label}不能早于今天`);
+}
+
+function assertPlannedWorkoutDraft(workout: PlannedWorkoutDraft): void {
+	assertCalendarDate(workout.date, "训练日期");
+	if (workout.time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(workout.time)) {
+		throw new Error("训练时间格式无效");
+	}
+	if (!workout.description.trim()) throw new Error("训练名称不能为空");
+	if (
+		!Number.isFinite(workout.plannedDuration) ||
+		workout.plannedDuration < 1 ||
+		workout.plannedDuration > 1440
+	) {
+		throw new Error("计划时长必须在 1–1440 分钟之间");
+	}
+	if (
+		workout.estimatedCalories !== undefined &&
+		(!Number.isFinite(workout.estimatedCalories) ||
+			workout.estimatedCalories < 0 ||
+			workout.estimatedCalories > 10000)
+	) {
+		throw new Error("计划消耗必须在 0–10000 kcal 之间");
+	}
+}
+
+function plannedWorkoutFromDraft(
+	planId: string,
+	workout: PlannedWorkoutDraft,
+	timestamp: number,
+): PlannedWorkout {
+	return {
+		...workout,
+		id: uid("pw_"),
+		planId,
+		description: workout.description.trim(),
+		notes: workout.notes?.trim() || undefined,
+		status: "planned",
+		createdAt: timestamp,
+		updatedAt: timestamp,
+	};
+}
+
+export async function createTrainingPlan(
+	data: CreateTrainingPlanInput,
+): Promise<{ plan: TrainingPlan; workouts: PlannedWorkout[] }> {
+	const title = data.title.trim();
+	if (!title) throw new Error("计划名称不能为空");
+	assertFutureOrToday(data.startDate, "计划开始日期");
+	if (data.endDate) {
+		assertCalendarDate(data.endDate, "计划结束日期");
+		if (data.endDate < data.startDate)
+			throw new Error("计划结束日期不能早于开始日期");
+	}
+	const drafts = data.workouts ?? [];
+	if (drafts.length > 84) throw new Error("一个计划最多包含 84 次训练");
+	for (const workout of drafts) {
+		assertPlannedWorkoutDraft(workout);
+		if (workout.date < data.startDate)
+			throw new Error("训练日期不能早于计划开始日期");
+		if (data.endDate && workout.date > data.endDate) {
+			throw new Error("训练日期不能晚于计划结束日期");
+		}
+	}
+
+	return db.transaction(
+		"rw",
+		[db.trainingPlans, db.plannedWorkouts],
+		async () => {
+			const current = await db.trainingPlans
+				.where("status")
+				.anyOf(["active", "paused"])
+				.first();
+			if (current)
+				throw new Error(`已有当前训练计划「${current.title}」，请先归档`);
+			const timestamp = now();
+			const plan: TrainingPlan = {
+				id: uid("plan_"),
+				title,
+				goal: data.goal?.trim() || undefined,
+				startDate: data.startDate,
+				endDate: data.endDate,
+				status: "active",
+				createdAt: timestamp,
+				updatedAt: timestamp,
+			};
+			const workouts = drafts.map((workout) =>
+				plannedWorkoutFromDraft(plan.id, workout, timestamp),
+			);
+			await db.trainingPlans.add(plan);
+			if (workouts.length) await db.plannedWorkouts.bulkAdd(workouts);
+			return { plan, workouts };
+		},
+	);
+}
+
+export async function getTrainingPlans(): Promise<TrainingPlan[]> {
+	return db.trainingPlans.orderBy("updatedAt").reverse().toArray();
+}
+
+export async function getTrainingPlan(
+	id: string,
+): Promise<TrainingPlan | undefined> {
+	return db.trainingPlans.get(id);
+}
+
+export async function getCurrentTrainingPlan(): Promise<
+	TrainingPlan | undefined
+> {
+	const plans = await db.trainingPlans
+		.where("status")
+		.anyOf(["active", "paused"])
+		.toArray();
+	return plans.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+}
+
+export async function getPlannedWorkouts(
+	planId: string,
+): Promise<PlannedWorkout[]> {
+	const workouts = await db.plannedWorkouts
+		.where("planId")
+		.equals(planId)
+		.toArray();
+	return workouts.sort(
+		(a, b) =>
+			a.date.localeCompare(b.date) ||
+			(a.time ?? "99:99").localeCompare(b.time ?? "99:99") ||
+			a.createdAt - b.createdAt,
+	);
+}
+
+export async function getPlannedWorkout(
+	id: string,
+): Promise<PlannedWorkout | undefined> {
+	return db.plannedWorkouts.get(id);
+}
+
+export async function getAllPlannedWorkouts(): Promise<PlannedWorkout[]> {
+	const workouts = await db.plannedWorkouts.orderBy("date").reverse().toArray();
+	return workouts.sort(
+		(a, b) =>
+			b.date.localeCompare(a.date) ||
+			(b.time ?? "").localeCompare(a.time ?? "") ||
+			b.createdAt - a.createdAt,
+	);
+}
+
+/**
+ * Link, move, or unlink an actual exercise and a planned workout atomically.
+ * The relationship is one-to-one and linking marks the plan item completed.
+ */
+export async function linkExerciseToPlannedWorkout(
+	exerciseId: string,
+	plannedWorkoutId: string | null,
+): Promise<{ exercise: ExerciseEntry; workout: PlannedWorkout | null }> {
+	return db.transaction(
+		"rw",
+		[db.exerciseEntries, db.trainingPlans, db.plannedWorkouts],
+		async () => {
+			const exercise = await db.exerciseEntries.get(exerciseId);
+			if (!exercise) throw new Error("运动记录不存在");
+			if (exercise.plannedWorkoutId === plannedWorkoutId) {
+				const workout = plannedWorkoutId
+					? ((await db.plannedWorkouts.get(plannedWorkoutId)) ?? null)
+					: null;
+				if (plannedWorkoutId && !workout) throw new Error("计划训练不存在");
+				if (workout && workout.exerciseEntryId !== exercise.id) {
+					throw new Error("运动记录与计划训练的关联不一致");
+				}
+				return { exercise, workout };
+			}
+
+			const oldWorkout = exercise.plannedWorkoutId
+				? await db.plannedWorkouts.get(exercise.plannedWorkoutId)
+				: undefined;
+			const targetWorkout = plannedWorkoutId
+				? await db.plannedWorkouts.get(plannedWorkoutId)
+				: undefined;
+			if (plannedWorkoutId && !targetWorkout) throw new Error("计划训练不存在");
+			if (
+				targetWorkout &&
+				!(await db.trainingPlans.get(targetWorkout.planId))
+			) {
+				throw new Error("训练计划不存在");
+			}
+			if (
+				targetWorkout?.exerciseEntryId &&
+				targetWorkout.exerciseEntryId !== exerciseId
+			) {
+				throw new Error("该计划训练已经关联另一条运动记录");
+			}
+
+			const timestamp = now();
+			if (oldWorkout?.exerciseEntryId === exerciseId) {
+				await db.plannedWorkouts.update(oldWorkout.id, {
+					status: "planned",
+					exerciseEntryId: undefined,
+					updatedAt: timestamp,
+				});
+			}
+			if (targetWorkout) {
+				await db.plannedWorkouts.update(targetWorkout.id, {
+					status: "completed",
+					exerciseEntryId: exerciseId,
+					updatedAt: timestamp,
+				});
+			}
+			const updatedExercise: ExerciseEntry = {
+				...exercise,
+				plannedWorkoutId: targetWorkout?.id,
+			};
+			await db.exerciseEntries.put(updatedExercise);
+
+			const affectedPlans = new Set(
+				[oldWorkout?.planId, targetWorkout?.planId].filter(
+					(planId): planId is string => !!planId,
+				),
+			);
+			for (const planId of affectedPlans) {
+				await reconcileTrainingPlanStatus(planId);
+			}
+			return {
+				exercise: updatedExercise,
+				workout: targetWorkout
+					? {
+							...targetWorkout,
+							status: "completed",
+							exerciseEntryId: exerciseId,
+							updatedAt: timestamp,
+						}
+					: null,
+			};
+		},
+	);
+}
+
+export async function addPlannedWorkout(
+	planId: string,
+	draft: PlannedWorkoutDraft,
+): Promise<PlannedWorkout> {
+	assertPlannedWorkoutDraft(draft);
+	assertFutureOrToday(draft.date, "训练日期");
+	return db.transaction(
+		"rw",
+		[db.trainingPlans, db.plannedWorkouts],
+		async () => {
+			const plan = await db.trainingPlans.get(planId);
+			if (!plan || (plan.status !== "active" && plan.status !== "paused")) {
+				throw new Error("当前训练计划不存在");
+			}
+			if (draft.date < plan.startDate)
+				throw new Error("训练日期不能早于计划开始日期");
+			if (plan.endDate && draft.date > plan.endDate)
+				throw new Error("训练日期不能晚于计划结束日期");
+			const entry = plannedWorkoutFromDraft(planId, draft, now());
+			await db.plannedWorkouts.add(entry);
+			await db.trainingPlans.update(planId, { updatedAt: now() });
+			return entry;
+		},
+	);
+}
+
+export async function updatePlannedWorkout(
+	id: string,
+	patch: Partial<PlannedWorkoutDraft> & { status?: "planned" | "skipped" },
+): Promise<PlannedWorkout> {
+	return db.transaction(
+		"rw",
+		[db.trainingPlans, db.plannedWorkouts],
+		async () => {
+			const existing = await db.plannedWorkouts.get(id);
+			if (!existing) throw new Error("计划训练不存在");
+			if (existing.status === "completed")
+				throw new Error("已完成训练请在运动记录中修改");
+			const plan = await db.trainingPlans.get(existing.planId);
+			if (!plan || (plan.status !== "active" && plan.status !== "paused")) {
+				throw new Error("当前训练计划不存在");
+			}
+			const merged: PlannedWorkout = {
+				...existing,
+				...patch,
+				description: patch.description?.trim() || existing.description,
+				notes:
+					patch.notes === undefined
+						? existing.notes
+						: patch.notes.trim() || undefined,
+				updatedAt: now(),
+			};
+			assertPlannedWorkoutDraft(merged);
+			if (patch.date !== undefined && patch.date !== existing.date) {
+				assertFutureOrToday(merged.date, "训练日期");
+				if (merged.date < plan.startDate)
+					throw new Error("训练日期不能早于计划开始日期");
+				if (plan.endDate && merged.date > plan.endDate) {
+					throw new Error("训练日期不能晚于计划结束日期");
+				}
+			}
+			await db.plannedWorkouts.put(merged);
+			await db.trainingPlans.update(plan.id, { updatedAt: now() });
+			return merged;
+		},
+	);
+}
+
+export async function deletePlannedWorkout(id: string): Promise<void> {
+	await db.transaction(
+		"rw",
+		[db.trainingPlans, db.plannedWorkouts],
+		async () => {
+			const workout = await db.plannedWorkouts.get(id);
+			if (!workout) throw new Error("计划训练不存在");
+			if (workout.status === "completed")
+				throw new Error("不能删除已完成的计划训练");
+			await db.plannedWorkouts.delete(id);
+			await db.trainingPlans.update(workout.planId, { updatedAt: now() });
+		},
+	);
+}
+
+async function reconcileTrainingPlanStatus(planId: string): Promise<void> {
+	const plan = await db.trainingPlans.get(planId);
+	if (!plan || plan.status === "archived") return;
+	const remaining = await db.plannedWorkouts
+		.where("planId")
+		.equals(planId)
+		.filter((workout) => workout.status === "planned")
+		.count();
+	if (remaining === 0) {
+		await db.trainingPlans.update(planId, {
+			status: "completed",
+			updatedAt: now(),
+		});
+		return;
+	}
+	if (plan.status === "completed") {
+		const otherCurrent = await db.trainingPlans
+			.where("status")
+			.anyOf(["active", "paused"])
+			.filter((candidate) => candidate.id !== planId)
+			.first();
+		await db.trainingPlans.update(planId, {
+			status: otherCurrent ? "archived" : "active",
+			updatedAt: now(),
+		});
+	}
+}
+
+export async function completePlannedWorkout(
+	id: string,
+	actual: {
+		date?: string;
+		time?: string;
+		duration: number;
+		caloriesBurned: number;
+	},
+): Promise<{ workout: PlannedWorkout; exercise: ExerciseEntry }> {
+	return db.transaction(
+		"rw",
+		[db.trainingPlans, db.plannedWorkouts, db.exerciseEntries],
+		async () => {
+			const workout = await db.plannedWorkouts.get(id);
+			if (!workout) throw new Error("计划训练不存在");
+			if (workout.exerciseEntryId) {
+				const exercise = await db.exerciseEntries.get(workout.exerciseEntryId);
+				if (exercise) return { workout, exercise };
+			}
+			const plan = await db.trainingPlans.get(workout.planId);
+			if (!plan || (plan.status !== "active" && plan.status !== "paused")) {
+				throw new Error("当前训练计划不存在");
+			}
+			const exerciseData = {
+				date: actual.date ?? localDateISO(),
+				time: actual.time ?? localTimeHHMM(),
+				description: workout.description,
+				category: workout.category,
+				intensity: workout.intensity,
+				duration: actual.duration,
+				caloriesBurned: actual.caloriesBurned,
+				source: "manual" as const,
+				plannedWorkoutId: workout.id,
+			};
+			assertExerciseEntry(exerciseData);
+			const timestamp = now();
+			const exercise: ExerciseEntry = {
+				...exerciseData,
+				id: uid("ex_"),
+				createdAt: timestamp,
+			};
+			const completed: PlannedWorkout = {
+				...workout,
+				status: "completed",
+				exerciseEntryId: exercise.id,
+				updatedAt: timestamp,
+			};
+			await db.exerciseEntries.add(exercise);
+			await db.plannedWorkouts.put(completed);
+			await reconcileTrainingPlanStatus(workout.planId);
+			return { workout: completed, exercise };
+		},
+	);
+}
+
+export async function setTrainingPlanStatus(
+	id: string,
+	status: Extract<TrainingPlanStatus, "active" | "paused">,
+): Promise<TrainingPlan> {
+	return db.transaction("rw", db.trainingPlans, async () => {
+		const plan = await db.trainingPlans.get(id);
+		if (!plan || plan.status === "archived") throw new Error("训练计划不存在");
+		if (status === "active") {
+			const other = await db.trainingPlans
+				.where("status")
+				.anyOf(["active", "paused"])
+				.filter((candidate) => candidate.id !== id)
+				.first();
+			if (other) throw new Error(`已有当前训练计划「${other.title}」`);
+		}
+		const updated = { ...plan, status, updatedAt: now() };
+		await db.trainingPlans.put(updated);
+		return updated;
+	});
+}
+
+export async function archiveTrainingPlan(
+	id: string,
+	expectedTitle: string,
+): Promise<TrainingPlan> {
+	const plan = await db.trainingPlans.get(id);
+	if (!plan) throw new Error("训练计划不存在");
+	if (
+		plan.title.trim().toLocaleLowerCase() !==
+		expectedTitle.trim().toLocaleLowerCase()
+	) {
+		throw new Error("计划 id 与标题不匹配，已拒绝归档");
+	}
+	const archived: TrainingPlan = {
+		...plan,
+		status: "archived",
+		updatedAt: now(),
+	};
+	await db.trainingPlans.put(archived);
+	return archived;
 }
 
 // ---------- Weight entries ----------
@@ -701,6 +1202,8 @@ export async function clearAllData(): Promise<void> {
 			db.userMemory,
 			db.foodEntries,
 			db.exerciseEntries,
+			db.trainingPlans,
+			db.plannedWorkouts,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -713,6 +1216,8 @@ export async function clearAllData(): Promise<void> {
 				db.userMemory.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
+				db.trainingPlans.clear(),
+				db.plannedWorkouts.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -725,7 +1230,7 @@ export async function clearAllData(): Promise<void> {
 /** Validate and atomically replace all app data from a Kalo backup. */
 export async function importAll(value: unknown): Promise<void> {
 	const data = parseKaloBackup(value, MAX_USER_MEMORY_LENGTH);
-	const { user, aiConfig, userMemory } = data;
+	const { user, aiConfig, userMemory, trainingPlans, plannedWorkouts } = data;
 
 	await db.transaction(
 		"rw",
@@ -735,6 +1240,8 @@ export async function importAll(value: unknown): Promise<void> {
 			db.userMemory,
 			db.foodEntries,
 			db.exerciseEntries,
+			db.trainingPlans,
+			db.plannedWorkouts,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -747,6 +1254,8 @@ export async function importAll(value: unknown): Promise<void> {
 				db.userMemory.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
+				db.trainingPlans.clear(),
+				db.plannedWorkouts.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -757,6 +1266,8 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.userMemory.bulkPut(userMemory);
 			await db.foodEntries.bulkPut(data.foodEntries);
 			await db.exerciseEntries.bulkPut(data.exerciseEntries);
+			await db.trainingPlans.bulkPut(trainingPlans);
+			await db.plannedWorkouts.bulkPut(plannedWorkouts);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);
 			await db.sessions.bulkPut(data.sessions);
@@ -766,13 +1277,15 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV2> {
+export async function exportAll(): Promise<KaloBackupV3> {
 	const [
 		user,
 		aiConfig,
 		userMemory,
 		foodEntries,
 		exerciseEntries,
+		trainingPlans,
+		plannedWorkouts,
 		weightEntries,
 		foodLibrary,
 		sessions,
@@ -783,19 +1296,23 @@ export async function exportAll(): Promise<KaloBackupV2> {
 		db.userMemory.toArray(),
 		db.foodEntries.toArray(),
 		db.exerciseEntries.toArray(),
+		db.trainingPlans.toArray(),
+		db.plannedWorkouts.toArray(),
 		db.weightEntries.toArray(),
 		db.foodLibrary.toArray(),
 		db.sessions.toArray(),
 		db.messages.toArray(),
 	]);
 	return {
-		version: 2,
+		version: 3,
 		exportedAt: now(),
 		user,
 		aiConfig,
 		userMemory,
 		foodEntries,
 		exerciseEntries,
+		trainingPlans,
+		plannedWorkouts,
 		weightEntries,
 		foodLibrary,
 		sessions,

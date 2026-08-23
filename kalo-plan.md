@@ -56,7 +56,8 @@ User {
 FoodEntry   { id, date, time, name, calories, protein, carbs, fat, tef,
               source: 'ai'|'library'|'manual', createdAt }
 ExerciseEntry { id, date, time, description, category?, intensity?, duration,
-                caloriesBurned, source: 'manual'|'third_party', createdAt }
+                caloriesBurned, source: 'manual'|'third_party',
+                plannedWorkoutId?, createdAt }
 WeightEntry { id, date, weight, createdAt }
 AIConfig    { id, apiKey, model, updatedAt }
 ```
@@ -71,6 +72,19 @@ FoodLibraryItem {
 }
 // source 字段从 FoodEntry 移除原 description，统一用 name
 // 食物库条目由 agent 自动沉淀 + 用户手动管理
+
+TrainingPlan {
+  id, title, goal?, startDate, endDate?,
+  status: 'active'|'paused'|'completed'|'archived',
+  createdAt, updatedAt
+}
+
+PlannedWorkout {
+  id, planId, date, time?, category, description, intensity,
+  plannedDuration, estimatedCalories?, notes?,
+  status: 'planned'|'completed'|'skipped', exerciseEntryId?,
+  createdAt, updatedAt
+}
 
 UserMemory {
   id: 'user-memory',
@@ -134,6 +148,10 @@ getTrends(range: '7d'|'30d'|'90d')
 //       + 自动检测的洞察(平台期/摄入异常/目标预测/趋势方向)
 // 一个工具同时给数据 + 分析结论。
 
+getTrainingPlan()
+// 返回当前计划、具体训练、今日/逾期/即将开始安排和完成进度。
+// 计划数据不会作为已完成运动进入统计。
+
 listLibrary()
 // 返回：食物库全部条目（按使用频率/最近使用排序）
 // 食物库预期不大，无需分页/搜索参数。
@@ -158,6 +176,18 @@ logExercise({ replaceEntryId?, category?, intensity?, description,
               duration, caloriesBurned, time?, date? })
 // 新增或按准确 id 修正已完成运动；禁止未来日期，返回 entry + corrected。
 // 消耗值是参考估算，不直接加回每日饮食预算。
+
+createTrainingPlan({ title, goal?, startDate, endDate?, workouts })
+addPlannedWorkout({ planId, workout })
+updatePlannedWorkout({ id, expectedDescription, fields })
+completePlannedWorkout({ id, actualDate?, actualTime?, actualDuration, caloriesBurned })
+linkExerciseToPlannedWorkout({ action, exerciseEntryId, plannedWorkoutId?, expected labels })
+setTrainingPlanStatus({ id, status: 'active'|'paused' })
+archiveTrainingPlan({ id, expectedTitle })
+// 批量创建前必须先展示草案并获得用户明确确认。
+// 完成计划项时原子创建并双向关联 ExerciseEntry，重复调用保持幂等。
+// 任意已有 ExerciseEntry 也可显式关联、改关联或保持不关联；禁止按名称自动匹配。
+// 归档保留已完成运动；计划安排本身不影响 TDEE 或饮食预算。
 
 logWeight({ weight, date? })
 // 写入 WeightEntry。触发自适应 TDEE 重算。
@@ -219,10 +249,13 @@ updateUserMemory({ content, expectedVersion })
 ├─────────────────────────────────┤
 │ 体重趋势（30天迷你图）  -1.2kg  │
 ├─────────────────────────────────┤
+│ 训练计划 · 今日轻松跑 · 2/5 完成 │
+├─────────────────────────────────┤
 │         [和卡卡聊聊 →]           │  ← CTA，跳 AI 页
 └─────────────────────────────────┘
 ```
 
+- **训练计划卡片**：展示当前计划、今日/逾期/下一项安排和完成进度；无计划时链接到创建页。
 - **空状态**：无数据时只显示 CTA + 引导文案。
 - **主动消息**：agent 后台生成的消息存入一个"默认/每日 session"或独立表，首页展示未读，点击进 AI 页对应 session。
 
@@ -311,7 +344,7 @@ updateUserMemory({ content, expectedVersion })
 
 **F. 数据与隐私页**
 - 导出 JSON / 导入 JSON / 清空数据。
-- 备份格式升级为 v2 并包含 UserMemory；导入继续兼容无记忆字段的 v1 备份。
+- 备份格式为 v3，包含 UserMemory、TrainingPlan 与 PlannedWorkout；导入继续兼容 v1/v2 备份。
 - 明确完整备份包含健康数据、聊天图片、卡卡的记忆与明文 API Key。
 
 ## 八、首次引导流
@@ -437,7 +470,9 @@ src/
 │   ├── +layout.svelte             # Konsta App 包根 + Nav + 引导守卫
 │   ├── +layout.ts                 # prerender=false, ssr=true（但 DB 仅浏览器用）
 │   ├── +page.svelte               # 首页 Dashboard
-│   ├── exercise/+page.svelte      # 运动历史、图表与手动 CRUD
+│   ├── exercise/
+│   │   ├── +page.svelte           # 运动历史、图表与手动 CRUD
+│   │   └── plan/+page.svelte      # 未来训练计划与完成流
 │   ├── chat/
 │   │   ├── +page.svelte           # 无 sessionId → 新建/选最近
 │   │   └── [sessionId]/+page.svelte

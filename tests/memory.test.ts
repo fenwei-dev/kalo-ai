@@ -3,10 +3,12 @@ import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 
 let repositories: typeof import("../src/lib/db/repositories");
 let database: typeof import("../src/lib/db/schema");
+let dates: typeof import("../src/lib/utils/date");
 
 beforeAll(async () => {
 	database = await import("../src/lib/db/schema");
 	repositories = await import("../src/lib/db/repositories");
+	dates = await import("../src/lib/utils/date");
 });
 
 beforeEach(async () => {
@@ -179,6 +181,247 @@ test("exercise records support correction and reject future dates", async () => 
 	).rejects.toThrow("未来日期");
 });
 
+test("training plan completion creates exactly one linked exercise record", async () => {
+	const today = dates.localDateISO();
+	const tomorrow = dates.localDateOffset(1);
+	const { plan, workouts } = await repositories.createTrainingPlan({
+		title: "Starter plan",
+		goal: "Build consistency",
+		startDate: today,
+		endDate: dates.localDateOffset(7),
+		workouts: [
+			{
+				date: today,
+				time: "08:00",
+				category: "running",
+				description: "Easy run",
+				intensity: "light",
+				plannedDuration: 30,
+				estimatedCalories: 240,
+			},
+			{
+				date: tomorrow,
+				category: "strength",
+				description: "Strength session",
+				intensity: "moderate",
+				plannedDuration: 40,
+			},
+		],
+	});
+	expect(plan.status).toBe("active");
+	expect(workouts).toHaveLength(2);
+
+	const first = await repositories.completePlannedWorkout(workouts[0].id, {
+		date: today,
+		time: "08:10",
+		duration: 32,
+		caloriesBurned: 250,
+	});
+	const repeated = await repositories.completePlannedWorkout(workouts[0].id, {
+		date: today,
+		time: "09:00",
+		duration: 60,
+		caloriesBurned: 500,
+	});
+	expect(repeated.exercise.id).toBe(first.exercise.id);
+	expect(await repositories.getExerciseEntries()).toHaveLength(1);
+	expect(first.exercise).toMatchObject({
+		plannedWorkoutId: workouts[0].id,
+		duration: 32,
+		source: "manual",
+	});
+
+	await repositories.deleteExerciseEntry(first.exercise.id);
+	const restoredWorkout = await repositories.getPlannedWorkout(workouts[0].id);
+	expect(restoredWorkout?.status).toBe("planned");
+	expect(restoredWorkout?.exerciseEntryId).toBeUndefined();
+});
+
+test("training plans enforce one current plan and preserve logs when archived", async () => {
+	const today = dates.localDateISO();
+	const created = await repositories.createTrainingPlan({
+		title: "Current plan",
+		startDate: today,
+		workouts: [
+			{
+				date: today,
+				category: "walking",
+				description: "Walk",
+				intensity: "moderate",
+				plannedDuration: 20,
+			},
+		],
+	});
+	await expect(
+		repositories.createTrainingPlan({
+			title: "Another plan",
+			startDate: today,
+		}),
+	).rejects.toThrow("已有当前训练计划");
+
+	const completed = await repositories.completePlannedWorkout(
+		created.workouts[0].id,
+		{
+			date: today,
+			duration: 20,
+			caloriesBurned: 80,
+		},
+	);
+	const repeated = await repositories.completePlannedWorkout(
+		created.workouts[0].id,
+		{
+			date: today,
+			duration: 99,
+			caloriesBurned: 999,
+		},
+	);
+	expect(repeated.exercise.id).toBe(completed.exercise.id);
+	const completedPlan = await repositories.getTrainingPlan(created.plan.id);
+	expect(completedPlan?.status).toBe("completed");
+	await repositories.archiveTrainingPlan(created.plan.id, created.plan.title);
+	expect(await repositories.getExerciseEntries()).toHaveLength(1);
+	expect((await repositories.getTrainingPlan(created.plan.id))?.status).toBe(
+		"archived",
+	);
+});
+
+test("any exercise can be linked, moved, or unlinked from a plan item", async () => {
+	const today = dates.localDateISO();
+	const created = await repositories.createTrainingPlan({
+		title: "Linkable plan",
+		startDate: today,
+		workouts: [
+			{
+				date: today,
+				category: "running",
+				description: "Run A",
+				intensity: "light",
+				plannedDuration: 20,
+			},
+			{
+				date: today,
+				category: "running",
+				description: "Run B",
+				intensity: "moderate",
+				plannedDuration: 30,
+			},
+		],
+	});
+	const exercise = await repositories.addExerciseEntry({
+		date: today,
+		time: "09:00",
+		description: "Actual run",
+		category: "running",
+		intensity: "moderate",
+		duration: 28,
+		caloriesBurned: 240,
+		source: "third_party",
+	});
+
+	await repositories.linkExerciseToPlannedWorkout(
+		exercise.id,
+		created.workouts[0].id,
+	);
+	expect(
+		await repositories.getPlannedWorkout(created.workouts[0].id),
+	).toMatchObject({
+		status: "completed",
+		exerciseEntryId: exercise.id,
+	});
+	expect(
+		(await repositories.getExerciseEntry(exercise.id))?.plannedWorkoutId,
+	).toBe(created.workouts[0].id);
+
+	await repositories.linkExerciseToPlannedWorkout(
+		exercise.id,
+		created.workouts[1].id,
+	);
+	expect(
+		(await repositories.getPlannedWorkout(created.workouts[0].id))?.status,
+	).toBe("planned");
+	expect(
+		(await repositories.getPlannedWorkout(created.workouts[1].id))?.status,
+	).toBe("completed");
+
+	await repositories.linkExerciseToPlannedWorkout(exercise.id, null);
+	expect(
+		(await repositories.getExerciseEntry(exercise.id))?.plannedWorkoutId,
+	).toBeUndefined();
+	expect(
+		(await repositories.getPlannedWorkout(created.workouts[1].id))?.status,
+	).toBe("planned");
+});
+
+test("a planned workout cannot link to two exercise records", async () => {
+	const today = dates.localDateISO();
+	const created = await repositories.createTrainingPlan({
+		title: "One-to-one plan",
+		startDate: today,
+		workouts: [
+			{
+				date: today,
+				category: "walking",
+				description: "Walk",
+				intensity: "light",
+				plannedDuration: 20,
+			},
+		],
+	});
+	const makeExercise = (id: string) =>
+		repositories.addExerciseEntry({
+			date: today,
+			time: "09:00",
+			description: id,
+			duration: 20,
+			caloriesBurned: 70,
+			source: "manual",
+		});
+	const first = await makeExercise("First");
+	const second = await makeExercise("Second");
+	await repositories.linkExerciseToPlannedWorkout(
+		first.id,
+		created.workouts[0].id,
+	);
+	await expect(
+		repositories.linkExerciseToPlannedWorkout(
+			second.id,
+			created.workouts[0].id,
+		),
+	).rejects.toThrow("已经关联另一条运动记录");
+});
+
+test("deleting an old plan completion never creates two current plans", async () => {
+	const today = dates.localDateISO();
+	const firstPlan = await repositories.createTrainingPlan({
+		title: "First",
+		startDate: today,
+		workouts: [
+			{
+				date: today,
+				category: "walking",
+				description: "Walk",
+				intensity: "light",
+				plannedDuration: 20,
+			},
+		],
+	});
+	const completion = await repositories.completePlannedWorkout(
+		firstPlan.workouts[0].id,
+		{ date: today, duration: 20, caloriesBurned: 70 },
+	);
+	const secondPlan = await repositories.createTrainingPlan({
+		title: "Second",
+		startDate: today,
+	});
+	await repositories.deleteExerciseEntry(completion.exercise.id);
+	expect((await repositories.getTrainingPlan(firstPlan.plan.id))?.status).toBe(
+		"archived",
+	);
+	expect((await repositories.getCurrentTrainingPlan())?.id).toBe(
+		secondPlan.plan.id,
+	);
+});
+
 test("legacy health and watch exercise sources import as third party", async () => {
 	await repositories.importAll({
 		version: 1,
@@ -239,12 +482,40 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		calculatedBMR: 1342,
 	});
 	await updateUserMemory("Remember this", 0);
+	const backedPlan = await repositories.createTrainingPlan({
+		title: "Backed-up plan",
+		startDate: dates.localDateISO(),
+		workouts: [
+			{
+				date: dates.localDateISO(),
+				category: "cycling",
+				description: "Easy ride",
+				intensity: "light",
+				plannedDuration: 30,
+			},
+		],
+	});
+	await repositories.completePlannedWorkout(backedPlan.workouts[0].id, {
+		date: dates.localDateISO(),
+		duration: 32,
+		caloriesBurned: 180,
+	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(2);
+	expect(backup.version).toBe(3);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",
 			bodyFatPercentage: 25,
+		}),
+	]);
+	expect(backup.trainingPlans).toEqual([
+		expect.objectContaining({ title: "Backed-up plan", status: "completed" }),
+	]);
+	expect(backup.plannedWorkouts).toEqual([
+		expect.objectContaining({
+			description: "Easy ride",
+			status: "completed",
+			exerciseEntryId: expect.any(String),
 		}),
 	]);
 	expect(backup.userMemory).toEqual([
@@ -260,6 +531,14 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 
 	await repositories.clearAllData();
 	await importAll(backup);
+	expect(await repositories.getTrainingPlans()).toHaveLength(1);
+	const restoredWorkouts = await repositories.getPlannedWorkouts(
+		backup.trainingPlans[0].id,
+	);
+	expect(restoredWorkouts).toHaveLength(1);
+	expect((await repositories.getExerciseEntries())[0]).toMatchObject({
+		plannedWorkoutId: restoredWorkouts[0].id,
+	});
 	expect(await repositories.getUser()).toMatchObject({
 		bmrMethod: "katch-mcardle",
 		bodyFatPercentage: 25,
@@ -285,4 +564,5 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		version: 0,
 		updatedAt: null,
 	});
+	expect(await repositories.getTrainingPlans()).toEqual([]);
 });

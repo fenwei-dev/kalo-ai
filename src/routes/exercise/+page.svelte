@@ -8,17 +8,22 @@
 		SegmentedButton,
 	} from "konsta/svelte";
 	import { onMount } from "svelte";
+	import { page } from "$app/state";
 	import AppDialog from "$lib/components/AppDialog.svelte";
 	import AppHeader from "$lib/components/AppHeader.svelte";
 	import ExerciseMinutesChart, {
 		type ExerciseChartPoint,
 	} from "$lib/components/charts/ExerciseMinutesChart.svelte";
+	import ExerciseTabs from "$lib/components/exercise/ExerciseTabs.svelte";
 	import SwipeListItem from "$lib/components/SwipeListItem.svelte";
 	import { app } from "$lib/context/appContext.svelte";
 	import {
 		addExerciseEntry,
 		deleteExerciseEntry,
+		getAllPlannedWorkouts,
 		getExerciseEntries,
+		getTrainingPlans,
+		linkExerciseToPlannedWorkout,
 		updateExerciseEntry,
 	} from "$lib/db/repositories";
 	import type {
@@ -26,6 +31,8 @@
 		ExerciseEntry,
 		ExerciseIntensity,
 		ExerciseSource,
+		PlannedWorkout,
+		TrainingPlan,
 	} from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
 	import { getLocale } from "$lib/paraglide/runtime";
@@ -56,6 +63,8 @@
 
 	let range = $state<Range>("30d");
 	let entries = $state<ExerciseEntry[]>([]);
+	let plans = $state<TrainingPlan[]>([]);
+	let plannedWorkouts = $state<PlannedWorkout[]>([]);
 	let loading = $state(true);
 	let formOpen = $state(false);
 	let editingId = $state<string | null>(null);
@@ -67,12 +76,15 @@
 	let duration = $state("30");
 	let calories = $state("");
 	let source = $state<ExerciseSource>("manual");
+	let selectedPlannedWorkoutId = $state("");
 	let autoCalories = $state(true);
 	let saving = $state(false);
 	let error = $state("");
 	let revealedId = $state<string | null>(null);
 	let pendingDelete = $state<ExerciseEntry | null>(null);
 	let deleteDialogOpen = $state(false);
+	let scrollContainer = $state<HTMLDivElement>();
+	let openedQueryEntry = false;
 
 	const dateFormatter = new Intl.DateTimeFormat(getLocale(), {
 		year: "numeric",
@@ -98,7 +110,23 @@
 	async function reload() {
 		loading = true;
 		try {
-			entries = await getExerciseEntries();
+			const [loadedEntries, loadedPlans, loadedWorkouts] = await Promise.all([
+				getExerciseEntries(),
+				getTrainingPlans(),
+				getAllPlannedWorkouts(),
+			]);
+			entries = loadedEntries;
+			plans = loadedPlans;
+			plannedWorkouts = loadedWorkouts;
+			const queryEntry = page.url.searchParams.get("entry");
+			if (
+				!openedQueryEntry &&
+				queryEntry &&
+				loadedEntries.some((entry) => entry.id === queryEntry)
+			) {
+				openedQueryEntry = true;
+				startEdit(queryEntry);
+			}
 		} finally {
 			loading = false;
 		}
@@ -118,6 +146,14 @@
 	let activeDays = $derived(new Set(visible.map((entry) => entry.date)).size);
 	let chartPoints = $derived(buildChartPoints(visible, range));
 	let chartWidth = $derived(Math.max(320, chartPoints.length * 16));
+	let associationOptions = $derived(
+		plannedWorkouts.filter(
+			(workout) =>
+				(!workout.exerciseEntryId || workout.exerciseEntryId === editingId) &&
+				(workout.status !== "completed" ||
+					workout.exerciseEntryId === editingId),
+		),
+	);
 	let formValid = $derived(
 		description.trim().length > 0 &&
 			/^\d{4}-\d{2}-\d{2}$/.test(date) &&
@@ -186,12 +222,33 @@
 		}[value ?? "other"];
 	}
 
+	function planTitle(planId: string): string {
+		return (
+			plans.find((item) => item.id === planId)?.title ??
+			m.training_unknown_plan()
+		);
+	}
+
+	function associationLabel(workout: PlannedWorkout): string {
+		return m.exercise_plan_option({
+			plan: planTitle(workout.planId),
+			date: workout.date,
+			workout: workout.description,
+		});
+	}
+
 	function intensityLabel(value: ExerciseIntensity): string {
 		return {
 			light: m.exercise_intensity_light(),
 			moderate: m.exercise_intensity_moderate(),
 			vigorous: m.exercise_intensity_vigorous(),
 		}[value];
+	}
+
+	function scrollToTop() {
+		requestAnimationFrame(() =>
+			scrollContainer?.scrollTo({ top: 0, behavior: "smooth" }),
+		);
 	}
 
 	function startNew() {
@@ -204,9 +261,11 @@
 		duration = "30";
 		calories = "";
 		source = "manual";
+		selectedPlannedWorkoutId = "";
 		autoCalories = true;
 		error = "";
 		formOpen = true;
+		scrollToTop();
 	}
 
 	function startEdit(id: string) {
@@ -221,10 +280,11 @@
 		duration = String(entry.duration);
 		calories = String(entry.caloriesBurned);
 		source = entry.source;
+		selectedPlannedWorkoutId = entry.plannedWorkoutId ?? "";
 		autoCalories = false;
 		error = "";
 		formOpen = true;
-		window.scrollTo({ top: 0, behavior: "smooth" });
+		scrollToTop();
 	}
 
 	function closeForm() {
@@ -248,8 +308,13 @@
 				caloriesBurned: +calories,
 				source,
 			};
-			if (editingId) await updateExerciseEntry(editingId, values);
-			else await addExerciseEntry(values);
+			const entry = editingId
+				? await updateExerciseEntry(editingId, values)
+				: await addExerciseEntry(values);
+			const desiredLink = selectedPlannedWorkoutId || null;
+			if ((entry.plannedWorkoutId ?? null) !== desiredLink) {
+				await linkExerciseToPlannedWorkout(entry.id, desiredLink);
+			}
 			closeForm();
 			await Promise.all([reload(), app.refreshToday()]);
 		} catch (cause) {
@@ -273,11 +338,18 @@
 	}
 
 	function recordSubtitle(entry: ExerciseEntry): string {
-		return m.exercise_record_meta({
+		const meta = m.exercise_record_meta({
 			time: entry.time,
 			minutes: entry.duration,
 			calories: Math.round(entry.caloriesBurned),
 		});
+		if (!entry.plannedWorkoutId) return meta;
+		const workout = plannedWorkouts.find(
+			(item) => item.id === entry.plannedWorkoutId,
+		);
+		return workout
+			? `${meta} · ${m.exercise_linked_plan({ title: planTitle(workout.planId) })}`
+			: meta;
 	}
 </script>
 
@@ -289,8 +361,9 @@
 		actionLabel={m.common_add()}
 		onaction={startNew}
 	/>
-	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+	<div bind:this={scrollContainer} class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 		<div class="mx-auto max-w-md py-2">
+			<ExerciseTabs active="records" />
 			{#if formOpen}
 				<BlockTitle>{editingId ? m.exercise_edit() : m.exercise_add()}</BlockTitle>
 				<List inset strong>
@@ -326,6 +399,16 @@
 						oninput={() => (autoCalories = false)}
 						bind:value={calories}
 					/>
+					<ListInput
+						label={m.exercise_plan_association()}
+						type="select"
+						bind:value={selectedPlannedWorkoutId}
+					>
+						<option value="">{m.exercise_no_plan_association()}</option>
+						{#each associationOptions as workout (workout.id)}
+							<option value={workout.id}>{associationLabel(workout)}</option>
+						{/each}
+					</ListInput>
 				</List>
 				<Block inset>
 					<div class="flex items-start justify-between gap-3">
@@ -338,6 +421,9 @@
 							{m.exercise_recalculate()}
 						</button>
 					</div>
+					<p class="mt-2 text-xs leading-relaxed text-gray-500">
+						{m.exercise_plan_association_hint()}
+					</p>
 					{#if error}<p class="mt-2 text-xs text-red-500">{error}</p>{/if}
 					<div class="mt-4 grid grid-cols-2 gap-3">
 						<button onclick={closeForm} class="rounded-full border border-gray-300 py-2.5 text-sm font-medium text-gray-600">

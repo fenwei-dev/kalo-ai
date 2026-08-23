@@ -67,6 +67,38 @@
 		<span class="text-base">🧠</span>
 		<span class="font-medium">{stringArg("content") ? m.tool_memory_updated() : m.tool_memory_cleared()}</span>
 	</div>
+{:else if tool === 'getTrainingPlan'}
+	<div class="my-1 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+		<span class="text-base">📋</span><span class="font-medium">{m.tool_training_read()}</span>
+	</div>
+{:else if tool === 'createTrainingPlan'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-800">
+		<span class="text-base">📋</span><span class="font-medium">{m.tool_training_created()}</span>
+	</div>
+{:else if tool === 'addPlannedWorkout'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-800">
+		<span class="text-base">➕</span><span class="font-medium">{m.tool_training_added()}</span>
+	</div>
+{:else if tool === 'updatePlannedWorkout'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-800">
+		<span class="text-base">🗓️</span><span class="font-medium">{m.tool_training_updated()}</span>
+	</div>
+{:else if tool === 'completePlannedWorkout'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+		<span class="text-base">✅</span><span class="font-medium">{m.tool_training_completed()}</span>
+	</div>
+{:else if tool === 'linkExerciseToPlannedWorkout'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-800">
+		<span class="text-base">🔗</span><span class="font-medium">{stringArg("action") === 'unlink' ? m.tool_training_unlinked() : m.tool_training_linked()}</span>
+	</div>
+{:else if tool === 'setTrainingPlanStatus'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+		<span class="text-base">⏯️</span><span class="font-medium">{m.tool_training_status()}</span>
+	</div>
+{:else if tool === 'archiveTrainingPlan'}
+	<div class="my-1 flex items-center gap-2 rounded-xl bg-gray-100 px-3 py-2 text-xs text-gray-700">
+		<span class="text-base">🗄️</span><span class="font-medium">{m.tool_training_archived()}</span>
+	</div>
 {:else if tool === 'logFood'}
 	<div class="my-1 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
 		<span class="text-base">🍽️</span>

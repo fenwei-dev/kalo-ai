@@ -5,6 +5,11 @@
 	import ProgressRing from "$lib/components/charts/ProgressRing.svelte";
 	import WeightSparkline from "$lib/components/charts/WeightSparkline.svelte";
 	import { app } from "$lib/context/appContext.svelte";
+	import {
+		getCurrentTrainingPlan,
+		getPlannedWorkouts,
+	} from "$lib/db/repositories";
+	import type { PlannedWorkout, TrainingPlan } from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
 	import { getLocale } from "$lib/paraglide/runtime";
 	import {
@@ -39,11 +44,68 @@
 	let dateLabel = $derived(formatViewDate(app.viewDate));
 	let dateDialogOpen = $state(false);
 	let pendingDate = $state(app.viewDate);
+	let trainingPlan = $state<TrainingPlan | null>(null);
+	let plannedWorkouts = $state<PlannedWorkout[]>([]);
+	let planLoadGeneration = 0;
+	let planCompleted = $derived(
+		plannedWorkouts.filter((workout) => workout.status === "completed").length,
+	);
+	let todayPlanWorkouts = $derived(
+		plannedWorkouts.filter((workout) => workout.date === currentDate),
+	);
+	let todayPlanCompleted = $derived(
+		todayPlanWorkouts.filter((workout) => workout.status === "completed")
+			.length,
+	);
+	let planToday = $derived(
+		todayPlanWorkouts.filter((workout) => workout.status === "planned"),
+	);
+	let homeWeekStart = $derived(
+		localDateOffset(
+			-((parseLocalDate(currentDate).getDay() + 6) % 7),
+			parseLocalDate(currentDate),
+		),
+	);
+	let homeWeekEnd = $derived(localDateOffset(6, parseLocalDate(homeWeekStart)));
+	let weekPlanWorkouts = $derived(
+		plannedWorkouts.filter(
+			(workout) => workout.date >= homeWeekStart && workout.date <= homeWeekEnd,
+		),
+	);
+	let weekPlanCompleted = $derived(
+		weekPlanWorkouts.filter((workout) => workout.status === "completed").length,
+	);
+	let planOverdue = $derived(
+		plannedWorkouts.filter(
+			(workout) => workout.status === "planned" && workout.date < currentDate,
+		),
+	);
+	let nextPlannedWorkout = $derived(
+		plannedWorkouts.find(
+			(workout) => workout.status === "planned" && workout.date > currentDate,
+		) ?? null,
+	);
+
+	function progressPercent(completed: number, total: number): number {
+		return total > 0 ? Math.round((completed / total) * 100) : 0;
+	}
+
+	async function refreshTrainingPlan() {
+		const generation = ++planLoadGeneration;
+		const plan = (await getCurrentTrainingPlan()) ?? null;
+		const workouts = plan ? await getPlannedWorkouts(plan.id) : [];
+		if (generation !== planLoadGeneration) return;
+		trainingPlan = plan;
+		plannedWorkouts = workouts;
+	}
 
 	// App context is a long-lived cache. Refresh when entering or refocusing the
 	// dashboard so writes from chat, settings, app resume, or another tab are visible.
 	onMount(() => {
-		const refresh = () => void app.refreshToday();
+		const refresh = () => {
+			void app.refreshToday();
+			void refreshTrainingPlan();
+		};
 		const refreshWhenVisible = () => {
 			if (document.visibilityState === "visible") refresh();
 		};
@@ -185,6 +247,66 @@
 					</div>
 				</a>
 			</div>
+
+			<a
+				href="/exercise/plan"
+				aria-label={m.home_view_training_plan()}
+				class="mt-3 block rounded-2xl bg-white p-4 shadow-sm transition active:scale-[0.99]"
+			>
+				<div class="flex items-center justify-between gap-3">
+					<div class="flex min-w-0 items-center gap-2">
+						<span class="text-lg">📋</span>
+						<p class="truncate text-sm font-semibold text-gray-800">
+							{trainingPlan?.title ?? m.home_training_plan()}
+						</p>
+					</div>
+					<svg class="h-4 w-4 shrink-0 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</div>
+				{#if trainingPlan}
+					<p class="mt-2 truncate text-xs {planOverdue.length ? 'text-red-500' : trainingPlan.status === 'paused' ? 'text-amber-600' : 'text-gray-500'}">
+						{#if trainingPlan.status === 'paused'}
+							{m.home_training_paused()}
+						{:else if planOverdue.length}
+							{m.home_training_overdue({ count: planOverdue.length })}
+						{:else if planToday.length > 1}
+							{m.home_training_today_more({ name: planToday[0].description, count: planToday.length - 1 })}
+						{:else if planToday.length === 1}
+							{m.home_training_today({ name: planToday[0].description })}
+						{:else if nextPlannedWorkout}
+							{m.home_training_next({ date: nextPlannedWorkout.date, name: nextPlannedWorkout.description })}
+						{:else}
+							{m.home_training_no_upcoming()}
+						{/if}
+					</p>
+					<div class="mt-3 grid grid-cols-3 gap-2 text-center">
+						<div class="rounded-xl bg-emerald-50 px-2 py-2">
+							<p class="text-sm font-semibold text-emerald-700">{todayPlanCompleted}/{todayPlanWorkouts.length}</p>
+							<p class="text-[10px] text-emerald-600">{m.home_training_today_progress()}</p>
+							<div class="mt-1 h-1 overflow-hidden rounded-full bg-emerald-100">
+								<div class="h-full rounded-full bg-emerald-500" style:width="{progressPercent(todayPlanCompleted, todayPlanWorkouts.length)}%"></div>
+							</div>
+						</div>
+						<div class="rounded-xl bg-blue-50 px-2 py-2">
+							<p class="text-sm font-semibold text-blue-700">{weekPlanCompleted}/{weekPlanWorkouts.length}</p>
+							<p class="text-[10px] text-blue-600">{m.home_training_week_progress()}</p>
+							<div class="mt-1 h-1 overflow-hidden rounded-full bg-blue-100">
+								<div class="h-full rounded-full bg-blue-500" style:width="{progressPercent(weekPlanCompleted, weekPlanWorkouts.length)}%"></div>
+							</div>
+						</div>
+						<div class="rounded-xl bg-violet-50 px-2 py-2">
+							<p class="text-sm font-semibold text-violet-700">{planCompleted}/{plannedWorkouts.length}</p>
+							<p class="text-[10px] text-violet-600">{m.home_training_overall_progress()}</p>
+							<div class="mt-1 h-1 overflow-hidden rounded-full bg-violet-100">
+								<div class="h-full rounded-full bg-violet-500" style:width="{progressPercent(planCompleted, plannedWorkouts.length)}%"></div>
+							</div>
+						</div>
+					</div>
+				{:else}
+					<p class="mt-2 text-xs text-gray-400">{m.home_training_empty()}</p>
+				{/if}
+			</a>
 
 			<!-- 今日时间线 -->
 			<div class="mt-4">

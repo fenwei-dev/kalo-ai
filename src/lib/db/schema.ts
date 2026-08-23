@@ -29,6 +29,8 @@ export type ExerciseCategory =
 	| "other";
 export type ExerciseIntensity = "light" | "moderate" | "vigorous";
 export type ExerciseSource = "manual" | "third_party";
+export type TrainingPlanStatus = "active" | "paused" | "completed" | "archived";
+export type PlannedWorkoutStatus = "planned" | "completed" | "skipped";
 
 // ---------- 实体 ----------
 
@@ -96,7 +98,37 @@ export interface ExerciseEntry {
 	duration: number; // 分钟
 	caloriesBurned: number;
 	source: ExerciseSource;
+	/** 完成训练计划时关联的计划项。 */
+	plannedWorkoutId?: string;
 	createdAt: number;
+}
+
+export interface TrainingPlan {
+	id: string;
+	title: string;
+	goal?: string;
+	startDate: string;
+	endDate?: string;
+	status: TrainingPlanStatus;
+	createdAt: number;
+	updatedAt: number;
+}
+
+export interface PlannedWorkout {
+	id: string;
+	planId: string;
+	date: string;
+	time?: string;
+	category: ExerciseCategory;
+	description: string;
+	intensity: ExerciseIntensity;
+	plannedDuration: number;
+	estimatedCalories?: number;
+	notes?: string;
+	status: PlannedWorkoutStatus;
+	exerciseEntryId?: string;
+	createdAt: number;
+	updatedAt: number;
 }
 
 export interface WeightEntry {
@@ -180,6 +212,8 @@ class KaloDB extends Dexie {
 	userMemory!: Table<UserMemory, string>;
 	foodEntries!: Table<FoodEntry, string>;
 	exerciseEntries!: Table<ExerciseEntry, string>;
+	trainingPlans!: Table<TrainingPlan, string>;
+	plannedWorkouts!: Table<PlannedWorkout, string>;
 	weightEntries!: Table<WeightEntry, string>;
 	foodLibrary!: Table<FoodLibraryItem, string>;
 	sessions!: Table<Session, string>;
@@ -231,6 +265,20 @@ class KaloDB extends Dexie {
 								: "manual";
 					}),
 			);
+		this.version(4).stores({
+			user: "id",
+			aiConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source, plannedWorkoutId",
+			trainingPlans: "id, status, startDate, updatedAt",
+			plannedWorkouts:
+				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
+		});
 	}
 }
 

@@ -9,11 +9,16 @@ import { app } from "$lib/context/appContext.svelte";
 import {
 	addExerciseEntry,
 	addFoodEntry,
+	addPlannedWorkout,
 	addWeightEntry,
+	archiveTrainingPlan,
+	completePlannedWorkout,
+	createTrainingPlan,
 	deleteExerciseEntry,
 	deleteFoodEntry,
 	deleteLibraryItem,
 	deleteWeightEntry,
+	getCurrentTrainingPlan,
 	getExerciseEntriesByDate,
 	getExerciseEntriesSince,
 	getExerciseEntry,
@@ -21,16 +26,22 @@ import {
 	getFoodEntriesSince,
 	getFoodEntry,
 	getLibraryItem,
+	getPlannedWorkout,
+	getPlannedWorkouts,
+	getTrainingPlans,
 	getUser,
 	getUserMemory,
 	getWeightEntries,
 	getWeightEntriesByDate,
 	getWeightEntry,
+	linkExerciseToPlannedWorkout,
 	listLibrary,
 	saveUser,
+	setTrainingPlanStatus,
 	syncCurrentWeightFromLatest,
 	updateExerciseEntry,
 	updateFoodEntry,
+	updatePlannedWorkout,
 	updateUser,
 	updateUserMemory,
 	upsertLibraryItem,
@@ -60,6 +71,30 @@ const dateParam = Type.Optional(
 		description: "YYYY-MM-DD，默认今天",
 	}),
 );
+const exerciseCategoryParam = StringEnum([
+	"walking",
+	"running",
+	"cycling",
+	"strength",
+	"swimming",
+	"sports",
+	"other",
+] as const);
+const exerciseIntensityParam = StringEnum([
+	"light",
+	"moderate",
+	"vigorous",
+] as const);
+const plannedWorkoutParam = Type.Object({
+	date: Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
+	time: Type.Optional(Type.String({ pattern: "^([01]\\d|2[0-3]):[0-5]\\d$" })),
+	category: exerciseCategoryParam,
+	description: Type.String(),
+	intensity: exerciseIntensityParam,
+	plannedDuration: Type.Number({ minimum: 1, maximum: 1440 }),
+	estimatedCalories: Type.Optional(Type.Number({ minimum: 0, maximum: 10000 })),
+	notes: Type.Optional(Type.String()),
+});
 
 export const toolDefs = [
 	{
@@ -81,6 +116,12 @@ export const toolDefs = [
 		parameters: Type.Object({
 			range: StringEnum(["7d", "30d", "90d"] as const, { default: "30d" }),
 		}),
+	},
+	{
+		name: "getTrainingPlan",
+		description:
+			"获取当前训练计划、全部计划项、今日/逾期/即将开始的训练和完成进度。回答计划安排或修改计划前先调用。计划不等于已完成运动。",
+		parameters: Type.Object({}),
 	},
 	{
 		name: "listLibrary",
@@ -150,20 +191,8 @@ export const toolDefs = [
 					description: "要修正的已有 ExerciseEntry id；新增时不传",
 				}),
 			),
-			category: Type.Optional(
-				StringEnum([
-					"walking",
-					"running",
-					"cycling",
-					"strength",
-					"swimming",
-					"sports",
-					"other",
-				] as const),
-			),
-			intensity: Type.Optional(
-				StringEnum(["light", "moderate", "vigorous"] as const),
-			),
+			category: Type.Optional(exerciseCategoryParam),
+			intensity: Type.Optional(exerciseIntensityParam),
 			description: Type.String({ description: "运动描述，如「跑步」" }),
 			duration: Type.Number({
 				minimum: 1,
@@ -177,6 +206,97 @@ export const toolDefs = [
 			}),
 			time: Type.Optional(Type.String({ description: "HH:mm，默认现在" })),
 			date: dateParam,
+		}),
+	},
+	{
+		name: "createTrainingPlan",
+		description:
+			"在用户明确确认完整草案后创建训练计划和具体日期的训练项。创建前必须询问可训练天数、单次时间、经验、器材、偏好和伤病限制，并先展示草案；禁止未经确认批量写入。一次最多 84 次训练。",
+		parameters: Type.Object({
+			title: Type.String(),
+			goal: Type.Optional(Type.String()),
+			startDate: Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
+			endDate: Type.Optional(
+				Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
+			),
+			workouts: Type.Array(plannedWorkoutParam, { minItems: 1, maxItems: 84 }),
+		}),
+	},
+	{
+		name: "addPlannedWorkout",
+		description: "在用户明确要求后，向当前训练计划增加一次具体日期的未来训练。",
+		parameters: Type.Object({
+			planId: Type.String(),
+			workout: plannedWorkoutParam,
+		}),
+	},
+	{
+		name: "updatePlannedWorkout",
+		description:
+			"调整、跳过或恢复一条未完成的计划训练。必须先 getTrainingPlan，并同时提供准确 id 与 expectedDescription；已完成训练应修改关联的 ExerciseEntry。",
+		parameters: Type.Object({
+			id: Type.String(),
+			expectedDescription: Type.String(),
+			date: Type.Optional(Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" })),
+			time: Type.Optional(
+				Type.String({ pattern: "^([01]\\d|2[0-3]):[0-5]\\d$" }),
+			),
+			category: Type.Optional(exerciseCategoryParam),
+			description: Type.Optional(Type.String()),
+			intensity: Type.Optional(exerciseIntensityParam),
+			plannedDuration: Type.Optional(
+				Type.Number({ minimum: 1, maximum: 1440 }),
+			),
+			estimatedCalories: Type.Optional(
+				Type.Number({ minimum: 0, maximum: 10000 }),
+			),
+			notes: Type.Optional(Type.String()),
+			status: Type.Optional(StringEnum(["planned", "skipped"] as const)),
+		}),
+	},
+	{
+		name: "completePlannedWorkout",
+		description:
+			"将计划训练标记为完成并原子创建真实 ExerciseEntry。必须先 getTrainingPlan 核对 id；重复调用同一计划项不会重复创建记录。实际日期不得是未来。",
+		parameters: Type.Object({
+			id: Type.String(),
+			actualDate: Type.Optional(
+				Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
+			),
+			actualTime: Type.Optional(
+				Type.String({ pattern: "^([01]\\d|2[0-3]):[0-5]\\d$" }),
+			),
+			actualDuration: Type.Number({ minimum: 1, maximum: 1440 }),
+			caloriesBurned: Type.Number({ minimum: 0, maximum: 10000 }),
+		}),
+	},
+	{
+		name: "linkExerciseToPlannedWorkout",
+		description:
+			"将已有运动记录关联到准确的计划训练，或解除现有关联。必须先 getTodayLog 核对运动 id/名称，并在关联时先 getTrainingPlan 核对计划项 id/名称；禁止仅凭相似名称自动关联。关联会把计划项标记为完成，解除会恢复为待完成。",
+		parameters: Type.Object({
+			action: StringEnum(["link", "unlink"] as const),
+			exerciseEntryId: Type.String(),
+			expectedExerciseDescription: Type.String(),
+			plannedWorkoutId: Type.Optional(Type.String()),
+			expectedWorkoutDescription: Type.Optional(Type.String()),
+		}),
+	},
+	{
+		name: "setTrainingPlanStatus",
+		description: "暂停或恢复当前训练计划。恢复前必须确认没有其他当前计划。",
+		parameters: Type.Object({
+			id: Type.String(),
+			status: StringEnum(["active", "paused"] as const),
+		}),
+	},
+	{
+		name: "archiveTrainingPlan",
+		description:
+			"归档训练计划。必须先 getTrainingPlan，并同时提供准确 id 和 expectedTitle。归档不会删除已经完成的 ExerciseEntry。",
+		parameters: Type.Object({
+			id: Type.String(),
+			expectedTitle: Type.String(),
 		}),
 	},
 	{
@@ -368,6 +488,42 @@ async function refreshAfterWeightMutation(): Promise<void> {
 	await app.refreshToday();
 }
 
+async function trainingPlanSnapshot() {
+	const plan = await getCurrentTrainingPlan();
+	if (!plan) {
+		const recentPlans = (await getTrainingPlans()).slice(0, 5);
+		return { currentPlan: null, workouts: [], recentPlans };
+	}
+	const workouts = await getPlannedWorkouts(plan.id);
+	const today = localDateISO();
+	const completed = workouts.filter(
+		(workout) => workout.status === "completed",
+	);
+	const skipped = workouts.filter((workout) => workout.status === "skipped");
+	const planned = workouts.filter((workout) => workout.status === "planned");
+	return {
+		currentPlan: plan,
+		workouts,
+		summary: {
+			total: workouts.length,
+			completed: completed.length,
+			skipped: skipped.length,
+			planned: planned.length,
+			plannedMinutes: workouts.reduce(
+				(sum, workout) => sum + workout.plannedDuration,
+				0,
+			),
+			completedPlannedMinutes: completed.reduce(
+				(sum, workout) => sum + workout.plannedDuration,
+				0,
+			),
+		},
+		today: planned.filter((workout) => workout.date === today),
+		overdue: planned.filter((workout) => workout.date < today),
+		upcoming: planned.filter((workout) => workout.date > today).slice(0, 14),
+	};
+}
+
 function summarizeDay(
 	entries: {
 		calories: number;
@@ -452,6 +608,10 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 				};
 			}
 
+			case "getTrainingPlan": {
+				return { ok: true, data: await trainingPlanSnapshot() };
+			}
+
 			case "listLibrary": {
 				return { ok: true, data: await listLibrary() };
 			}
@@ -524,6 +684,116 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 					: await addExerciseEntry(values);
 				await app.refreshToday();
 				return { ok: true, data: { entry, corrected: !!args.replaceEntryId } };
+			}
+
+			case "createTrainingPlan": {
+				const args = request.args;
+				const result = await createTrainingPlan({
+					title: args.title,
+					goal: args.goal,
+					startDate: args.startDate,
+					endDate: args.endDate,
+					workouts: args.workouts,
+				});
+				return { ok: true, data: result };
+			}
+
+			case "addPlannedWorkout": {
+				const args = request.args;
+				const workout = await addPlannedWorkout(args.planId, args.workout);
+				return { ok: true, data: { workout } };
+			}
+
+			case "updatePlannedWorkout": {
+				const args = request.args;
+				const existing = await getPlannedWorkout(args.id);
+				if (!existing)
+					return { ok: false, data: null, error: "计划训练不存在" };
+				if (
+					existing.description.trim().toLocaleLowerCase() !==
+					args.expectedDescription.trim().toLocaleLowerCase()
+				) {
+					return {
+						ok: false,
+						data: null,
+						error: "计划训练 id 与名称不匹配，已拒绝修改",
+					};
+				}
+				const { id: requestId, expectedDescription, ...patch } = args;
+				void expectedDescription;
+				const workout = await updatePlannedWorkout(requestId, patch);
+				return { ok: true, data: { workout } };
+			}
+
+			case "completePlannedWorkout": {
+				const args = request.args;
+				const result = await completePlannedWorkout(args.id, {
+					date: args.actualDate,
+					time: args.actualTime,
+					duration: args.actualDuration,
+					caloriesBurned: args.caloriesBurned,
+				});
+				await app.refreshToday();
+				return { ok: true, data: result };
+			}
+
+			case "linkExerciseToPlannedWorkout": {
+				const args = request.args;
+				const exercise = await getExerciseEntry(args.exerciseEntryId);
+				if (!exercise)
+					return { ok: false, data: null, error: "运动记录不存在" };
+				if (
+					exercise.description.trim().toLocaleLowerCase() !==
+					args.expectedExerciseDescription.trim().toLocaleLowerCase()
+				) {
+					return {
+						ok: false,
+						data: null,
+						error: "运动记录 id 与名称不匹配，已拒绝关联",
+					};
+				}
+				let plannedWorkoutId: string | null = null;
+				if (args.action === "link") {
+					if (!args.plannedWorkoutId || !args.expectedWorkoutDescription) {
+						return {
+							ok: false,
+							data: null,
+							error: "关联需要 plannedWorkoutId 和准确的计划训练名称",
+						};
+					}
+					const workout = await getPlannedWorkout(args.plannedWorkoutId);
+					if (!workout)
+						return { ok: false, data: null, error: "计划训练不存在" };
+					if (
+						workout.description.trim().toLocaleLowerCase() !==
+						args.expectedWorkoutDescription.trim().toLocaleLowerCase()
+					) {
+						return {
+							ok: false,
+							data: null,
+							error: "计划训练 id 与名称不匹配，已拒绝关联",
+						};
+					}
+					plannedWorkoutId = workout.id;
+				}
+				const result = await linkExerciseToPlannedWorkout(
+					exercise.id,
+					plannedWorkoutId,
+				);
+				await app.refreshToday();
+				return { ok: true, data: result };
+			}
+
+			case "setTrainingPlanStatus": {
+				const args = request.args;
+				const plan = await setTrainingPlanStatus(args.id, args.status);
+				return { ok: true, data: { plan } };
+			}
+
+			case "archiveTrainingPlan": {
+				const args = request.args;
+				const plan = await archiveTrainingPlan(args.id, args.expectedTitle);
+				return { ok: true, data: { plan } };
 			}
 
 			case "logWeight": {

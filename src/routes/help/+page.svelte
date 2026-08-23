@@ -22,6 +22,11 @@
 			<BlockTitle>{m.help_overview_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_overview_body()}</p></Block>
 
+			<BlockTitle>{m.help_training_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-gray-600">{m.help_training_body()}</p>
+			</Block>
+
 			<BlockTitle>{m.help_api_title()}</BlockTitle>
 			<Block inset strong><p class="text-sm leading-relaxed text-gray-600">{m.help_api_body()}</p></Block>
 
