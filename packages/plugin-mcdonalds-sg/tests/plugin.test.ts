@@ -29,7 +29,7 @@ test("bundled nutrition snapshot is complete and internally valid", () => {
 });
 
 test("full list returns only exact product names and IDs", () => {
-	const products = listMcDonaldsSGProducts();
+	const products = listMcDonaldsSGProducts("all");
 	expect(products).toHaveLength(mcdonaldsSGProducts.length);
 	expect(products).toEqual(
 		mcdonaldsSGProducts.map((product) => ({

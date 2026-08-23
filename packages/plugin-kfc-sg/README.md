@@ -4,14 +4,15 @@ Build-time Kalo plugin providing KFC Singapore nutrition and allergen data to th
 
 ## Agent tools
 
-- `kfc_sg_listProducts` — returns exact `{ id, name, servingSize, servingUnit }` records, optionally filtered by category. Serving details distinguish official duplicate names and variants.
+- `kfc_sg_listProducts` — returns exact `{ id, name, servingSize, servingUnit }` records for the required category scope; use `all` for the complete bundled nutrition-page index. Serving details distinguish official duplicate names and variants.
 - `kfc_sg_getNutrition` — returns the complete nutrition and allergen record for one exact listed ID.
 
 The plugin is enabled by default and performs no browser network requests. Data comes from `data/products.json`.
 
-Supported normalized category filters:
+`category` is required. Use `all` to return the complete bundled nutrition-page index in one call, or one of the concrete normalized categories to narrow the result:
 
 ```text
+all
 chicken
 burgers
 wraps

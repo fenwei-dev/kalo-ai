@@ -4,14 +4,15 @@ Build-time Kalo plugin providing Subway Singapore nutrition to the Agent from a 
 
 ## Agent tools
 
-- `subway_sg_listProducts` — returns exact `{ id, name }` pairs, optionally filtered by category.
+- `subway_sg_listProducts` — returns exact `{ id, name }` pairs for the required category scope; use `all` for the complete bundled nutrition-product index.
 - `subway_sg_getNutrition` — returns the complete nutrition table for one exact listed ID.
 
 The plugin is enabled by default and performs no browser network requests. Data comes from `data/products.json`. Products for which Subway Singapore does not publish a nutrition table are intentionally excluded.
 
-Supported category filters:
+`category` is required. Use `all` to return the complete bundled nutrition-product index in one call, or one of the concrete categories to narrow the result:
 
 ```text
+all
 sandwich
 breakfast
 energy-bowls

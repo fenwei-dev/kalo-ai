@@ -19,6 +19,12 @@ export const MCDONALDS_SG_CATEGORIES = [
 	"sides",
 ] as const;
 export type McDonaldsSGCategory = (typeof MCDONALDS_SG_CATEGORIES)[number];
+export const MCDONALDS_SG_CATEGORY_FILTERS = [
+	"all",
+	...MCDONALDS_SG_CATEGORIES,
+] as const;
+export type McDonaldsSGCategoryFilter =
+	(typeof MCDONALDS_SG_CATEGORY_FILTERS)[number];
 
 export interface McDonaldsSGNutritionFacts {
 	energyKcal: number;
@@ -72,7 +78,10 @@ const dataset: McDonaldsSGDataset = {
 };
 
 const listParameters = Type.Object({
-	category: Type.Optional(StringEnum(MCDONALDS_SG_CATEGORIES)),
+	category: StringEnum(MCDONALDS_SG_CATEGORY_FILTERS, {
+		description:
+			'Required menu scope. Use "all" to return the complete bundled menu index in one call, or an official category to narrow the result.',
+	}),
 });
 const getParameters = Type.Object({
 	id: Type.String({ pattern: "^[0-9]+$" }),
@@ -84,10 +93,12 @@ export interface McDonaldsSGProductListItem {
 }
 
 export function listMcDonaldsSGProducts(
-	category?: McDonaldsSGCategory,
+	category: McDonaldsSGCategoryFilter,
 ): McDonaldsSGProductListItem[] {
 	return dataset.products
-		.filter((product) => !category || product.categories.includes(category))
+		.filter(
+			(product) => category === "all" || product.categories.includes(category),
+		)
 		.map((product) => ({ id: product.id, name: product.name }));
 }
 
@@ -131,7 +142,7 @@ export const mcdonaldsSGPlugin = definePlugin({
 			name: "mcdonalds_sg_listProducts",
 			label: "List McDonald's SG products",
 			description:
-				"List every bundled McDonald's Singapore product as exact {id, name} pairs. Optionally filter by one official category. Use this before nutrition lookup; never guess an ID, size, or variant.",
+				'Return McDonald\'s Singapore product index entries as exact {id, name} pairs. category is required: use "all" to return the complete bundled menu index in one call, or an official category to narrow the result. Never call every category separately to construct the full index. Use this before nutrition lookup and never guess an ID, size, or variant.',
 			parameters: listParameters,
 			executionMode: "parallel",
 			execute: async (_toolCallId, params, signal) => {
@@ -142,7 +153,7 @@ export const mcdonaldsSGPlugin = definePlugin({
 						{
 							type: "text",
 							text: JSON.stringify({
-								category: params.category ?? null,
+								category: params.category,
 								retrievedAt: dataset.retrievedAt,
 								products,
 							}),
@@ -188,7 +199,7 @@ export const mcdonaldsSGPlugin = definePlugin({
 	systemPrompt: ({ locale }) => {
 		const snapshot = dataset.retrievedAt.slice(0, 10);
 		return locale === "en-us"
-			? `Use mcdonalds_sg tools only for McDonald's Singapore products. Call mcdonalds_sg_listProducts first, optionally with an official category, then choose the exact ID and call mcdonalds_sg_getNutrition. Preserve product size and variant and ask when the user's wording does not identify one exact list item. Values are for the official standard serving in the bundled snapshot dated ${snapshot}; actual preparation and current recipes may differ. Use energyKcal, proteinG, carbohydratesG, and totalFatG when the user explicitly asks to log the food through the core logFood tool. Never log automatically.`
-			: `mcdonalds_sg 工具仅适用于新加坡麦当劳产品。先调用 mcdonalds_sg_listProducts（可按官网分类筛选），再选择准确 ID 并调用 mcdonalds_sg_getNutrition。必须严格区分尺寸与产品变体；用户描述无法对应唯一列表项时要先询问。数值来自日期为 ${snapshot} 的官网标准份量静态快照，实际制作和当前配方可能不同。只有用户明确要求记录时，才把 energyKcal、proteinG、carbohydratesG 和 totalFatG 传给核心 logFood 工具；不得自动记录。`;
+			? `Use mcdonalds_sg tools only for McDonald's Singapore products. category is required for mcdonalds_sg_listProducts. When the user asks for the complete, full, or all-product menu index, call mcdonalds_sg_listProducts exactly once with {"category":"all"} and do not call categories separately. Use an official category only to narrow the index. Then choose the exact ID and call mcdonalds_sg_getNutrition when nutrition is needed. Preserve product size and variant and ask when the user's wording does not identify one exact list item. Values are for the official standard serving in the bundled snapshot dated ${snapshot}; actual preparation and current recipes may differ. Use energyKcal, proteinG, carbohydratesG, and totalFatG when the user explicitly asks to log the food through the core logFood tool. Never log automatically.`
+			: `mcdonalds_sg 工具仅适用于新加坡麦当劳产品。mcdonalds_sg_listProducts 的 category 是必填参数；用户要求完整、全部或全量菜单索引时，只调用一次 mcdonalds_sg_listProducts({"category":"all"})，不得拆分分类调用。只有需要缩小索引范围时才传具体官网分类；需要营养信息时再选择准确 ID 并调用 mcdonalds_sg_getNutrition。必须严格区分尺寸与产品变体；用户描述无法对应唯一列表项时要先询问。数值来自日期为 ${snapshot} 的官网标准份量静态快照，实际制作和当前配方可能不同。只有用户明确要求记录时，才把 energyKcal、proteinG、carbohydratesG 和 totalFatG 传给核心 logFood 工具；不得自动记录。`;
 	},
 });

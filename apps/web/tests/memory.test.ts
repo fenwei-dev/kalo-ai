@@ -163,6 +163,33 @@ test("enabled plugin contributes tools and a bounded system prompt", async () =>
 			expect.stringContaining("### Plugin: kfc_sg"),
 		]),
 	);
+	for (const section of defaultRuntime.promptSections) {
+		expect(section).toContain('exactly once with {"category":"all"}');
+	}
+	const fullIndexTools = defaultRuntime.tools.filter((tool) =>
+		tool.name.endsWith("_listProducts"),
+	);
+	expect(fullIndexTools).toHaveLength(3);
+	for (const listTool of fullIndexTools) {
+		expect(listTool.parameters).toMatchObject({ required: ["category"] });
+		expect(listTool.parameters).toMatchObject({
+			properties: {
+				category: { enum: expect.arrayContaining(["all"]) },
+			},
+		});
+		expect(listTool.description).toContain("category is required");
+		const fullIndexResult = await listTool.execute(
+			`${listTool.name}-full-index`,
+			{ category: "all" },
+		);
+		const content = fullIndexResult.content[0];
+		expect(content?.type).toBe("text");
+		if (content?.type === "text") {
+			const payload = JSON.parse(content.text);
+			expect(payload.category).toBe("all");
+			expect(payload.products.length).toBeGreaterThan(0);
+		}
+	}
 	const mcdList = defaultRuntime.tools.find(
 		(tool) => tool.name === "mcdonalds_sg_listProducts",
 	);

@@ -26,7 +26,7 @@ test("bundled nutrition snapshot is complete and internally valid", () => {
 });
 
 test("full list returns only exact product names and IDs", () => {
-	const products = listSubwaySGProducts();
+	const products = listSubwaySGProducts("all");
 	expect(products).toHaveLength(subwaySGProducts.length);
 	expect(products).toEqual(
 		subwaySGProducts.map((product) => ({ id: product.id, name: product.name })),

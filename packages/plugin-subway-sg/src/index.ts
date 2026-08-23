@@ -13,6 +13,12 @@ export const SUBWAY_SG_CATEGORIES = [
 	"sides",
 ] as const;
 export type SubwaySGCategory = (typeof SUBWAY_SG_CATEGORIES)[number];
+export const SUBWAY_SG_CATEGORY_FILTERS = [
+	"all",
+	...SUBWAY_SG_CATEGORIES,
+] as const;
+export type SubwaySGCategoryFilter =
+	(typeof SUBWAY_SG_CATEGORY_FILTERS)[number];
 
 export interface SubwaySGNutritionFacts {
 	energyKcal: number;
@@ -68,15 +74,18 @@ const dataset: SubwaySGDataset = {
 };
 
 const listParameters = Type.Object({
-	category: Type.Optional(StringEnum(SUBWAY_SG_CATEGORIES)),
+	category: StringEnum(SUBWAY_SG_CATEGORY_FILTERS, {
+		description:
+			'Required menu scope. Use "all" to return the complete bundled nutrition-product index in one call, or a category to narrow the result.',
+	}),
 });
 const getParameters = Type.Object({
 	id: Type.String({ pattern: "^[0-9]+$" }),
 });
 
-export function listSubwaySGProducts(category?: SubwaySGCategory) {
+export function listSubwaySGProducts(category: SubwaySGCategoryFilter) {
 	return dataset.products
-		.filter((product) => !category || product.category === category)
+		.filter((product) => category === "all" || product.category === category)
 		.map((product) => ({ id: product.id, name: product.name }));
 }
 
@@ -115,7 +124,7 @@ export const subwaySGPlugin = definePlugin({
 			name: "subway_sg_listProducts",
 			label: "List Subway SG products",
 			description:
-				"List bundled Subway Singapore nutrition products as exact {id, name} pairs, optionally filtered by sandwich, breakfast, energy-bowls, or sides. Products without an official nutrition table are excluded.",
+				'Return bundled Subway Singapore nutrition-product index entries as exact {id, name} pairs. category is required: use "all" to return the complete bundled index in one call, or sandwich, breakfast, energy-bowls, or sides to narrow the result. Never call every category separately to construct the full index. Products without an official nutrition table are excluded.',
 			parameters: listParameters,
 			executionMode: "parallel",
 			execute: async (_toolCallId, params, signal) => {
@@ -126,7 +135,7 @@ export const subwaySGPlugin = definePlugin({
 						{
 							type: "text",
 							text: JSON.stringify({
-								category: params.category ?? null,
+								category: params.category,
 								retrievedAt: dataset.retrievedAt,
 								products: listed,
 							}),
@@ -168,7 +177,7 @@ export const subwaySGPlugin = definePlugin({
 	systemPrompt: ({ locale }) => {
 		const snapshot = dataset.retrievedAt.slice(0, 10);
 		return locale === "en-us"
-			? `Use subway_sg tools only for Subway Singapore. Call subway_sg_listProducts first, optionally by category, then use the exact ID with subway_sg_getNutrition. Products without an official nutrition table are not listed. Values are based on the standard recipe and serving shown by Subway Singapore in the bundled snapshot dated ${snapshot}; custom bread, cheese, vegetables, sauces, add-ons, and portion changes alter nutrition. An absent nutrient field was unavailable in the source and must not be invented. Subway states Footlong sandwich values are approximately double the listed standard sub values. Only use the core logFood tool when the user explicitly asks to record food.`
-			: `subway_sg 工具仅适用于新加坡赛百味。先调用 subway_sg_listProducts（可按分类筛选），再把准确 ID 传给 subway_sg_getNutrition；官网没有营养表的产品不会列出。数值来自日期为 ${snapshot} 的官网标准配方与份量快照；面包、芝士、蔬菜、酱料、加料和份量自定义都会改变营养；缺少的营养字段表示来源未提供，不得编造。赛百味说明 Footlong 三明治可近似按所列标准 Sub 数值的两倍估算。只有用户明确要求记录时才调用核心 logFood。`;
+			? `Use subway_sg tools only for Subway Singapore. category is required for subway_sg_listProducts. When the user asks for the complete, full, or all-product bundled index, call subway_sg_listProducts exactly once with {"category":"all"} and do not call categories separately. Use a concrete category only to narrow the index. Use the exact listed ID with subway_sg_getNutrition when nutrition is needed. Products without an official nutrition table are not listed, so this is the complete bundled nutrition-product index rather than every item sold by Subway. Values are based on the standard recipe and serving shown by Subway Singapore in the bundled snapshot dated ${snapshot}; custom bread, cheese, vegetables, sauces, add-ons, and portion changes alter nutrition. An absent nutrient field was unavailable in the source and must not be invented. Subway states Footlong sandwich values are approximately double the listed standard sub values. Only use the core logFood tool when the user explicitly asks to record food.`
+			: `subway_sg 工具仅适用于新加坡赛百味。subway_sg_listProducts 的 category 是必填参数；用户要求完整、全部或全量 bundled 索引时，只调用一次 subway_sg_listProducts({"category":"all"})，不得拆分分类调用。只有需要缩小索引范围时才传具体分类；需要营养信息时再把准确 ID 传给 subway_sg_getNutrition。官网没有营养表的产品不会列出，因此这里的完整索引是插件内全部营养产品，并非赛百味所有在售商品。数值来自日期为 ${snapshot} 的官网标准配方与份量快照；面包、芝士、蔬菜、酱料、加料和份量自定义都会改变营养；缺少的营养字段表示来源未提供，不得编造。赛百味说明 Footlong 三明治可近似按所列标准 Sub 数值的两倍估算。只有用户明确要求记录时才调用核心 logFood。`;
 	},
 });

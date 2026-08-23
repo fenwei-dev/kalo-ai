@@ -30,7 +30,7 @@ test("bundled nutrition snapshot is complete and internally valid", () => {
 });
 
 test("full list returns exact IDs, names, and serving details", () => {
-	const products = listKFCSGProducts();
+	const products = listKFCSGProducts("all");
 	expect(products).toHaveLength(kfcSGProducts.length);
 	expect(products).toEqual(
 		kfcSGProducts.map((product) => ({

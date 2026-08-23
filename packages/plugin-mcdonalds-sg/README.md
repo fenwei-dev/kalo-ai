@@ -4,14 +4,15 @@ Build-time Kalo plugin providing McDonald's Singapore product nutrition to the A
 
 ## Agent tools
 
-- `mcdonalds_sg_listProducts` — returns every exact `{ id, name }` pair, optionally filtered by one official category.
+- `mcdonalds_sg_listProducts` — returns exact `{ id, name }` pairs for the required category scope; use `all` for the complete bundled menu index.
 - `mcdonalds_sg_getNutrition` — returns the complete nutrition table for one exact listed ID.
 
 The plugin is enabled by default and performs no browser network requests. Data comes from `data/products.json`.
 
-Supported category filters:
+Supported `category` values:
 
 ```text
+all
 beverages
 breakfast
 burgers
@@ -24,7 +25,7 @@ salads-and-wraps
 sides
 ```
 
-Omitting `category` returns the Full Menu, including products such as sauces that are not listed under one of those category pages.
+`category` is required. `all` returns the Full Menu in one call, including products such as sauces that are not listed under one of the official category pages.
 
 ## Updating data
 
