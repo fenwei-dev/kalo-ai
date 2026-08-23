@@ -1232,10 +1232,25 @@ export async function deleteMessagesFrom(
 	sessionId: string,
 	order: number,
 ): Promise<void> {
-	await db.messages
-		.where("[sessionId+order]")
-		.between([sessionId, order], [sessionId, Infinity])
-		.delete();
+	await db.transaction("rw", [db.sessions, db.messages], async () => {
+		const session = await db.sessions.get(sessionId);
+		if (!session) throw new Error("对话不存在或已被删除");
+		await db.messages
+			.where("[sessionId+order]")
+			.between([sessionId, order], [sessionId, Infinity])
+			.delete();
+		const lastMessage = await db.messages
+			.where("[sessionId+order]")
+			.between([sessionId, 0], [sessionId, Infinity])
+			.last();
+		await db.sessions.update(sessionId, {
+			updatedAt: now(),
+			lastMessageAt: lastMessage?.createdAt ?? session.createdAt,
+			// A deleted range may have contained the latest synthetic memory snapshot.
+			// Force the next real user send to append a fresh one.
+			memoryVersion: undefined,
+		});
+	});
 }
 
 // ---------- 聚合 / 工具 ----------

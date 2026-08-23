@@ -111,6 +111,32 @@ test("a changed memory snapshot is appended after the user message only once per
 	expect((await getSession(session.id))?.memoryVersion).toBe(1);
 });
 
+test("message revert deletion removes the selected range and resets session metadata", async () => {
+	const session = await repositories.createSession("Revert test");
+	const first = await repositories.addMessage({
+		sessionId: session.id,
+		role: "assistant",
+		content: [{ type: "text", text: "Welcome" }],
+	});
+	const selected = await repositories.addMessage({
+		sessionId: session.id,
+		role: "user",
+		content: [{ type: "text", text: "Try this" }],
+	});
+	await repositories.addMessage({
+		sessionId: session.id,
+		role: "assistant",
+		content: [{ type: "text", text: "Later reply" }],
+	});
+	await repositories.markSessionMemoryVersion(session.id, 7);
+
+	await repositories.deleteMessagesFrom(session.id, selected.order);
+	expect(await repositories.listMessages(session.id)).toEqual([first]);
+	const revertedSession = await repositories.getSession(session.id);
+	expect(revertedSession?.lastMessageAt).toBe(first.createdAt);
+	expect(revertedSession?.memoryVersion).toBeUndefined();
+});
+
 test("enabled plugin contributes tools and a bounded system prompt", async () => {
 	const mcdonalds = await plugins.getPluginState("mcdonalds_sg");
 	expect(mcdonalds).toMatchObject({ enabled: true, status: "ready" });

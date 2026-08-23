@@ -3,13 +3,16 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { runTurn } from "$lib/agent/client";
+	import AppDialog from "$lib/components/AppDialog.svelte";
 	import Markdown from "$lib/components/chat/Markdown.svelte";
+	import MessageContextMenu from "$lib/components/chat/MessageContextMenu.svelte";
 	import SessionDrawer from "$lib/components/chat/SessionDrawer.svelte";
 	import ToolChip from "$lib/components/chat/ToolChip.svelte";
 	import { app } from "$lib/context/appContext.svelte";
 	import {
 		addUserMessageWithMemorySync,
 		createSession,
+		deleteMessagesFrom,
 		getSession,
 		listMessages,
 		renameSession,
@@ -27,6 +30,14 @@
 		prepareImage,
 	} from "$lib/utils/image";
 
+	type ComposerImage = PreparedImage | Extract<ContentBlock, { type: "image" }>;
+	interface MessageMenuState {
+		message: DBMessage;
+		x: number;
+		y: number;
+		deferInteraction: boolean;
+	}
+
 	let sessionId = $derived(page.params.sessionId ?? "");
 	let session = $state<Session | null>(null);
 	let messages = $state<DBMessage[]>([]);
@@ -35,9 +46,10 @@
 	let streamText = $state("");
 	let errorMsg = $state("");
 	let drawerOpen = $state(false);
-	let selectedImage = $state<PreparedImage | null>(null);
+	let selectedImage = $state<ComposerImage | null>(null);
 	let preparingImage = $state(false);
 	let imageInput: HTMLInputElement | undefined = $state();
+	let composerInput: HTMLTextAreaElement | undefined = $state();
 	let turnController = $state<AbortController | null>(null);
 	let turnSessionId: string | null = null;
 	let turnTimer: ReturnType<typeof setTimeout> | undefined;
@@ -46,11 +58,18 @@
 	let creatingNew = false;
 	let destroyed = false;
 	let imeComposing = false;
+	let messageMenu = $state<MessageMenuState | null>(null);
+	let pendingRevert = $state<DBMessage | null>(null);
+	let revertDialogOpen = $state(false);
+	let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+	let longPressX = 0;
+	let longPressY = 0;
 	const attemptedUserMessages = new Set<string>();
 
 	onDestroy(() => {
 		destroyed = true;
 		if (turnTimer) clearTimeout(turnTimer);
+		if (longPressTimer) clearTimeout(longPressTimer);
 		turnAbortReason = "cancelled";
 		turnController?.abort();
 		turnController = null;
@@ -96,6 +115,148 @@
 			}
 		}
 		return { failed: !!result.isError, error };
+	}
+
+	function closeMessageMenu() {
+		messageMenu = null;
+	}
+
+	function openMessageMenu(
+		message: DBMessage,
+		clientX: number,
+		clientY: number,
+		deferInteraction = false,
+	) {
+		if (message.role !== "user" && message.role !== "assistant") return;
+		const menuWidth = 176;
+		const menuHeight = message.role === "user" ? 104 : 56;
+		messageMenu = {
+			message,
+			x: Math.max(8, Math.min(clientX, window.innerWidth - menuWidth - 8)),
+			y: Math.max(8, Math.min(clientY, window.innerHeight - menuHeight - 8)),
+			deferInteraction,
+		};
+	}
+
+	function openContextMenu(event: MouseEvent, message: DBMessage) {
+		event.preventDefault();
+		if (
+			messageMenu?.message.id === message.id &&
+			messageMenu.deferInteraction
+		) {
+			return;
+		}
+		let x = event.clientX;
+		let y = event.clientY;
+		if (x === 0 && y === 0 && event.currentTarget instanceof HTMLElement) {
+			const rect = event.currentTarget.getBoundingClientRect();
+			x = rect.left + rect.width / 2;
+			y = rect.top + rect.height / 2;
+		}
+		openMessageMenu(message, x, y);
+	}
+
+	function cancelLongPress() {
+		if (longPressTimer) clearTimeout(longPressTimer);
+		longPressTimer = undefined;
+	}
+
+	function startLongPress(event: PointerEvent, message: DBMessage) {
+		if (event.pointerType === "mouse" || event.button !== 0) return;
+		cancelLongPress();
+		longPressX = event.clientX;
+		longPressY = event.clientY;
+		longPressTimer = setTimeout(() => {
+			longPressTimer = undefined;
+			openMessageMenu(message, longPressX, longPressY, true);
+		}, 500);
+	}
+
+	function moveLongPress(event: PointerEvent) {
+		if (!longPressTimer) return;
+		if (
+			Math.abs(event.clientX - longPressX) > 8 ||
+			Math.abs(event.clientY - longPressY) > 8
+		) {
+			cancelLongPress();
+		}
+	}
+
+	function keydownMessage(event: KeyboardEvent, message: DBMessage) {
+		if (
+			event.key !== "ContextMenu" &&
+			event.key !== "Enter" &&
+			event.key !== " " &&
+			!(event.shiftKey && event.key === "F10")
+		) {
+			return;
+		}
+		event.preventDefault();
+		if (!(event.currentTarget instanceof HTMLElement)) return;
+		const rect = event.currentTarget.getBoundingClientRect();
+		openMessageMenu(
+			message,
+			rect.left + rect.width / 2,
+			rect.top + rect.height / 2,
+		);
+	}
+
+	function fallbackCopy(text: string): boolean {
+		const textarea = document.createElement("textarea");
+		textarea.value = text;
+		textarea.setAttribute("readonly", "");
+		textarea.style.position = "fixed";
+		textarea.style.opacity = "0";
+		document.body.appendChild(textarea);
+		textarea.select();
+		const copied = document.execCommand("copy");
+		textarea.remove();
+		return copied;
+	}
+
+	async function copySelectedMessage() {
+		const selected = messageMenu?.message;
+		closeMessageMenu();
+		if (!selected) return;
+		const text = blocksText(selected.content);
+		if (!text) return;
+		try {
+			if (navigator.clipboard?.writeText)
+				await navigator.clipboard.writeText(text);
+			else if (!fallbackCopy(text)) throw new Error("Clipboard unavailable");
+		} catch {
+			errorMsg = m.chat_copy_failed();
+		}
+	}
+
+	function requestRevert() {
+		const selected = messageMenu?.message;
+		closeMessageMenu();
+		if (selected?.role !== "user" || sending) return;
+		pendingRevert = selected;
+		revertDialogOpen = true;
+	}
+
+	async function performRevert() {
+		const selected = pendingRevert;
+		if (selected?.role !== "user" || sending) return;
+		const restoreText = blocksText(selected.content);
+		const restoreImage = imageBlocks(selected.content)[0] ?? null;
+		const removedMessages = messages.filter(
+			(message) => message.order >= selected.order,
+		);
+		await deleteMessagesFrom(selected.sessionId, selected.order);
+		for (const message of removedMessages)
+			attemptedUserMessages.delete(message.id);
+		input = restoreText;
+		selectedImage = restoreImage;
+		errorMsg = "";
+		pendingRevert = null;
+		revertDialogOpen = false;
+		await app.refreshSessions();
+		await load(selected.sessionId);
+		await tick();
+		composerInput?.focus();
 	}
 
 	async function load(id = sessionId) {
@@ -421,10 +582,22 @@
 					{@const text = blocksText(message.content)}
 					{@const images = imageBlocks(message.content)}
 					<div class="flex justify-end">
-						<div class="max-w-[80%] overflow-hidden rounded-2xl rounded-br-md bg-emerald-500 text-sm text-white">
+						<div
+							role="button"
+							tabindex="0"
+							aria-label={m.chat_user_message_actions()}
+							oncontextmenu={(event) => openContextMenu(event, message)}
+							onpointerdown={(event) => startLongPress(event, message)}
+							onpointermove={moveLongPress}
+							onpointerup={cancelLongPress}
+							onpointercancel={cancelLongPress}
+							onkeydown={(event) => keydownMessage(event, message)}
+							class="max-w-[80%] touch-pan-y select-none overflow-hidden rounded-2xl rounded-br-md bg-emerald-500 text-sm text-white outline-none focus:ring-2 focus:ring-emerald-300 [-webkit-touch-callout:none]"
+						>
 							{#each images as image}
 								<img
 									src={imageSource(image)}
+									draggable="false"
 									alt={m.chat_image_alt()}
 									class="max-h-72 w-full object-contain"
 								/>
@@ -438,7 +611,18 @@
 					{@const text = blocksText(message.content)}
 					{#if text}
 						<div class="flex justify-start">
-							<div class="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm">
+							<div
+								role="button"
+								tabindex="0"
+								aria-label={m.chat_assistant_message_actions()}
+								oncontextmenu={(event) => openContextMenu(event, message)}
+								onpointerdown={(event) => startLongPress(event, message)}
+								onpointermove={moveLongPress}
+								onpointerup={cancelLongPress}
+								onpointercancel={cancelLongPress}
+								onkeydown={(event) => keydownMessage(event, message)}
+								class="max-w-[85%] touch-pan-y select-none rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm outline-none focus:ring-2 focus:ring-gray-300 [-webkit-touch-callout:none]"
+							>
 								<Markdown content={text} />
 							</div>
 						</div>
@@ -458,7 +642,7 @@
 			{#if sending}
 				<div class="flex justify-start">
 					<div
-						class="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm"
+						class="max-w-[85%] select-none rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm"
 					>
 						{#if streamText}
 							<Markdown content={streamText} /><span class="animate-pulse">▋</span>
@@ -518,6 +702,7 @@
 					{/if}
 				</button>
 				<textarea
+					bind:this={composerInput}
 					rows="1"
 					bind:value={input}
 					oncompositionstart={() => (imeComposing = true)}
@@ -546,3 +731,27 @@
 </div>
 
 <SessionDrawer bind:open={drawerOpen} currentId={sessionId} />
+
+{#if messageMenu && (messageMenu.message.role === 'user' || messageMenu.message.role === 'assistant')}
+	<MessageContextMenu
+		x={messageMenu.x}
+		y={messageMenu.y}
+		role={messageMenu.message.role}
+		deferInteraction={messageMenu.deferInteraction}
+		canCopy={blocksText(messageMenu.message.content).length > 0}
+		canRevert={!sending}
+		oncopy={copySelectedMessage}
+		onrevert={requestRevert}
+		onclose={closeMessageMenu}
+	/>
+{/if}
+
+<AppDialog
+	bind:open={revertDialogOpen}
+	title={m.chat_revert_title()}
+	message={m.chat_revert_body()}
+	kind="confirm"
+	confirmLabel={m.chat_revert_confirm()}
+	onconfirm={performRevert}
+	onclose={() => (pendingRevert = null)}
+/>
