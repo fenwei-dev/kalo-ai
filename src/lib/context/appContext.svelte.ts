@@ -17,10 +17,11 @@ import type {
 } from "$lib/db/schema";
 import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
 import {
-	calculateBMR,
 	calculateGoalPlan,
+	calculateProfileBMR,
 	calculateTDEE,
 	effectiveTDEE,
+	isValidBMRConfiguration,
 } from "$lib/utils/calculations";
 import { localDateISO } from "$lib/utils/date";
 
@@ -69,6 +70,10 @@ class AppState {
 			this.user.currentWeight >= 25 &&
 			this.user.currentWeight <= 400 &&
 			(this.user.gender === "male" || this.user.gender === "female") &&
+			isValidBMRConfiguration(
+				this.user.bmrMethod,
+				this.user.bodyFatPercentage,
+			) &&
 			["sedentary", "light", "moderate", "active", "very_active"].includes(
 				this.user.activityLevel,
 			),
@@ -87,13 +92,16 @@ class AppState {
 
 	/** 基础代谢 */
 	bmr = $derived(
-		this.user
-			? calculateBMR(
-					this.user.currentWeight,
-					this.user.height,
-					this.user.age,
-					this.user.gender,
-				)
+		this.user &&
+			isValidBMRConfiguration(this.user.bmrMethod, this.user.bodyFatPercentage)
+			? calculateProfileBMR({
+					weight: this.user.currentWeight,
+					height: this.user.height,
+					age: this.user.age,
+					gender: this.user.gender,
+					bmrMethod: this.user.bmrMethod,
+					bodyFatPercentage: this.user.bodyFatPercentage,
+				})
 			: 0,
 	);
 

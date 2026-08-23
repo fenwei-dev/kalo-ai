@@ -1,8 +1,11 @@
-import type { ActivityLevel, Gender } from "$lib/db/schema";
+import type { ActivityLevel, BMRMethod, Gender } from "$lib/db/schema";
 import { getLocale } from "$lib/paraglide/runtime";
 
 /** 1kg 脂肪约等于 7700 kcal */
 export const KCAL_PER_KG = 7700;
+export const DEFAULT_BMR_METHOD: BMRMethod = "mifflin-st-jeor";
+export const MIN_BODY_FAT_PERCENTAGE = 2;
+export const MAX_BODY_FAT_PERCENTAGE = 70;
 
 /** 活动系数 */
 export const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
@@ -21,7 +24,7 @@ export const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
 	very_active: "极高活动",
 };
 
-/** Mifflin-St Jeor 基础代谢率 (kcal/day) */
+/** Mifflin–St Jeor 基础代谢率 (kcal/day)。 */
 export function calculateBMR(
 	weight: number,
 	height: number,
@@ -30,6 +33,62 @@ export function calculateBMR(
 ): number {
 	const base = 10 * weight + 6.25 * height - 5 * age;
 	return Math.round(gender === "male" ? base + 5 : base - 161);
+}
+
+export function isValidBodyFatPercentage(value?: number): value is number {
+	return (
+		typeof value === "number" &&
+		Number.isFinite(value) &&
+		value >= MIN_BODY_FAT_PERCENTAGE &&
+		value <= MAX_BODY_FAT_PERCENTAGE
+	);
+}
+
+/** Katch–McArdle 基础代谢率，依赖由体脂率计算出的去脂体重。 */
+export function calculateKatchMcArdleBMR(
+	weight: number,
+	bodyFatPercentage: number,
+): number {
+	if (!isValidBodyFatPercentage(bodyFatPercentage)) {
+		throw new Error(
+			`Katch–McArdle 需要 ${MIN_BODY_FAT_PERCENTAGE}–${MAX_BODY_FAT_PERCENTAGE}% 的有效体脂率`,
+		);
+	}
+	const leanBodyMass = weight * (1 - bodyFatPercentage / 100);
+	return Math.round(370 + 21.6 * leanBodyMass);
+}
+
+export function isValidBMRConfiguration(
+	method: BMRMethod | undefined,
+	bodyFatPercentage?: number,
+): boolean {
+	if (
+		bodyFatPercentage !== undefined &&
+		!isValidBodyFatPercentage(bodyFatPercentage)
+	)
+		return false;
+	return (
+		(method ?? DEFAULT_BMR_METHOD) !== "katch-mcardle" ||
+		isValidBodyFatPercentage(bodyFatPercentage)
+	);
+}
+
+/** 按用户选择的公式计算 BMR；旧资料默认使用 Mifflin–St Jeor。 */
+export function calculateProfileBMR(opts: {
+	weight: number;
+	height: number;
+	age: number;
+	gender: Gender;
+	bmrMethod?: BMRMethod;
+	bodyFatPercentage?: number;
+}): number {
+	if ((opts.bmrMethod ?? DEFAULT_BMR_METHOD) === "katch-mcardle") {
+		if (!isValidBodyFatPercentage(opts.bodyFatPercentage)) {
+			throw new Error("选择 Katch–McArdle 前必须提供有效体脂率");
+		}
+		return calculateKatchMcArdleBMR(opts.weight, opts.bodyFatPercentage);
+	}
+	return calculateBMR(opts.weight, opts.height, opts.age, opts.gender);
 }
 
 export function getActivityMultiplier(level: ActivityLevel): number {

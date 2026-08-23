@@ -5,6 +5,8 @@ import {
 	bmi,
 	calculateBMR,
 	calculateGoalPlan,
+	calculateKatchMcArdleBMR,
+	calculateProfileBMR,
 	calculateTDEE,
 	calculateTEF,
 	effectiveTDEE,
@@ -20,6 +22,36 @@ test("BMR (Mifflin-St Jeor) - male", () => {
 test("BMR (Mifflin-St Jeor) - female", () => {
 	// female 28y, 60kg, 165cm: 10*60 + 6.25*165 - 5*28 - 161 = 600+1031.25-140-161 = 1330.25 → 1330
 	expect(calculateBMR(60, 165, 28, "female")).toBe(1330);
+});
+
+test("Katch-McArdle BMR uses lean body mass", () => {
+	// 80 kg at 25% body fat => 60 kg lean mass; 370 + 21.6 * 60 = 1666
+	expect(calculateKatchMcArdleBMR(80, 25)).toBe(1666);
+	expect(
+		calculateProfileBMR({
+			weight: 80,
+			height: 175,
+			age: 30,
+			gender: "male",
+			bmrMethod: "katch-mcardle",
+			bodyFatPercentage: 25,
+		}),
+	).toBe(1666);
+});
+
+test("Katch-McArdle requires body fat while old profiles default to Mifflin", () => {
+	expect(() =>
+		calculateProfileBMR({
+			weight: 80,
+			height: 175,
+			age: 30,
+			gender: "male",
+			bmrMethod: "katch-mcardle",
+		}),
+	).toThrow("体脂率");
+	expect(
+		calculateProfileBMR({ weight: 80, height: 175, age: 30, gender: "male" }),
+	).toBe(1749);
 });
 
 test("TDEE applies activity multiplier", () => {

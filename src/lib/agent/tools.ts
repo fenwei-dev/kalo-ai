@@ -35,13 +35,18 @@ import {
 	upsertLibraryItem,
 	upsertWeightEntryForDate,
 } from "$lib/db/repositories";
+import type { BMRMethod } from "$lib/db/schema";
 import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
 import {
-	calculateBMR,
 	calculateGoalPlan,
+	calculateProfileBMR,
 	calculateTDEE,
+	DEFAULT_BMR_METHOD,
 	effectiveTDEE,
 	healthWeightRange,
+	isValidBMRConfiguration,
+	MAX_BODY_FAT_PERCENTAGE,
+	MIN_BODY_FAT_PERCENTAGE,
 } from "$lib/utils/calculations";
 import { localDateISO, localDateOffset } from "$lib/utils/date";
 import { buildTrendSummary } from "$lib/utils/trends";
@@ -59,7 +64,7 @@ export const toolDefs = [
 	{
 		name: "getProfile",
 		description:
-			"获取用户的完整画像：基础信息、BMR、公式 TDEE、趋势自适应 TDEE、置信度、当前实际采用的混合 TDEE、目标与健康判定、健康体重推荐区间。回答任何关于用户身体数据、热量预算或目标的问题前先调用；必须区分 formulaTDEE、adaptiveTDEE 与 effectiveTDEE，不要把趋势估算说成简单公式结果。",
+			"获取用户的完整画像：基础信息、体脂率、BMR 公式、BMR、公式 TDEE、趋势自适应 TDEE、置信度、当前实际采用的混合 TDEE、目标与健康判定、健康体重推荐区间。回答任何关于用户身体数据、热量预算或目标的问题前先调用；必须区分 formulaTDEE、adaptiveTDEE 与 effectiveTDEE，不要把趋势估算说成简单公式结果。",
 		parameters: Type.Object({}),
 	},
 	{
@@ -169,7 +174,7 @@ export const toolDefs = [
 	{
 		name: "updateProfile",
 		description:
-			"更新用户资料或目标（任意子集）。日常称重应使用 logWeight；currentWeight 仅用于首次建档或用户明确修改资料基线。传 currentWeight 时会创建或更新今天的体重记录，并同步最新记录到 Profile。改目标后会实时重算计划。",
+			"更新用户资料、BMR 公式或目标（任意子集）。日常称重应使用 logWeight；currentWeight 仅用于首次建档或用户明确修改资料基线。传 currentWeight 时会创建或更新今天的体重记录，并同步最新记录到 Profile。Katch–McArdle 必须同时已有或传入可靠体脂率，禁止根据照片、BMI 或猜测填写体脂率。改资料后会重算 BMR、TDEE 与目标计划。",
 		parameters: Type.Object({
 			age: Type.Optional(Type.Number({ minimum: 13, maximum: 120 })),
 			gender: Type.Optional(StringEnum(["male", "female"] as const)),
@@ -187,6 +192,16 @@ export const toolDefs = [
 					"active",
 					"very_active",
 				] as const),
+			),
+			bmrMethod: Type.Optional(
+				StringEnum(["mifflin-st-jeor", "katch-mcardle"] as const),
+			),
+			bodyFatPercentage: Type.Optional(
+				Type.Number({
+					minimum: MIN_BODY_FAT_PERCENTAGE,
+					maximum: MAX_BODY_FAT_PERCENTAGE,
+					description: "体脂率百分数；必须来自用户明确提供的测量值",
+				}),
 			),
 			targetWeight: Type.Optional(
 				Type.Number({ minimum: 25, maximum: 400, description: "kg" }),
@@ -239,6 +254,8 @@ type ToolRequest = ToolRequestFor<ToolDefinition>;
 function tdeeBreakdown(
 	formulaTDEE: number,
 	effectiveValue: number,
+	bmrMethod: BMRMethod | undefined,
+	bodyFatPercentage: number | undefined,
 	adaptiveTDEE?: number,
 	adaptiveConfidence?: number,
 ) {
@@ -248,7 +265,12 @@ function tdeeBreakdown(
 		(adaptiveConfidence ?? 0) >= 0.45;
 	return {
 		formulaTDEE,
-		formulaTDEEMethod: "mifflin_st_jeor_bmr_times_activity_multiplier",
+		bmrMethod: bmrMethod ?? DEFAULT_BMR_METHOD,
+		bodyFatPercentage: bodyFatPercentage ?? null,
+		formulaTDEEMethod:
+			(bmrMethod ?? DEFAULT_BMR_METHOD) === "katch-mcardle"
+				? "katch_mcardle_lean_mass_bmr_times_activity_multiplier"
+				: "mifflin_st_jeor_bmr_times_activity_multiplier",
 		adaptiveTDEE: adaptiveTDEE ?? null,
 		adaptiveConfidence: adaptiveConfidence ?? null,
 		adaptiveTDEEMethod:
@@ -271,7 +293,14 @@ export interface ToolOutcome {
 function profileSnapshot() {
 	const u = app.user;
 	if (!u) return { onboarded: false, message: "用户尚未填写基础信息" };
-	const bmr = calculateBMR(u.currentWeight, u.height, u.age, u.gender);
+	const bmr = calculateProfileBMR({
+		weight: u.currentWeight,
+		height: u.height,
+		age: u.age,
+		gender: u.gender,
+		bmrMethod: u.bmrMethod,
+		bodyFatPercentage: u.bodyFatPercentage,
+	});
 	const formulaTDEE = calculateTDEE(bmr, u.activityLevel);
 	const tdee = effectiveTDEE({
 		adaptiveTDEE: u.adaptiveTDEE,
@@ -289,6 +318,8 @@ function profileSnapshot() {
 	const tdeeDetails = tdeeBreakdown(
 		formulaTDEE,
 		tdee,
+		u.bmrMethod,
+		u.bodyFatPercentage,
 		u.adaptiveTDEE,
 		u.adaptiveConfidence,
 	);
@@ -355,6 +386,8 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 				const tdeeDetails = tdeeBreakdown(
 					app.formulaTDEE,
 					app.tdee,
+					app.user?.bmrMethod,
+					app.user?.bodyFatPercentage,
 					app.user?.adaptiveTDEE,
 					app.user?.adaptiveConfidence,
 				);
@@ -561,6 +594,19 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 					| Awaited<ReturnType<typeof upsertWeightEntryForDate>>
 					| undefined;
 				if (app.user) {
+					const proposed = { ...app.user, ...patch };
+					if (
+						!isValidBMRConfiguration(
+							proposed.bmrMethod,
+							proposed.bodyFatPercentage,
+						)
+					) {
+						return {
+							ok: false,
+							data: null,
+							error: "选择 Katch–McArdle 前必须提供有效体脂率",
+						};
+					}
 					if (typeof patch.currentWeight === "number") {
 						weightRecord = await upsertWeightEntryForDate({
 							date: localDateISO(),
@@ -570,12 +616,14 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 						if (latest) patch.currentWeight = latest.weight;
 					}
 					const merged = { ...app.user, ...patch };
-					patch.calculatedBMR = calculateBMR(
-						merged.currentWeight,
-						merged.height,
-						merged.age,
-						merged.gender,
-					);
+					patch.calculatedBMR = calculateProfileBMR({
+						weight: merged.currentWeight,
+						height: merged.height,
+						age: merged.age,
+						gender: merged.gender,
+						bmrMethod: merged.bmrMethod,
+						bodyFatPercentage: merged.bodyFatPercentage,
+					});
 					app.user = (await updateUser(patch)) ?? app.user;
 				} else {
 					const required = {
@@ -584,15 +632,32 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 						height: patch.height ?? 170,
 						currentWeight: patch.currentWeight ?? 70,
 						activityLevel: patch.activityLevel ?? "moderate",
-						calculatedBMR: calculateBMR(
-							patch.currentWeight ?? 70,
-							patch.height ?? 170,
-							patch.age ?? 30,
-							patch.gender ?? "male",
-						),
+						bmrMethod: patch.bmrMethod ?? DEFAULT_BMR_METHOD,
+						bodyFatPercentage: patch.bodyFatPercentage,
 					};
+					if (
+						!isValidBMRConfiguration(
+							required.bmrMethod,
+							required.bodyFatPercentage,
+						)
+					) {
+						return {
+							ok: false,
+							data: null,
+							error: "选择 Katch–McArdle 前必须提供有效体脂率",
+						};
+					}
+					const calculatedBMR = calculateProfileBMR({
+						weight: required.currentWeight,
+						height: required.height,
+						age: required.age,
+						gender: required.gender,
+						bmrMethod: required.bmrMethod,
+						bodyFatPercentage: required.bodyFatPercentage,
+					});
 					app.user = await saveUser({
 						...required,
+						calculatedBMR,
 						targetWeight: patch.targetWeight,
 						targetDate: patch.targetDate,
 					});
@@ -604,6 +669,7 @@ export async function executeTool(request: ToolRequest): Promise<ToolOutcome> {
 				if (weightRecord) {
 					await refreshAfterWeightMutation();
 				} else {
+					await recomputeAdaptiveTDEE();
 					const fresh = await getUser();
 					if (fresh) app.user = fresh;
 				}

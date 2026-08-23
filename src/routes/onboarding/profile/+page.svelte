@@ -3,10 +3,16 @@
 	import { goto } from "$app/navigation";
 	import { app } from "$lib/context/appContext.svelte";
 	import { getUser, saveUserWithWeightEntry } from "$lib/db/repositories";
-	import type { ActivityLevel, Gender } from "$lib/db/schema";
+	import type { ActivityLevel, BMRMethod, Gender } from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
 	import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
-	import { calculateBMR, calculateTDEE } from "$lib/utils/calculations";
+	import {
+		calculateProfileBMR,
+		calculateTDEE,
+		DEFAULT_BMR_METHOD,
+		isValidBMRConfiguration,
+		isValidBodyFatPercentage,
+	} from "$lib/utils/calculations";
 	import { localDateISO } from "$lib/utils/date";
 	import { onboardingDestination } from "$lib/utils/onboarding";
 
@@ -27,6 +33,15 @@
 		})[value];
 
 	const existing = app.user;
+	const existingBodyFat = isValidBodyFatPercentage(existing?.bodyFatPercentage)
+		? existing.bodyFatPercentage
+		: undefined;
+	const existingBMRMethod: BMRMethod = isValidBMRConfiguration(
+		existing?.bmrMethod,
+		existingBodyFat,
+	)
+		? (existing?.bmrMethod ?? DEFAULT_BMR_METHOD)
+		: DEFAULT_BMR_METHOD;
 	let gender = $state<Gender>(
 		existing?.gender === "female" ? "female" : "male",
 	);
@@ -58,7 +73,16 @@
 			+currentWeight <= 400,
 	);
 	let bmr = $derived(
-		valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0,
+		valid
+			? calculateProfileBMR({
+					weight: +currentWeight,
+					height: +height,
+					age: +age,
+					gender,
+					bmrMethod: existingBMRMethod,
+					bodyFatPercentage: existingBodyFat,
+				})
+			: 0,
 	);
 	let tdee = $derived(valid ? calculateTDEE(bmr, activityLevel) : 0);
 
@@ -81,6 +105,8 @@
 					height: +height,
 					currentWeight: +currentWeight,
 					activityLevel,
+					bmrMethod: existingBMRMethod,
+					bodyFatPercentage: existingBodyFat,
 					calculatedBMR: bmr,
 					targetWeight: existing?.targetWeight,
 					targetDate: existing?.targetDate,

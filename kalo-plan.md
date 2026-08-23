@@ -48,7 +48,8 @@
 ```typescript
 User {
   id, age, gender, height, currentWeight, targetWeight?, targetDate?,
-  activityLevel, calculatedBMR, adaptiveTDEE?, adaptiveConfidence?,
+  activityLevel, bmrMethod?, bodyFatPercentage?, calculatedBMR,
+  adaptiveTDEE?, adaptiveConfidence?,
   createdAt, updatedAt
 }
 
@@ -117,7 +118,8 @@ type Card =
 
 ```typescript
 getProfile()
-// 返回：基础信息 + calculatedBMR + TDEE(公式) + adaptiveTDEE + adaptiveConfidence
+// 返回：基础信息 + bmrMethod/bodyFatPercentage + calculatedBMR
+//       + Formula/Adaptive/Effective TDEE + adaptiveConfidence
 //       + 当前目标 + 目标进度 + 健康体重推荐区间(BMI 18.5-23.9)
 //       + 若目标设定则附每周减重/每日缺口/安全提示
 // 一个工具一次性给 agent 全部用户画像。
@@ -164,7 +166,8 @@ logWeight({ weight, date? })
 
 updateProfile({ fields })
 // fields 可含：age, gender, height, currentWeight, activityLevel,
-//              targetWeight, targetDate
+//              bmrMethod, bodyFatPercentage, targetWeight, targetDate
+// Katch–McArdle 必须已有或同时提供有效体脂率；不得由 Agent 猜测。
 // 任意子集。改完后实时重算 BMR/TDEE/目标缺口。
 // 返回：更新后的完整 profile（同 getProfile 返回结构）。
 
@@ -262,7 +265,8 @@ updateUserMemory({ content, expectedVersion })
 
 **基础信息区域**
 - 性别 / 年龄 / 身高 / 当前体重 / 活动水平（5 档）。
-- 实时展示：BMR（Mifflin-St Jeor）+ TDEE（公式）。
+- 体脂率可选；Formula TDEE 默认使用 Mifflin–St Jeor，填写有效体脂率后可改用 Katch–McArdle。
+- 实时展示：所选公式计算的 BMR + Formula TDEE。
 - 自适应 TDEE 展示（置信度条），若已有数据。
 
 **目标设定区域**

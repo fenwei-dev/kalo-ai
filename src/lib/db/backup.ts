@@ -109,6 +109,8 @@ const isActivityLevel = (value: unknown): value is User["activityLevel"] =>
 		"active",
 		"very_active",
 	] as const);
+const isBMRMethod = (value: unknown): value is NonNullable<User["bmrMethod"]> =>
+	isOneOf(value, ["mifflin-st-jeor", "katch-mcardle"] as const);
 
 function isUser(value: unknown): value is User {
 	return (
@@ -121,6 +123,12 @@ function isUser(value: unknown): value is User {
 		isOptional(value.targetWeight, isFiniteNumber) &&
 		isOptional(value.targetDate, isString) &&
 		isActivityLevel(value.activityLevel) &&
+		isOptional(value.bmrMethod, isBMRMethod) &&
+		isOptional(value.bodyFatPercentage, isFiniteNumber) &&
+		(value.bodyFatPercentage === undefined ||
+			(value.bodyFatPercentage >= 2 && value.bodyFatPercentage <= 70)) &&
+		(value.bmrMethod !== "katch-mcardle" ||
+			isFiniteNumber(value.bodyFatPercentage)) &&
 		isFiniteNumber(value.calculatedBMR) &&
 		isOptional(value.adaptiveTDEE, isFiniteNumber) &&
 		isOptional(value.adaptiveConfidence, isFiniteNumber) &&

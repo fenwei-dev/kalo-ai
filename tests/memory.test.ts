@@ -107,6 +107,38 @@ test("a changed memory snapshot is appended after the user message only once per
 	expect((await getSession(session.id))?.memoryVersion).toBe(1);
 });
 
+test("Katch-McArdle profiles require body fat at the repository boundary", async () => {
+	await expect(
+		repositories.saveUser({
+			age: 30,
+			gender: "male",
+			height: 175,
+			currentWeight: 80,
+			activityLevel: "moderate",
+			bmrMethod: "katch-mcardle",
+			calculatedBMR: 1666,
+		}),
+	).rejects.toThrow("体脂率");
+
+	const user = await repositories.saveUser({
+		age: 30,
+		gender: "male",
+		height: 175,
+		currentWeight: 80,
+		activityLevel: "moderate",
+		bmrMethod: "katch-mcardle",
+		bodyFatPercentage: 25,
+		calculatedBMR: 1666,
+	});
+	expect(user).toMatchObject({
+		bmrMethod: "katch-mcardle",
+		bodyFatPercentage: 25,
+	});
+	await expect(
+		repositories.updateUser({ bodyFatPercentage: undefined }),
+	).rejects.toThrow("体脂率");
+});
+
 test("backup imports reject malformed entity arrays", async () => {
 	await expect(
 		repositories.importAll({
@@ -124,12 +156,28 @@ test("backup imports reject malformed entity arrays", async () => {
 	).rejects.toThrow("foodEntries 数据格式无效");
 });
 
-test("backups include memory while version 1 backups remain importable", async () => {
+test("backups include memory and BMR settings while version 1 backups remain importable", async () => {
 	const { exportAll, getUserMemory, importAll, updateUserMemory } =
 		repositories;
+	await repositories.saveUser({
+		age: 30,
+		gender: "female",
+		height: 165,
+		currentWeight: 60,
+		activityLevel: "light",
+		bmrMethod: "katch-mcardle",
+		bodyFatPercentage: 25,
+		calculatedBMR: 1342,
+	});
 	await updateUserMemory("Remember this", 0);
 	const backup = await exportAll();
 	expect(backup.version).toBe(2);
+	expect(backup.user).toEqual([
+		expect.objectContaining({
+			bmrMethod: "katch-mcardle",
+			bodyFatPercentage: 25,
+		}),
+	]);
 	expect(backup.userMemory).toEqual([
 		expect.objectContaining({
 			id: "user-memory",
@@ -137,8 +185,16 @@ test("backups include memory while version 1 backups remain importable", async (
 			version: 1,
 		}),
 	]);
+	const invalidBackup = structuredClone(backup);
+	delete invalidBackup.user[0].bodyFatPercentage;
+	await expect(importAll(invalidBackup)).rejects.toThrow("user 数据格式无效");
+
 	await repositories.clearAllData();
 	await importAll(backup);
+	expect(await repositories.getUser()).toMatchObject({
+		bmrMethod: "katch-mcardle",
+		bodyFatPercentage: 25,
+	});
 	expect(await getUserMemory()).toEqual(
 		expect.objectContaining({ content: "Remember this", version: 1 }),
 	);

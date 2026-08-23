@@ -1,4 +1,5 @@
 import { getLocale } from "$lib/paraglide/runtime";
+import { isValidBMRConfiguration } from "$lib/utils/calculations";
 import { type KaloBackupV2, parseKaloBackup } from "./backup";
 
 export type { KaloBackup, KaloBackupV1, KaloBackupV2 } from "./backup";
@@ -33,6 +34,14 @@ export interface UserMemorySnapshot {
 
 // ---------- User (singleton, id='me') ----------
 
+function assertUserBMRConfiguration(
+	user: Pick<User, "bmrMethod" | "bodyFatPercentage">,
+): void {
+	if (!isValidBMRConfiguration(user.bmrMethod, user.bodyFatPercentage)) {
+		throw new Error("选择 Katch–McArdle 前必须提供有效体脂率");
+	}
+}
+
 export async function getUser(): Promise<User | undefined> {
 	return db.user.get("me");
 }
@@ -40,6 +49,7 @@ export async function getUser(): Promise<User | undefined> {
 export async function saveUser(
 	data: Omit<User, "id" | "createdAt" | "updatedAt">,
 ): Promise<User> {
+	assertUserBMRConfiguration(data);
 	const existing = await db.user.get("me");
 	const ts = now();
 	const user: User = {
@@ -56,6 +66,7 @@ export async function saveUserWithWeightEntry(
 	data: Omit<User, "id" | "createdAt" | "updatedAt">,
 	date: string,
 ): Promise<User> {
+	assertUserBMRConfiguration(data);
 	assertWeightDate(date);
 	return db.transaction("rw", db.user, db.weightEntries, async () => {
 		const existingUser = await db.user.get("me");
@@ -101,6 +112,7 @@ export async function updateUser(
 	const existing = await db.user.get("me");
 	if (!existing) return undefined;
 	const updated: User = { ...existing, ...patch, updatedAt: now() };
+	assertUserBMRConfiguration(updated);
 	await db.user.put(updated);
 	return updated;
 }

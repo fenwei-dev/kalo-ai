@@ -3,6 +3,7 @@ import Dexie, { type Table } from "dexie";
 // ---------- 基础枚举 / 类型 ----------
 
 export type Gender = "male" | "female";
+export type BMRMethod = "mifflin-st-jeor" | "katch-mcardle";
 export type ActivityLevel =
 	| "sedentary"
 	| "light"
@@ -32,6 +33,10 @@ export interface User {
 	targetWeight?: number; // kg
 	targetDate?: string; // ISO date YYYY-MM-DD
 	activityLevel: ActivityLevel;
+	/** 旧数据库未设置时默认使用 Mifflin–St Jeor。 */
+	bmrMethod?: BMRMethod;
+	/** Katch–McArdle 所需；选择 Mifflin 时也可作为可选资料保留。 */
+	bodyFatPercentage?: number;
 	calculatedBMR: number;
 	adaptiveTDEE?: number;
 	adaptiveConfidence?: number; // 0..1

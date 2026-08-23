@@ -20,14 +20,18 @@
 		updateUser,
 		upsertWeightEntryForDate,
 	} from "$lib/db/repositories";
-	import type { ActivityLevel, Gender } from "$lib/db/schema";
+	import type { ActivityLevel, BMRMethod, Gender } from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
 	import { getLocale } from "$lib/paraglide/runtime";
 	import { recomputeAdaptiveTDEE } from "$lib/utils/adaptiveTDEE";
 	import {
-		calculateBMR,
 		calculateGoalPlan,
+		calculateProfileBMR,
 		calculateTDEE,
+		DEFAULT_BMR_METHOD,
+		isValidBodyFatPercentage,
+		MAX_BODY_FAT_PERCENTAGE,
+		MIN_BODY_FAT_PERCENTAGE,
 	} from "$lib/utils/calculations";
 	import { localDateISO } from "$lib/utils/date";
 
@@ -57,12 +61,25 @@
 	);
 	let targetDate = $state<string>(u?.targetDate ?? "");
 	let activityLevel = $state<ActivityLevel>(u?.activityLevel ?? "moderate");
+	let bodyFatPercentage = $state<string>(
+		u?.bodyFatPercentage != null ? String(u.bodyFatPercentage) : "",
+	);
+	let bmrMethod = $state<BMRMethod>(u?.bmrMethod ?? DEFAULT_BMR_METHOD);
 
 	let saving = $state(false);
 	let saved = $state(false);
 	let weightConfirmOpen = $state(false);
 	let weightConfirmMode = $state<"create" | "update">("create");
 
+	let parsedBodyFat = $derived(
+		bodyFatPercentage.trim() === "" ? undefined : Number(bodyFatPercentage),
+	);
+	let bodyFatValid = $derived(
+		parsedBodyFat === undefined || isValidBodyFatPercentage(parsedBodyFat),
+	);
+	let bmrMethodValid = $derived(
+		bmrMethod !== "katch-mcardle" || isValidBodyFatPercentage(parsedBodyFat),
+	);
 	let valid = $derived(
 		Number.isFinite(+age) &&
 			+age >= 13 &&
@@ -72,11 +89,22 @@
 			+height <= 250 &&
 			Number.isFinite(+currentWeight) &&
 			+currentWeight >= 25 &&
-			+currentWeight <= 400,
+			+currentWeight <= 400 &&
+			bodyFatValid &&
+			bmrMethodValid,
 	);
 
 	const liveBMR = $derived(
-		valid ? calculateBMR(+currentWeight, +height, +age, gender) : 0,
+		valid
+			? calculateProfileBMR({
+					weight: +currentWeight,
+					height: +height,
+					age: +age,
+					gender,
+					bmrMethod,
+					bodyFatPercentage: parsedBodyFat,
+				})
+			: 0,
 	);
 	const liveTDEE = $derived(valid ? calculateTDEE(liveBMR, activityLevel) : 0);
 	const goal = $derived(
@@ -103,9 +131,19 @@
 
 	async function persistProfile() {
 		if (!valid) return;
-		const firstSave = !app.user;
+		const previous = app.user;
+		const firstSave = !previous;
 		const weightChanged =
-			firstSave || +currentWeight !== app.user?.currentWeight;
+			firstSave || +currentWeight !== previous?.currentWeight;
+		const metabolismChanged =
+			firstSave ||
+			+age !== previous?.age ||
+			gender !== previous?.gender ||
+			+height !== previous?.height ||
+			+currentWeight !== previous?.currentWeight ||
+			activityLevel !== previous?.activityLevel ||
+			bmrMethod !== (previous?.bmrMethod ?? DEFAULT_BMR_METHOD) ||
+			parsedBodyFat !== previous?.bodyFatPercentage;
 		saving = true;
 		try {
 			const data = {
@@ -116,6 +154,8 @@
 				targetWeight: targetWeight ? +targetWeight : undefined,
 				targetDate: targetDate || undefined,
 				activityLevel,
+				bmrMethod,
+				bodyFatPercentage: parsedBodyFat,
 				calculatedBMR: liveBMR,
 			};
 			if (app.user) app.user = (await updateUser(data)) ?? null;
@@ -125,10 +165,12 @@
 					date: localDateISO(),
 					weight: +currentWeight,
 				});
+			}
+			if (metabolismChanged) {
 				await recomputeAdaptiveTDEE();
 				app.user = (await getUser()) ?? app.user;
-				await app.refreshToday();
 			}
+			if (weightChanged) await app.refreshToday();
 			if (firstSave) {
 				const english = getLocale() === "en-us";
 				const session = await createSession(english ? "Meet Kalo" : "认识卡卡");
@@ -188,7 +230,26 @@
 			<option value={a}>{activityLabel(a)}</option>
 		{/each}
 	</ListInput>
+	<ListInput
+		label={m.profile_body_fat()}
+		type="number"
+		inputmode="decimal"
+		min={MIN_BODY_FAT_PERCENTAGE}
+		max={MAX_BODY_FAT_PERCENTAGE}
+		step="0.1"
+		placeholder="%"
+		bind:value={bodyFatPercentage}
+	/>
+	<ListInput label={m.profile_bmr_method()} type="select" bind:value={bmrMethod}>
+		<option value="mifflin-st-jeor">{m.profile_bmr_mifflin()}</option>
+		<option value="katch-mcardle" disabled={!isValidBodyFatPercentage(parsedBodyFat)}>
+			{m.profile_bmr_katch()}
+		</option>
+	</ListInput>
 </List>
+<Block inset>
+	<p class="text-xs leading-relaxed text-gray-500">{m.profile_bmr_method_hint()}</p>
+</Block>
 
 {#if valid}
 	<Block inset>
@@ -281,7 +342,13 @@
 {/if}
 
 <Block inset>
-	{#if !valid && (age || height || currentWeight)}
+	{#if !bodyFatValid}
+		<p class="mb-2 text-center text-xs text-red-500">
+			{m.profile_body_fat_invalid({ min: MIN_BODY_FAT_PERCENTAGE, max: MAX_BODY_FAT_PERCENTAGE })}
+		</p>
+	{:else if !bmrMethodValid}
+		<p class="mb-2 text-center text-xs text-red-500">{m.profile_bmr_katch_requires_body_fat()}</p>
+	{:else if !valid && (age || height || currentWeight || bodyFatPercentage)}
 		<p class="mb-2 text-center text-xs text-red-500">{m.profile_invalid()}</p>
 	{/if}
 	<button

@@ -5,8 +5,9 @@ import {
 	updateUser,
 } from "$lib/db/repositories";
 import {
-	calculateBMR,
+	calculateProfileBMR,
 	calculateTDEE,
+	isValidBMRConfiguration,
 	KCAL_PER_KG,
 } from "$lib/utils/calculations";
 import { localDateOffset, parseLocalDate } from "$lib/utils/date";
@@ -168,21 +169,25 @@ export async function recomputeAdaptiveTDEE(days = 14): Promise<void> {
 		getWeightEntries(),
 	]);
 	const weights = allWeights.filter((entry) => entry.date >= sinceISO);
-	const bmr = calculateBMR(
-		user.currentWeight,
-		user.height,
-		user.age,
-		user.gender,
-	);
+	if (!isValidBMRConfiguration(user.bmrMethod, user.bodyFatPercentage)) return;
+	const bmr = calculateProfileBMR({
+		weight: user.currentWeight,
+		height: user.height,
+		age: user.age,
+		gender: user.gender,
+		bmrMethod: user.bmrMethod,
+		bodyFatPercentage: user.bodyFatPercentage,
+	});
 	const formulaTDEE = calculateTDEE(bmr, user.activityLevel);
 	const estimate = estimateAdaptiveTDEE({ food, weights, formulaTDEE });
 	const adaptiveTDEE = estimate?.tdee;
 	const adaptiveConfidence = estimate?.confidence;
 	if (
+		user.calculatedBMR === bmr &&
 		user.adaptiveTDEE === adaptiveTDEE &&
 		user.adaptiveConfidence === adaptiveConfidence
 	)
 		return;
 
-	await updateUser({ adaptiveTDEE, adaptiveConfidence });
+	await updateUser({ calculatedBMR: bmr, adaptiveTDEE, adaptiveConfidence });
 }
