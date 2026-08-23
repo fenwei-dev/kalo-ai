@@ -29,6 +29,7 @@
 		type PreparedImage,
 		prepareImage,
 	} from "$lib/utils/image";
+	import { isScrollAtBottom } from "$lib/utils/scroll";
 
 	type ComposerImage = PreparedImage | Extract<ContentBlock, { type: "image" }>;
 	interface MessageMenuState {
@@ -76,6 +77,8 @@
 	});
 
 	let messagesEl: HTMLDivElement | undefined = $state();
+	let followMessagesToBottom = true;
+	let scrollSessionId = "";
 
 	function blocksText(blocks: ContentBlock[]): string {
 		return blocks
@@ -326,18 +329,32 @@
 		}
 	});
 
-	// 只滚动消息容器。scrollIntoView 会连带滚动移动端 visual viewport，
-	// 导致整个应用顶部永久移出屏幕。
+	// 只在用户原本位于消息底部时跟随新增内容。用户向上浏览后，
+	// 流式增量不得把视图拉回底部；切换会话时仍默认展示最新消息。
 	$effect(() => {
+		const id = sessionId;
 		messages.length;
 		streamText;
-		void scrollMessagesToBottom();
+		sending;
+		errorMsg;
+		selectedImage;
+		if (scrollSessionId !== id) {
+			scrollSessionId = id;
+			followMessagesToBottom = true;
+		}
+		if (followMessagesToBottom) void scrollMessagesToBottom();
 	});
+
+	function updateMessagesScrollPosition() {
+		if (!messagesEl) return;
+		followMessagesToBottom = isScrollAtBottom(messagesEl);
+	}
 
 	async function scrollMessagesToBottom() {
 		await tick();
-		if (!messagesEl) return;
-		messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
+		if (!messagesEl || !followMessagesToBottom) return;
+		// 流式输出期间直接贴底，避免反复 smooth 动画与 scroll 事件竞争。
+		messagesEl.scrollTop = messagesEl.scrollHeight;
 	}
 
 	function showError(error: unknown) {
@@ -564,6 +581,7 @@
 	<!-- messages -->
 	<div
 		bind:this={messagesEl}
+		onscroll={updateMessagesScrollPosition}
 		class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 [-webkit-overflow-scrolling:touch]"
 	>
 		<div class="mx-auto max-w-md space-y-3">
