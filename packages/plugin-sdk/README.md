@@ -116,7 +116,7 @@ git tag -a "plugin-sdk-v$VERSION" -m "plugin-sdk v$VERSION"
 git push origin "plugin-sdk-v$VERSION"
 ```
 
-The `plugin-sdk-v<version>` tag triggers `.github/workflows/publish-plugin-sdk.yml`, which validates and publishes the same version to npm and JSR with GitHub OIDC and no long-lived registry token. A manual workflow dispatch is available for recovery, but version tags are the recommended, auditable release path.
+The `plugin-sdk-v<version>` tag triggers `.github/workflows/publish-plugin-sdk.yml`, which validates and publishes the same version to npm and JSR with GitHub OIDC and no long-lived registry token. The workflow is safe to dispatch again for recovery: an existing npm version is skipped, while JSR treats an existing version as a no-op. A manual workflow dispatch is available for recovery, but version tags are the recommended, auditable release path.
 
 ## Security boundary
 
