@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Dialog, DialogButton } from "konsta/svelte";
 	import { onMount } from "svelte";
-	import { goto } from "$app/navigation";
 	import AppHeader from "$lib/components/AppHeader.svelte";
 	import ProgressRing from "$lib/components/charts/ProgressRing.svelte";
 	import WeightSparkline from "$lib/components/charts/WeightSparkline.svelte";
@@ -180,15 +179,6 @@
 				</a>
 			</div>
 
-			<!-- 卡卡的消息（主动消息，v1 占位） -->
-			<a href="/chat" class="mt-3 block rounded-2xl bg-white p-4 shadow-sm">
-				<div class="flex items-center gap-2">
-					<span class="text-base">🌿</span>
-					<span class="text-sm font-medium">{m.home_kaka()}</span>
-				</div>
-				<p class="mt-1 text-xs text-gray-400">{m.home_no_messages()}</p>
-			</a>
-
 			<!-- 今日时间线 -->
 			<div class="mt-4">
 				<div class="mb-2 flex items-center justify-between">
@@ -218,12 +208,6 @@
 				{/if}
 			</div>
 
-			<button
-				onclick={() => goto('/chat')}
-				class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 font-medium text-white shadow-sm hover:bg-emerald-600"
-			>
-				{m.home_chat_cta()}
-			</button>
 		{/if}
 	</div>
 	</div>

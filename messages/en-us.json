@@ -63,8 +63,6 @@
 	"weight_no_data_hint": "Tell Kalo your weight and it will appear here.",
 	"weight_delta_previous": "{value} kg from previous",
 	"weight_first_record": "First record in this range",
-	"home_kaka": "Kalo",
-	"home_no_messages": "No new messages. Tap here whenever you want to talk →",
 	"home_today": "Today",
 	"home_no_logs": "Nothing logged on this day",
 	"home_chat_cta": "Chat with Kalo →",

@@ -63,8 +63,6 @@
 	"weight_no_data_hint": "告诉卡卡你的体重，记录会出现在这里。",
 	"weight_delta_previous": "较上次 {value} kg",
 	"weight_first_record": "该范围内首条记录",
-	"home_kaka": "卡卡",
-	"home_no_messages": "没有新消息。有想聊的随时点这里 →",
 	"home_today": "今日",
 	"home_no_logs": "这一天还没记录",
 	"home_chat_cta": "和卡卡聊聊 →",
