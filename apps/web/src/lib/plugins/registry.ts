@@ -1,9 +1,13 @@
 import { examplePlugin } from "@kalo-ai/plugin-example";
+import { mcdonaldsSGPlugin } from "@kalo-ai/plugin-mcdonalds-sg";
 import type { KaloPlugin } from "@kalo-ai/plugin-sdk";
 
 const PLUGIN_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 
-export const bundledPlugins: readonly KaloPlugin[] = [examplePlugin];
+export const bundledPlugins: readonly KaloPlugin[] = [
+	mcdonaldsSGPlugin,
+	examplePlugin,
+];
 
 const pluginsById = new Map<string, KaloPlugin>();
 for (const plugin of bundledPlugins) {

@@ -26,8 +26,9 @@ apps/
   web/       SvelteKit PWA
 packages/
   plugin-sdk/       Stable plugin contract
-  plugin-example/   Disabled-by-default integration example
-  ...               Additional shared and plugin packages
+  plugin-example/         Disabled-by-default integration example
+  plugin-mcdonalds-sg/    McDonald's Singapore nutrition snapshot tools
+  ...                     Additional shared and plugin packages
 ```
 
 The root scripts proxy the web workspace, so the usual commands remain unchanged.

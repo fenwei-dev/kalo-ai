@@ -267,7 +267,7 @@
 	"plugins_secret_warning": "敏感配置会明文保存在当前浏览器，并包含在完整备份中；插件可能把它发送到其声明的第三方服务。",
 	"plugins_reset": "重置插件配置与数据",
 	"plugins_reset_title": "重置这个插件？",
-	"plugins_reset_message": "将删除此插件的本地配置和私有数据，并恢复默认停用状态。",
+	"plugins_reset_message": "将删除此插件的本地配置和私有数据，并恢复插件的默认启用状态与默认配置。",
 	"settings_profile_goal_subtitle": "身体资料、代谢与减脂计划",
 	"settings_ai_subtitle": "模型、接口与 API Key",
 	"settings_preferences": "偏好",

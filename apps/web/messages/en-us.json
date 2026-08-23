@@ -267,7 +267,7 @@
 	"plugins_secret_warning": "Sensitive settings are stored in plain text in this browser and included in full backups. A plugin may send them to its declared third-party service.",
 	"plugins_reset": "Reset plugin settings and data",
 	"plugins_reset_title": "Reset this plugin?",
-	"plugins_reset_message": "This removes the plugin's local settings and private data, then restores its default disabled state.",
+	"plugins_reset_message": "This removes the plugin's local settings and private data, then restores its default enabled state and configuration.",
 	"settings_profile_goal_subtitle": "Body details, metabolism, and weight-loss plan",
 	"settings_ai_subtitle": "Model, endpoint, and API key",
 	"settings_preferences": "Preferences",

@@ -26,8 +26,9 @@ apps/
   web/       SvelteKit PWA
 packages/
   plugin-sdk/       稳定插件协议
-  plugin-example/   默认停用的集成示例
-  ...               后续共享与插件 package
+  plugin-example/         默认停用的集成示例
+  plugin-mcdonalds-sg/    新加坡麦当劳营养静态数据工具
+  ...                     后续共享与插件 package
 ```
 
 根目录脚本会代理到 web workspace，因此日常命令保持不变。

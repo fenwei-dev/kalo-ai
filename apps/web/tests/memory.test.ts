@@ -112,12 +112,34 @@ test("a changed memory snapshot is appended after the user message only once per
 });
 
 test("enabled plugin contributes tools and a bounded system prompt", async () => {
+	const mcdonalds = await plugins.getPluginState("mcdonalds_sg");
+	expect(mcdonalds).toMatchObject({ enabled: true, status: "ready" });
 	const initial = await plugins.getPluginState("example");
 	expect(initial).toMatchObject({ enabled: false, status: "disabled" });
 	const disabledRuntime = await plugins.loadPluginRuntime("en-us", [
 		"getProfile",
 	]);
-	expect(disabledRuntime).toEqual({ tools: [], promptSections: [] });
+	expect(disabledRuntime.tools.map((tool) => tool.name)).toEqual([
+		"mcdonalds_sg_listProducts",
+		"mcdonalds_sg_getNutrition",
+	]);
+	expect(disabledRuntime.promptSections).toHaveLength(1);
+	expect(disabledRuntime.promptSections[0]).toContain(
+		"### Plugin: mcdonalds_sg",
+	);
+	const mcdList = disabledRuntime.tools.find(
+		(tool) => tool.name === "mcdonalds_sg_listProducts",
+	);
+	if (!mcdList)
+		throw new Error("McDonald's Singapore list tool was not loaded");
+	const listResult = await mcdList.execute("mcd-list", {
+		category: "burgers",
+	});
+	expect(listResult.content[0]?.type).toBe("text");
+	if (listResult.content[0]?.type === "text") {
+		expect(listResult.content[0].text).toContain("Big Mac");
+		expect(listResult.content[0].text).toContain("burgers");
+	}
 
 	await plugins.savePluginSettings(
 		"example",
@@ -131,8 +153,8 @@ test("enabled plugin contributes tools and a bounded system prompt", async () =>
 		true,
 	);
 	const runtime = await plugins.loadPluginRuntime("en-us", ["getProfile"]);
-	expect(runtime.promptSections).toHaveLength(1);
-	expect(runtime.promptSections[0]).toContain("### Plugin: example");
+	expect(runtime.promptSections).toHaveLength(2);
+	expect(runtime.promptSections[1]).toContain("### Plugin: example");
 	const echo = runtime.tools.find((tool) => tool.name === "example_echo");
 	if (!echo) throw new Error("example_echo was not loaded");
 	const result = await echo.execute("echo-call", { text: "hello" });

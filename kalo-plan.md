@@ -427,6 +427,7 @@ updateUserMemory({ content, expectedVersion })
 - `pluginConfigs` 保存启用状态、配置版本和 JSON 配置；`pluginData` 提供按 pluginId 隔离的私有 KV 存储，两者均进入完整备份。
 - 设置页提供 `/settings/plugins` 与 `/settings/plugins/[pluginId]`，第一版支持 text/password/number/toggle/select schema-driven 配置。
 - 插件代码和 Web App 运行在同一浏览器上下文，不是真正沙箱，因此只集成经过审查的 package，并在 UI 展示声明权限。
+- `plugin-mcdonalds-sg` 内置新加坡麦当劳官网营养静态快照，提供 Full Menu / 官网分类 `{id,name}` 列表与准确 ID 营养查询；服务端更新脚本仅在规范化产品或分类数据变化时改写 JSON，定时 GitHub Actions 据此自动创建更新 PR。
 
 ### 9.7 图表
 
@@ -508,7 +509,8 @@ apps/web/src/
 
 packages/
 ├── plugin-sdk/                    # 稳定插件协议与 definePlugin
-└── plugin-example/                # 默认停用的工具/Prompt/设置示例
+├── plugin-example/                # 默认停用的工具/Prompt/设置示例
+└── plugin-mcdonalds-sg/           # 新加坡麦当劳营养静态快照与查询工具
 package.json                       # Bun workspaces + 根代理脚本
 wrangler.jsonc                     # 部署 apps/web/build，SPA fallback
 ```

@@ -17,6 +17,7 @@
         "@earendil-works/pi-agent-core": "^0.84.1",
         "@earendil-works/pi-ai": "^0.84.1",
         "@kalo-ai/plugin-example": "workspace:*",
+        "@kalo-ai/plugin-mcdonalds-sg": "workspace:*",
         "@kalo-ai/plugin-sdk": "workspace:*",
         "dexie": "^4.4.4",
         "dompurify": "^3.4.13",
@@ -47,6 +48,16 @@
       "version": "0.1.0",
       "dependencies": {
         "@kalo-ai/plugin-sdk": "workspace:*",
+      },
+    },
+    "packages/plugin-mcdonalds-sg": {
+      "name": "@kalo-ai/plugin-mcdonalds-sg",
+      "version": "0.1.0",
+      "dependencies": {
+        "@kalo-ai/plugin-sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
       },
     },
     "packages/plugin-sdk": {
@@ -475,6 +486,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@kalo-ai/plugin-example": ["@kalo-ai/plugin-example@workspace:packages/plugin-example"],
+
+    "@kalo-ai/plugin-mcdonalds-sg": ["@kalo-ai/plugin-mcdonalds-sg@workspace:packages/plugin-mcdonalds-sg"],
 
     "@kalo-ai/plugin-sdk": ["@kalo-ai/plugin-sdk@workspace:packages/plugin-sdk"],
 

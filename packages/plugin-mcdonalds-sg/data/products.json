@@ -1,0 +1,2115 @@
+{
+	"schemaVersion": 2,
+	"sourceUrl": "https://www.mcdonalds.com.sg/full-menu",
+	"retrievedAt": "2026-08-23T13:07:56.228Z",
+	"products": [
+		{
+			"id": "66",
+			"name": "Apple Pie",
+			"description": "A crisp bubbly crust encasing a luscious apple filling. Best eaten warm.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/apple-pie",
+			"categories": ["desserts", "sides"],
+			"nutrition": {
+				"energyKcal": 231,
+				"proteinG": 1,
+				"totalFatG": 12,
+				"saturatedFatG": 6,
+				"cholesterolMg": 1,
+				"carbohydratesG": 29,
+				"dietaryFibreG": 1,
+				"sodiumMg": 185
+			}
+		},
+		{
+			"id": "816",
+			"name": "Barbeque Sauce",
+			"description": "A hickory smoke delight with just the right hint of sweetness and spice.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/barbeque-sauce",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 46.8,
+				"proteinG": 0.3,
+				"totalFatG": 0.2,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0.3,
+				"carbohydratesG": 11,
+				"dietaryFibreG": 0.1,
+				"sodiumMg": 231
+			}
+		},
+		{
+			"id": "67",
+			"name": "Big Breakfast®",
+			"description": "Our satisfying Big Breakfast® is perfect for any morning. Wake up to a breakfast meal with fluffy scrambled eggs, savoury chicken sausage, toasted wholegrain muffins and a golden hash brown.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/big-breakfast",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 496,
+				"proteinG": 27,
+				"totalFatG": 22,
+				"saturatedFatG": 6,
+				"cholesterolMg": 418,
+				"carbohydratesG": 47,
+				"dietaryFibreG": 5,
+				"sodiumMg": 971
+			}
+		},
+		{
+			"id": "40",
+			"name": "Big Mac®",
+			"description": "Two 100% beef patties, cheese, lettuce, onion and pickles. And the sauce. That unbeatable, tasty Big Mac® sauce. You know you want to.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/big-mac",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 558,
+				"proteinG": 28,
+				"totalFatG": 28,
+				"saturatedFatG": 11,
+				"cholesterolMg": 68,
+				"carbohydratesG": 48,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1321
+			}
+		},
+		{
+			"id": "345",
+			"name": "Breakfast Deluxe",
+			"description": "Kickstart your morning with a load of goodness. Scrambled eggs, toasted wholegrain muffins, savoury chicken sausage – and Hotcakes. It’s maximum satisfaction.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-deluxe",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 805,
+				"proteinG": 31,
+				"totalFatG": 29,
+				"saturatedFatG": 10,
+				"cholesterolMg": 487,
+				"carbohydratesG": 104,
+				"dietaryFibreG": 6,
+				"sodiumMg": 1123
+			}
+		},
+		{
+			"id": "556",
+			"name": "Breakfast Family Meal",
+			"description": "Delight the family with the hearty Breakfast Deluxe Meal, Sausage McMuffin® with Egg Meal and Hotcakes Happy Meal®!",
+			"url": "https://www.mcdonalds.com.sg/breakfast-family-meal",
+			"categories": ["breakfast", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 1974,
+				"proteinG": 69,
+				"totalFatG": 77,
+				"saturatedFatG": 25,
+				"cholesterolMg": 775,
+				"carbohydratesG": 249,
+				"dietaryFibreG": 14,
+				"sodiumMg": 3156
+			}
+		},
+		{
+			"id": "79",
+			"name": "Breakfast Wrap Chicken Ham",
+			"description": "Fluffy, scrambled eggs tucked between a slice of cheese and delicious chicken ham, topped with a crispy, golden hash brown. All perfectly wrapped up in a wholegrain tortilla.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-wrap-chicken-ham",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 430,
+				"proteinG": 17,
+				"totalFatG": 21,
+				"saturatedFatG": 8,
+				"cholesterolMg": 222,
+				"carbohydratesG": 43,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1201
+			}
+		},
+		{
+			"id": "78",
+			"name": "Breakfast Wrap Chicken Sausage",
+			"description": "Fluffy, scrambled eggs sandwiched between a slice of cheese and a chicken sausage patty, topped with a crispy, golden hash brown, finished with tomato ketchup and wrapped in a hearty wholegrain tortilla.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-wrap-chicken-sausage",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 472,
+				"proteinG": 22,
+				"totalFatG": 24,
+				"saturatedFatG": 9,
+				"cholesterolMg": 236,
+				"carbohydratesG": 44,
+				"dietaryFibreG": 5,
+				"sodiumMg": 1353
+			}
+		},
+		{
+			"id": "824",
+			"name": "Buttermilk Chicken McWrap®",
+			"description": "Juicy whole-muscle chicken thigh in perfectly crispy buttermilk batter laid over refreshing lettuce and purple cabbage, wrapped snugly with a soft wholegrain tortilla.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-chicken-mcwrap",
+			"categories": ["salads-and-wraps"],
+			"nutrition": {
+				"energyKcal": 689.7,
+				"proteinG": 24.2,
+				"totalFatG": 44.1,
+				"saturatedFatG": 9.1,
+				"cholesterolMg": 64.1,
+				"carbohydratesG": 50.3,
+				"dietaryFibreG": 4.5,
+				"sodiumMg": 1542.5
+			}
+		},
+		{
+			"id": "823",
+			"name": "Buttermilk Chicken Salad",
+			"description": "A juicy, crispy buttermilk-battered chicken thigh nestled atop a bed of refreshing lettuce and purple cabbage.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-chicken-salad",
+			"categories": ["salads-and-wraps"],
+			"nutrition": {
+				"energyKcal": 384,
+				"proteinG": 18.4,
+				"totalFatG": 22.5,
+				"saturatedFatG": 3.7,
+				"cholesterolMg": 61.6,
+				"carbohydratesG": 27.1,
+				"dietaryFibreG": 2.6,
+				"sodiumMg": 727.9
+			}
+		},
+		{
+			"id": "27",
+			"name": "Buttermilk Crispy Chicken",
+			"description": "Crispy whole-muscle chicken thigh flavoured with buttermilk packed in a glazed burger bun. Served with white cheddar cheese, whole leaf lettuce, black pepper mayo; and topped with pineapple rings and crisp purple cabbage slaw. In short, perfection in every bite!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-crispy-chicken",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 739,
+				"proteinG": 26,
+				"totalFatG": 42,
+				"saturatedFatG": 7,
+				"cholesterolMg": 65,
+				"carbohydratesG": 64,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1422
+			}
+		},
+		{
+			"id": "354",
+			"name": "Caramel Frappé",
+			"description": "Caramel with a hint of coffee, refreshingly blended with ice and topped with caramel drizzle.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/caramel-frappe-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 424,
+				"proteinG": 9,
+				"totalFatG": 18,
+				"saturatedFatG": 11,
+				"cholesterolMg": 0,
+				"carbohydratesG": 57,
+				"dietaryFibreG": 0,
+				"sodiumMg": 356
+			}
+		},
+		{
+			"id": "41",
+			"name": "Cheeseburger",
+			"description": "Sometimes you just want to reach for a classic. A classic 100% beef patty, and cheese; with onions, pickles, mustard and a dollop of tomato ketchup, in a soft bun. Delicious.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/cheeseburger",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 303,
+				"proteinG": 16,
+				"totalFatG": 12,
+				"saturatedFatG": 6,
+				"cholesterolMg": 40,
+				"carbohydratesG": 32,
+				"dietaryFibreG": 2,
+				"sodiumMg": 860
+			}
+		},
+		{
+			"id": "559",
+			"name": "Cheeseburger Happy Meal®",
+			"description": "A classic McDonald’s Hamburger with warm, melting cheese on a beef patty. It’s an enjoyment in every bite for the little ones!",
+			"url": "https://www.mcdonalds.com.sg/cheeseburger-happy-meal",
+			"categories": ["burgers", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 386,
+				"proteinG": 25,
+				"totalFatG": 14,
+				"saturatedFatG": 7,
+				"cholesterolMg": 1.7,
+				"carbohydratesG": 56,
+				"dietaryFibreG": 3,
+				"sodiumMg": 820
+			}
+		},
+		{
+			"id": "59",
+			"name": "Cheeseburger Meal with Corn and Ice Mountain",
+			"description": "Cheeseburger + Corn + Ice Mountain Drinking Water",
+			"url": "https://www.mcdonalds.com.sg/food-menu/cheeseburger-delight-500-meal-with-drinking-water",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 396,
+				"proteinG": 21,
+				"totalFatG": 13,
+				"saturatedFatG": 6.4,
+				"cholesterolMg": 141,
+				"carbohydratesG": 50,
+				"dietaryFibreG": 5,
+				"sodiumMg": 810
+			}
+		},
+		{
+			"id": "743",
+			"name": "Chicken McCrispy® Mix (6pc)",
+			"description": "The best of both flavours, in one box! Crunch down into juicy, crispy Chicken McCrispy® however you prefer! Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispymix6pc",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 2028,
+				"proteinG": 120,
+				"totalFatG": 119,
+				"saturatedFatG": 26,
+				"cholesterolMg": 491,
+				"carbohydratesG": 120,
+				"dietaryFibreG": 8,
+				"sodiumMg": 5617
+			}
+		},
+		{
+			"id": "747",
+			"name": "Chicken McCrispy® Mix (6pc) Bundle",
+			"description": "Can’t pick a favourite? Have them both with this juicy, crispy mix of two flavours along with 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispymix6pcbundle",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 2796,
+				"proteinG": 130,
+				"totalFatG": 159,
+				"saturatedFatG": 39,
+				"cholesterolMg": 493,
+				"carbohydratesG": 211,
+				"dietaryFibreG": 17,
+				"sodiumMg": 6147
+			}
+		},
+		{
+			"id": "741",
+			"name": "Chicken McCrispy® Signature (2pc)",
+			"description": "This is it, your new favourite awaits with bites of juicy chicken coated in non-spicy, extra crispy batter. Chicken McCrispy® Signature (2pc) comes with 1 thigh and 1 drumstick Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature",
+			"categories": ["chicken"],
+			"nutrition": {
+				"energyKcal": 590,
+				"proteinG": 39,
+				"totalFatG": 33,
+				"saturatedFatG": 7,
+				"cholesterolMg": 178,
+				"carbohydratesG": 35,
+				"dietaryFibreG": 2,
+				"sodiumMg": 1743
+			}
+		},
+		{
+			"id": "742",
+			"name": "Chicken McCrispy® Signature (6pc)",
+			"description": "Can’t get enough or sharing the goodness? Have more *crunch* to go around with 6 pieces of Chicken McCrispy® Signature. Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature6pc",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 1908,
+				"proteinG": 122,
+				"totalFatG": 108,
+				"saturatedFatG": 25,
+				"cholesterolMg": 565,
+				"carbohydratesG": 113,
+				"dietaryFibreG": 5,
+				"sodiumMg": 5466
+			}
+		},
+		{
+			"id": "746",
+			"name": "Chicken McCrispy® Signature (6pc) Bundle",
+			"description": "Indulge in our Chicken McCrispy® Spicy (6pc) Value Bundle, perfect for sharing unforgettable moments. Includes Chicken McCrispy® Spicy (6pc), 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature6pcbundle",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 2676,
+				"proteinG": 131,
+				"totalFatG": 148,
+				"saturatedFatG": 38,
+				"cholesterolMg": 567,
+				"carbohydratesG": 204,
+				"dietaryFibreG": 14,
+				"sodiumMg": 5996
+			}
+		},
+		{
+			"id": "538",
+			"name": "Chicken McCrispy® Spicy (2pc)",
+			"description": "Dive into the delightful crunch and satisfying crispiness of the Chicken McCrispy® Spicy, along with tender, juicy chunks of chicken you love. Now, wouldn’t that be nice? Chicken McCrispy® (2pc) comes with 1 thigh and 1 drumstick. Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy",
+			"categories": ["chicken"],
+			"nutrition": {
+				"energyKcal": 689,
+				"proteinG": 39,
+				"totalFatG": 41,
+				"saturatedFatG": 8,
+				"cholesterolMg": 135,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1895
+			}
+		},
+		{
+			"id": "537",
+			"name": "Chicken McCrispy® Spicy (6pc)",
+			"description": "Love the crispy crunch? Perfect for sharing with friends and family. Be prepared, though — everyone will want the crispy crumbs at the bottom of the box! Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy6pc",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 2148,
+				"proteinG": 118,
+				"totalFatG": 130,
+				"saturatedFatG": 27,
+				"cholesterolMg": 417,
+				"carbohydratesG": 126,
+				"dietaryFibreG": 11,
+				"sodiumMg": 5769
+			}
+		},
+		{
+			"id": "745",
+			"name": "Chicken McCrispy® Spicy (6pc) Bundle",
+			"description": "Share this Chicken McCrispy® Signature (6pc) Value Bundle with your friends and family! Chicken McCrispy® Signature (6pc) comes with 4 thigh and 2 drumstick. Your meal also comes with 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy6pcbundle",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 2916,
+				"proteinG": 128,
+				"totalFatG": 170,
+				"saturatedFatG": 40,
+				"cholesterolMg": 419,
+				"carbohydratesG": 218,
+				"dietaryFibreG": 20,
+				"sodiumMg": 6298
+			}
+		},
+		{
+			"id": "343",
+			"name": "Chicken McNuggets® (20pc)",
+			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-20pc",
+			"categories": ["chicken", "sharing", "sides"],
+			"nutrition": {
+				"energyKcal": 910,
+				"proteinG": 46,
+				"totalFatG": 54,
+				"saturatedFatG": 7,
+				"cholesterolMg": 147,
+				"carbohydratesG": 57,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1686
+			}
+		},
+		{
+			"id": "48",
+			"name": "Chicken McNuggets® (4pc) Happy Meal®",
+			"description": "Everything's better when it's bite-sized. Our tender, juicy Chicken McNuggets® are made with 100% white meat chicken and no artificial colour, flavouring or preservative.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-4pc-happy-meal",
+			"categories": ["chicken", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 204,
+				"proteinG": 10,
+				"totalFatG": 12,
+				"saturatedFatG": 1,
+				"cholesterolMg": 33,
+				"carbohydratesG": 13,
+				"dietaryFibreG": 1,
+				"sodiumMg": 378
+			}
+		},
+		{
+			"id": "341",
+			"name": "Chicken McNuggets® (6pc)",
+			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-6pc",
+			"categories": ["chicken", "sides"],
+			"nutrition": {
+				"energyKcal": 273,
+				"proteinG": 14,
+				"totalFatG": 16,
+				"saturatedFatG": 2,
+				"cholesterolMg": 44,
+				"carbohydratesG": 17,
+				"dietaryFibreG": 1,
+				"sodiumMg": 506
+			}
+		},
+		{
+			"id": "342",
+			"name": "Chicken McNuggets® (9pc)",
+			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-9pc",
+			"categories": ["chicken", "sides"],
+			"nutrition": {
+				"energyKcal": 409,
+				"proteinG": 21,
+				"totalFatG": 24,
+				"saturatedFatG": 3,
+				"cholesterolMg": 66,
+				"carbohydratesG": 26,
+				"dietaryFibreG": 2,
+				"sodiumMg": 759
+			}
+		},
+		{
+			"id": "68",
+			"name": "Chicken Muffin",
+			"description": "Craving a chicken protein in the morning? Then you’ll enjoy the Chicken Muffin.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-muffin",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 407,
+				"proteinG": 16,
+				"totalFatG": 21,
+				"saturatedFatG": 6,
+				"cholesterolMg": 49,
+				"carbohydratesG": 38,
+				"dietaryFibreG": 4,
+				"sodiumMg": 847
+			}
+		},
+		{
+			"id": "60",
+			"name": "Chicken Muffin Meal",
+			"description": "Wholegrain Chicken Muffin + Corn (Jr) + McCafe® Premium Roast Coffee",
+			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-chicken-muffin-delight-500-meal",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 482,
+				"proteinG": 22,
+				"totalFatG": 21,
+				"saturatedFatG": 5.9,
+				"cholesterolMg": 151,
+				"carbohydratesG": 50,
+				"dietaryFibreG": 5,
+				"sodiumMg": 930
+			}
+		},
+		{
+			"id": "70",
+			"name": "Chicken Muffin with Egg",
+			"description": "Enjoy even more protein in this Chicken Muffin with an added egg.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-muffin-with-egg",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 481,
+				"proteinG": 23,
+				"totalFatG": 26,
+				"saturatedFatG": 7,
+				"cholesterolMg": 256,
+				"carbohydratesG": 39,
+				"dietaryFibreG": 4,
+				"sodiumMg": 921
+			}
+		},
+		{
+			"id": "37",
+			"name": "ChocoCone®",
+			"description": "Chocolate lovers, rejoice! The ultimate indulgence has arrived. Our classic Vanilla Cone in a smooth, rich chocolate coating for a heavenly treat.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/chococone",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 281,
+				"proteinG": 3,
+				"totalFatG": 16,
+				"saturatedFatG": 10,
+				"cholesterolMg": 2,
+				"carbohydratesG": 31,
+				"dietaryFibreG": 1,
+				"sodiumMg": 65
+			}
+		},
+		{
+			"id": "360",
+			"name": "Coca-Cola® Original Taste Less Sugar (Large)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-large",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 221,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 55,
+				"dietaryFibreG": 0,
+				"sodiumMg": 15
+			}
+		},
+		{
+			"id": "359",
+			"name": "Coca-Cola® Original Taste Less Sugar (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 152,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 38,
+				"dietaryFibreG": 0,
+				"sodiumMg": 10
+			}
+		},
+		{
+			"id": "358",
+			"name": "Coca-Cola® Original Taste Less Sugar (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 109,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 27,
+				"dietaryFibreG": 0,
+				"sodiumMg": 7
+			}
+		},
+		{
+			"id": "363",
+			"name": "Coca-Cola® Zero Sugar (Large)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-large",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 58
+			}
+		},
+		{
+			"id": "362",
+			"name": "Coca-Cola® Zero Sugar (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 40
+			}
+		},
+		{
+			"id": "361",
+			"name": "Coca-Cola® Zero Sugar (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 29
+			}
+		},
+		{
+			"id": "347",
+			"name": "Corn",
+			"description": "Veg up with crunchy corn kernels and enjoy a yummy serving of antioxidants! Served warm with an optional pat of butter, it’s comfort food that’s oh-so-wholesome.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/corn-cup-45oz",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 100,
+				"proteinG": 4,
+				"totalFatG": 1,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 18,
+				"dietaryFibreG": 3,
+				"sodiumMg": 101
+			}
+		},
+		{
+			"id": "346",
+			"name": "Corn (Jr)",
+			"description": "Veg up with crunchy corn kernels and enjoy a yummy serving of antioxidants! Served warm with an optional pat of butter, it’s comfort food that’s oh-so-wholesome.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/corn-cup-3oz",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 66,
+				"proteinG": 2,
+				"totalFatG": 1,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 12,
+				"dietaryFibreG": 2,
+				"sodiumMg": 67
+			}
+		},
+		{
+			"id": "815",
+			"name": "Curry Sauce",
+			"description": "A savory blend of spices with a rich, creamy texture, and a hint of sweetness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/curry-sauce",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 38.5,
+				"proteinG": 0.6,
+				"totalFatG": 0.8,
+				"saturatedFatG": 0.2,
+				"cholesterolMg": 0,
+				"carbohydratesG": 7.3,
+				"dietaryFibreG": 0,
+				"sodiumMg": 183.6
+			}
+		},
+		{
+			"id": "42",
+			"name": "Double Cheeseburger",
+			"description": "Love our Cheeseburger? Double it! Think two 100% beef patties with cheese, onions, pickles, mustard and a dollop of tomato ketchup, all in a perfectly soft bun.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-cheeseburger",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 443,
+				"proteinG": 27,
+				"totalFatG": 22,
+				"saturatedFatG": 12,
+				"cholesterolMg": 79,
+				"carbohydratesG": 34,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1360
+			}
+		},
+		{
+			"id": "733",
+			"name": "Double Chocolate Frappe",
+			"description": "Sip up a choc-ful of velvety goodness with our Double Chocolate Frappé. The perfect drink for chocoholics out there!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-choc-frappe-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 393,
+				"proteinG": 6,
+				"totalFatG": 13,
+				"saturatedFatG": 9,
+				"cholesterolMg": 0,
+				"carbohydratesG": 60,
+				"dietaryFibreG": 2,
+				"sodiumMg": 315
+			}
+		},
+		{
+			"id": "72",
+			"name": "Double Filet-O-Fish®",
+			"description": "Not one but two pieces of fish filets smothered with tangy tartar sauce and topped with melty cheese between soft, steamed buns.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-filet-o-fish",
+			"categories": ["breakfast", "burgers"],
+			"nutrition": {
+				"energyKcal": 466,
+				"proteinG": 24,
+				"totalFatG": 20,
+				"saturatedFatG": 8,
+				"cholesterolMg": 64,
+				"carbohydratesG": 48,
+				"dietaryFibreG": 3,
+				"sodiumMg": 756
+			}
+		},
+		{
+			"id": "853",
+			"name": "Double McCrispy®",
+			"description": "Double the CRUNCH with two new crispy batter coated over juicy, whole-muscle thigh patty. Topped with umami-packed smoky sauce and fluffy potato buns!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/doublemccrispy",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 1004,
+				"proteinG": 41.2,
+				"totalFatG": 55.6,
+				"saturatedFatG": 6,
+				"cholesterolMg": 117.3,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 3.5,
+				"sodiumMg": 1021.6
+			}
+		},
+		{
+			"id": "53",
+			"name": "Double McSpicy®",
+			"description": "Feel the heat. We double the spiciness with two thick juicy cutlets of whole muscle chicken thigh on a bed of crisp lettuce between toasted sesame seed buns – double the shiok!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-mcspicy",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 833,
+				"proteinG": 38,
+				"totalFatG": 46,
+				"saturatedFatG": 9,
+				"cholesterolMg": 140,
+				"carbohydratesG": 66,
+				"dietaryFibreG": 6,
+				"sodiumMg": 2161
+			}
+		},
+		{
+			"id": "798",
+			"name": "Double McSpicy® with Cheese",
+			"description": "Turn up the heat and double the flavour. Two crispy chicken thighs, oozing with melty cheese, fiery spice, and crunchy lettuce, all snugly nestled between warm sesame buns.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-mcspicy-with-cheese",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 883,
+				"proteinG": 41,
+				"totalFatG": 50,
+				"saturatedFatG": 12,
+				"cholesterolMg": 152,
+				"carbohydratesG": 67,
+				"dietaryFibreG": 6,
+				"sodiumMg": 2331
+			}
+		},
+		{
+			"id": "705",
+			"name": "Double Quarter Pounder® with Cheese",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-quarter-pounder",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 717,
+				"proteinG": 50,
+				"totalFatG": 40,
+				"saturatedFatG": 20,
+				"cholesterolMg": 154,
+				"carbohydratesG": 39,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1698
+			}
+		},
+		{
+			"id": "800",
+			"name": "Double Sausage McMuffin®",
+			"description": "Two juicy sausage patties with melted cheese, nestled between warm, toasted wholegrain muffins — simple, but irresistible.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-sausage-mcmuffin",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 327,
+				"proteinG": 23,
+				"totalFatG": 13,
+				"saturatedFatG": 5,
+				"cholesterolMg": 74,
+				"carbohydratesG": 32,
+				"dietaryFibreG": 5,
+				"sodiumMg": 952
+			}
+		},
+		{
+			"id": "801",
+			"name": "Double Sausage McMuffin® with Egg",
+			"description": "Take your morning to a whole new level with two savoury sausage patties, a round egg, and melted cheese all enveloped in a soft, toasted wholegrain muffin. Here’s more of what you love.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/double-sausage-mcmuffin-with-egg",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 406,
+				"proteinG": 30,
+				"totalFatG": 18,
+				"saturatedFatG": 7,
+				"cholesterolMg": 295,
+				"carbohydratesG": 33,
+				"dietaryFibreG": 5,
+				"sodiumMg": 1031
+			}
+		},
+		{
+			"id": "69",
+			"name": "Egg McMuffin®",
+			"description": "Fresh round egg with chicken ham and melted cheese in a toasted wholegrain muffin. It’s cracking good stuff.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/egg-mcmuffin",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 289,
+				"proteinG": 18,
+				"totalFatG": 11,
+				"saturatedFatG": 5,
+				"cholesterolMg": 236,
+				"carbohydratesG": 29,
+				"dietaryFibreG": 3,
+				"sodiumMg": 574
+			}
+		},
+		{
+			"id": "62",
+			"name": "Egg McMuffin® Meal",
+			"description": "Wholegrain Egg McMuffin® + Corn (Jr) + McCafe® Premium Roast Coffee",
+			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-egg-mcmuffin-delight-500-meal",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 366,
+				"proteinG": 23,
+				"totalFatG": 12,
+				"saturatedFatG": 5.2,
+				"cholesterolMg": 335,
+				"carbohydratesG": 41,
+				"dietaryFibreG": 5,
+				"sodiumMg": 670
+			}
+		},
+		{
+			"id": "557",
+			"name": "Family Meal (Cheeseburger)",
+			"description": "Delight the family with a McSpicy® Meal, Filet-O-Fish® Meal and a Cheeseburger Happy Meal®!",
+			"url": "https://www.mcdonalds.com.sg/rod-fm-chb",
+			"categories": ["burgers", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "558",
+			"name": "Family Meal (McNuggets®)",
+			"description": "Delight the family with a McSpicy® Meal, Filet-O-Fish® Meal and a 4pc Chicken McNuggets® Happy Meal®!",
+			"url": "https://www.mcdonalds.com.sg/rod-fm-nug",
+			"categories": ["burgers", "chicken", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "71",
+			"name": "Filet-O-Fish®",
+			"description": "Dive into our Filet-O-Fish®! This popular fish sandwich uses sustainably sourced fish. Topped with melty cheese and creamy McDonald’s tartar sauce between soft, steamed buns.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish",
+			"categories": ["breakfast", "burgers"],
+			"nutrition": {
+				"energyKcal": 332,
+				"proteinG": 15,
+				"totalFatG": 13,
+				"saturatedFatG": 5,
+				"cholesterolMg": 36,
+				"carbohydratesG": 38,
+				"dietaryFibreG": 2,
+				"sodiumMg": 562
+			}
+		},
+		{
+			"id": "58",
+			"name": "Filet-O-Fish® Meal with Corn and Ice Mountain",
+			"description": "Filet-O-Fish® + Corn + Ice Mountain Drinking Water",
+			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish-meal-with-drinking-water",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 421,
+				"proteinG": 16,
+				"totalFatG": 13,
+				"saturatedFatG": 3.5,
+				"cholesterolMg": 90,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 3,
+				"sodiumMg": 580
+			}
+		},
+		{
+			"id": "844",
+			"name": "Filet-O-Fish® Meal with Garden Side Salad and Ice Mountain",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish-meal-with-garden-side-salad-and-ice-mountain",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 351,
+				"proteinG": 16,
+				"totalFatG": 13,
+				"saturatedFatG": 5,
+				"cholesterolMg": 36,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 3,
+				"sodiumMg": 572
+			}
+		},
+		{
+			"id": "350",
+			"name": "French Fries (Large)",
+			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-large",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 512,
+				"proteinG": 6,
+				"totalFatG": 27,
+				"saturatedFatG": 8,
+				"cholesterolMg": 1,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 6,
+				"sodiumMg": 314
+			}
+		},
+		{
+			"id": "349",
+			"name": "French Fries (Medium)",
+			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-medium",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 384,
+				"proteinG": 5,
+				"totalFatG": 20,
+				"saturatedFatG": 6,
+				"cholesterolMg": 1,
+				"carbohydratesG": 46,
+				"dietaryFibreG": 5,
+				"sodiumMg": 236
+			}
+		},
+		{
+			"id": "348",
+			"name": "French Fries (Small)",
+			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-small",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 315,
+				"proteinG": 4,
+				"totalFatG": 17,
+				"saturatedFatG": 5,
+				"cholesterolMg": 1,
+				"carbohydratesG": 37,
+				"dietaryFibreG": 4,
+				"sodiumMg": 193
+			}
+		},
+		{
+			"id": "50",
+			"name": "Garden Side Salad",
+			"description": "A delightful combination of crisp lettuce, purple cabbage and sweet corn kernels.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/garden-side-salad",
+			"categories": ["salads-and-wraps"],
+			"nutrition": {
+				"energyKcal": 17,
+				"proteinG": 1,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 4,
+				"dietaryFibreG": 1,
+				"sodiumMg": 10
+			}
+		},
+		{
+			"id": "49",
+			"name": "Hamburger",
+			"description": "100% beef patty with onions, pickles, mustard and a dollop of tomato ketchup, all in a soft bun. A classic, every time.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hamburger",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 253,
+				"proteinG": 14,
+				"totalFatG": 8,
+				"saturatedFatG": 4,
+				"cholesterolMg": 28,
+				"carbohydratesG": 31,
+				"dietaryFibreG": 2,
+				"sodiumMg": 690
+			}
+		},
+		{
+			"id": "843",
+			"name": "Hamburger Meal with Garden Side Salad and Ice Mountain",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/hamburger-meal-with-garden-side-salad-and-ice-mountain",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 273,
+				"proteinG": 16,
+				"totalFatG": 8,
+				"saturatedFatG": 4,
+				"cholesterolMg": 28,
+				"carbohydratesG": 35,
+				"dietaryFibreG": 3,
+				"sodiumMg": 699
+			}
+		},
+		{
+			"id": "43",
+			"name": "Happy Sharing Box® A",
+			"description": "Chicken McNuggets® (12pc) + McWings® (8pc) More of your favourites in one box for any occasion. Share the joy of Chicken McNuggets® and McWings® with the whole party!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/happy-sharing-box-a",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 1730,
+				"proteinG": 101,
+				"totalFatG": 109,
+				"saturatedFatG": 20,
+				"cholesterolMg": 480,
+				"carbohydratesG": 85,
+				"dietaryFibreG": 6,
+				"sodiumMg": 3698
+			}
+		},
+		{
+			"id": "44",
+			"name": "Happy Sharing Box® B",
+			"description": "Chicken McNuggets® (6pc) + McWings® (4pc) Perfect for small groups and tiny cravings. Cosy up with your favourite Chicken McNuggets® and McWings®!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/happy-sharing-box-b",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 865,
+				"proteinG": 50,
+				"totalFatG": 54,
+				"saturatedFatG": 10,
+				"cholesterolMg": 240,
+				"carbohydratesG": 43,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1849
+			}
+		},
+		{
+			"id": "749",
+			"name": "Happy Sharing Combo",
+			"description": "It’s time to Chicken and Chill with your friends! Enjoy more of your favourites for less. Happy Sharing Combo (3 to 4 pax) includes Chicken McCrispy® Mix (6pc), 8pc McWings®, and 20pc Chicken McNuggets®. Chicken McCrispy® Mix (6pc) comes with 2 thighs, 1 drumstick (Spicy), and 2 thighs, 1 drumstick (Signature). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk",
+			"url": "https://www.mcdonalds.com.sg/food-menu/happysharingcombo",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 3108,
+				"proteinG": 155,
+				"totalFatG": 188,
+				"saturatedFatG": 39,
+				"cholesterolMg": 633,
+				"carbohydratesG": 198,
+				"dietaryFibreG": 15,
+				"sodiumMg": 6440
+			}
+		},
+		{
+			"id": "748",
+			"name": "Happy Sharing Snacks",
+			"description": "Dip, crunch and share for a great time. Happy Sharing Snacks include 8pc McWings®, 20pc Chicken McNuggets®, 3 French Fries (M), and 3 Apple Pies.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/happysharingsnacks",
+			"categories": ["chicken", "sharing"],
+			"nutrition": {
+				"energyKcal": 3961,
+				"proteinG": 135,
+				"totalFatG": 233,
+				"saturatedFatG": 58,
+				"cholesterolMg": 502,
+				"carbohydratesG": 330,
+				"dietaryFibreG": 27,
+				"sodiumMg": 5674
+			}
+		},
+		{
+			"id": "83",
+			"name": "Hash Brown",
+			"description": "Perfectly crispy and toasty on the outside, and fluffy in the inside, our Hash Browns are great on its own or as part of a breakfast meal.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hashbrown",
+			"categories": ["sides"],
+			"nutrition": {
+				"energyKcal": 149,
+				"proteinG": 1,
+				"totalFatG": 8,
+				"saturatedFatG": 1,
+				"cholesterolMg": 0,
+				"carbohydratesG": 17,
+				"dietaryFibreG": 1,
+				"sodiumMg": 351
+			}
+		},
+		{
+			"id": "817",
+			"name": "Honey Mustard Sauce",
+			"description": "Dip into tangy bliss with our sweet Honey Mustard Sauce. A true Must-try!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/honey-mustard-sauce",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 119.6,
+				"proteinG": 0.3,
+				"totalFatG": 10.5,
+				"saturatedFatG": 1.5,
+				"cholesterolMg": 9.6,
+				"carbohydratesG": 5.9,
+				"dietaryFibreG": 0.1,
+				"sodiumMg": 138.2
+			}
+		},
+		{
+			"id": "100",
+			"name": "Hot Fudge Sundae",
+			"description": "A decadent combination that brings delight in every bite. With rich chocolate fudge glazed onto a creamy soft-serve, our Hot Fudge Sundae is a luxurious treat.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hot-fudge-sundae",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 314,
+				"proteinG": 6,
+				"totalFatG": 10,
+				"saturatedFatG": 7,
+				"cholesterolMg": 3,
+				"carbohydratesG": 49,
+				"dietaryFibreG": 1,
+				"sodiumMg": 168
+			}
+		},
+		{
+			"id": "87",
+			"name": "Hot MILO®",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/hot-milo",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 192,
+				"proteinG": 5,
+				"totalFatG": 4,
+				"saturatedFatG": 2,
+				"cholesterolMg": 4,
+				"carbohydratesG": 33,
+				"dietaryFibreG": 2,
+				"sodiumMg": 153
+			}
+		},
+		{
+			"id": "88",
+			"name": "Hot Tea",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/hot-tea",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 4,
+				"proteinG": 1,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 3
+			}
+		},
+		{
+			"id": "819",
+			"name": "Hotcake Syrup",
+			"description": "Hotcakes are already next level—but paired with Hotcake Syrup? New level unlocked.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hotcake-syrup",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 129.8,
+				"proteinG": 0,
+				"totalFatG": 0.5,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0.3,
+				"carbohydratesG": 31.4,
+				"dietaryFibreG": 0.2,
+				"sodiumMg": 16
+			}
+		},
+		{
+			"id": "73",
+			"name": "Hotcakes",
+			"description": "Fluffy Hotcakes are made all the more heavenly when smothered with syrup and butter. Pure bliss!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 557,
+				"proteinG": 9,
+				"totalFatG": 18,
+				"saturatedFatG": 6,
+				"cholesterolMg": 20,
+				"carbohydratesG": 91,
+				"dietaryFibreG": 3,
+				"sodiumMg": 685
+			}
+		},
+		{
+			"id": "75",
+			"name": "Hotcakes (2pc) Happy Meal®",
+			"description": "Nothing beats fluffy Hotcakes for a kid’s breakfast. Made from wheat flour, our Hotcakes pack enough protein and energy to charge up the little ones for the morning.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes-2pc-happy-meal",
+			"categories": ["breakfast", "for-the-family"],
+			"nutrition": {
+				"energyKcal": 430,
+				"proteinG": 6,
+				"totalFatG": 15,
+				"saturatedFatG": 5,
+				"cholesterolMg": 14,
+				"carbohydratesG": 69,
+				"dietaryFibreG": 2,
+				"sodiumMg": 501
+			}
+		},
+		{
+			"id": "74",
+			"name": "Hotcakes with Sausage",
+			"description": "Jump-start the day with this classic sweet-and-savoury combo. Fluffy Hotcakes drizzled with syrup and served alongside a delicious chicken sausage.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes-with-sausage",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 619,
+				"proteinG": 16,
+				"totalFatG": 21,
+				"saturatedFatG": 7,
+				"cholesterolMg": 51,
+				"carbohydratesG": 92,
+				"dietaryFibreG": 4,
+				"sodiumMg": 974
+			}
+		},
+		{
+			"id": "86",
+			"name": "Ice Mountain Drinking Water",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/drinking-water",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 0,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "365",
+			"name": "Iced Lemon Tea (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/iced-lemon-tea-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 91,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 22,
+				"dietaryFibreG": 0,
+				"sodiumMg": 15
+			}
+		},
+		{
+			"id": "364",
+			"name": "Iced Lemon Tea (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/iced-lemon-tea-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 66,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 16,
+				"dietaryFibreG": 0,
+				"sodiumMg": 11
+			}
+		},
+		{
+			"id": "374",
+			"name": "Iced MILO® (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/iced-milo-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 322,
+				"proteinG": 10,
+				"totalFatG": 9,
+				"saturatedFatG": 4,
+				"cholesterolMg": 5,
+				"carbohydratesG": 51,
+				"dietaryFibreG": 3,
+				"sodiumMg": 187
+			}
+		},
+		{
+			"id": "373",
+			"name": "Iced MILO® (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/iced-milo-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 227,
+				"proteinG": 7,
+				"totalFatG": 6,
+				"saturatedFatG": 3,
+				"cholesterolMg": 4,
+				"carbohydratesG": 36,
+				"dietaryFibreG": 2,
+				"sodiumMg": 132
+			}
+		},
+		{
+			"id": "367",
+			"name": "Jasmine Green Tea (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/jasmine-green-tea-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 86,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 21,
+				"dietaryFibreG": 0,
+				"sodiumMg": 30
+			}
+		},
+		{
+			"id": "366",
+			"name": "Jasmine Green Tea (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/jasmine-green-tea-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 62,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 15,
+				"dietaryFibreG": 0,
+				"sodiumMg": 22
+			}
+		},
+		{
+			"id": "791",
+			"name": "Kiyo Grape Juice",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/kiyo-grape-juice",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 100,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 25,
+				"dietaryFibreG": 0,
+				"sodiumMg": 25
+			}
+		},
+		{
+			"id": "92",
+			"name": "Low-Fat Hi-Calcium Milk",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/magnolia-lo-fat-hi-calcium-milk",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 96,
+				"proteinG": 7,
+				"totalFatG": 3,
+				"saturatedFatG": 2,
+				"cholesterolMg": 10,
+				"carbohydratesG": 10,
+				"dietaryFibreG": 0,
+				"sodiumMg": 98
+			}
+		},
+		{
+			"id": "32",
+			"name": "McCafé Iced Latte",
+			"description": "The perfect combination of espresso and milk swilled over ice.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-iced-latte",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 77,
+				"proteinG": 6,
+				"totalFatG": 2,
+				"saturatedFatG": 1,
+				"cholesterolMg": 9,
+				"carbohydratesG": 9,
+				"dietaryFibreG": 0,
+				"sodiumMg": 26
+			}
+		},
+		{
+			"id": "834",
+			"name": "McCafé® Americano",
+			"description": "Start your mornings with a bold Americano, simply made with hot water poured over our espresso made with aromatic 100% Arabica Beans.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-americano",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 1,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "351",
+			"name": "McCafé® Cappuccino",
+			"description": "A refreshingly warm shot of espresso topped with milk that is steamed to a thick, perfect froth. A classic favourite.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-cappuccino",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 74,
+				"proteinG": 5,
+				"totalFatG": 2,
+				"saturatedFatG": 1,
+				"cholesterolMg": 9,
+				"carbohydratesG": 8,
+				"dietaryFibreG": 0,
+				"sodiumMg": 54
+			}
+		},
+		{
+			"id": "833",
+			"name": "McCafé® Iced Americano",
+			"description": "Bold and refreshing. Our Iced Americano combines rich espresso over ice, perfect for coffee lovers.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-iced-americano",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 1,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "29",
+			"name": "McCafé® Latte",
+			"description": "Velvety steamed milk gently poured into a lovingly brewed shot of dusky, aromatic arabica beans.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-latte",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 97,
+				"proteinG": 10,
+				"totalFatG": 3,
+				"saturatedFatG": 1,
+				"cholesterolMg": 147,
+				"carbohydratesG": 8,
+				"dietaryFibreG": 0,
+				"sodiumMg": 69
+			}
+		},
+		{
+			"id": "93",
+			"name": "McCafé® Premium Roast Coffee",
+			"description": "Made with 100% Arabica beans and freshly brewed every 30 minutes.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-premium-roast-coffee",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 4,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 1,
+				"dietaryFibreG": 0,
+				"sodiumMg": 0
+			}
+		},
+		{
+			"id": "51",
+			"name": "McChicken®",
+			"description": "Crispy coated chicken with lettuce and mayo in a soft, sesame seed bun. A true classic.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 391,
+				"proteinG": 15,
+				"totalFatG": 18,
+				"saturatedFatG": 3,
+				"cholesterolMg": 38,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 2,
+				"sodiumMg": 751
+			}
+		},
+		{
+			"id": "57",
+			"name": "McChicken® Meal with Corn and Ice Mountain",
+			"description": "McChicken® + Corn + Ice Mountain Drinking Water",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-delight-500-meal-with-drinking-water",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 483,
+				"proteinG": 19,
+				"totalFatG": 18,
+				"saturatedFatG": 3.5,
+				"cholesterolMg": 41,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 6,
+				"sodiumMg": 860
+			}
+		},
+		{
+			"id": "845",
+			"name": "McChicken® Meal with Garden Side Salad and Ice Mountain",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-meal-with-garden-side-salad-and-ice-mountain",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 410,
+				"proteinG": 16,
+				"totalFatG": 18,
+				"saturatedFatG": 3,
+				"cholesterolMg": 33,
+				"carbohydratesG": 47,
+				"dietaryFibreG": 3,
+				"sodiumMg": 785
+			}
+		},
+		{
+			"id": "799",
+			"name": "McChicken® with Cheese",
+			"description": "A crispy, tender chicken patty paired with creamy mayo and fresh lettuce. Add a melt of cheese to elevate this classic into something truly special.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-with-cheese",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 441,
+				"proteinG": 18,
+				"totalFatG": 22,
+				"saturatedFatG": 6,
+				"cholesterolMg": 50,
+				"carbohydratesG": 43,
+				"dietaryFibreG": 2,
+				"sodiumMg": 921
+			}
+		},
+		{
+			"id": "852",
+			"name": "McCrispy®",
+			"description": "We’re bringing the CRUNCH with a new crispy batter coated over juicy, whole-muscle thigh patty. Topped with umami-packed smoky sauce and fluffy potato buns!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mccrispy",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 638,
+				"proteinG": 24,
+				"totalFatG": 33,
+				"saturatedFatG": 6,
+				"cholesterolMg": 59,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 3.5,
+				"sodiumMg": 1021.6
+			}
+		},
+		{
+			"id": "52",
+			"name": "McSpicy®",
+			"description": "If you’re big on hot chilli spice, this is the sandwich for you. A thick, juicy cutlet of chicken thigh sits fiery hot on a bed of crunchy lettuce between toasted sesame seed buns – shiok!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcspicy",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 541,
+				"proteinG": 23,
+				"totalFatG": 28,
+				"saturatedFatG": 6,
+				"cholesterolMg": 76,
+				"carbohydratesG": 50,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1269
+			}
+		},
+		{
+			"id": "797",
+			"name": "McSpicy® with Cheese",
+			"description": "A fiery, crispy chicken thigh cutlet topped with melty cheese and crunchy lettuce — all wrapped in a sesame seed bun. It’s the perfect combination of heat and cheesy goodness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcspicy-with-cheese",
+			"categories": ["burgers", "chicken"],
+			"nutrition": {
+				"energyKcal": 591,
+				"proteinG": 26,
+				"totalFatG": 32,
+				"saturatedFatG": 8,
+				"cholesterolMg": 88,
+				"carbohydratesG": 51,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1439
+			}
+		},
+		{
+			"id": "560",
+			"name": "McWings® (2pc)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/mcwings-2pc",
+			"categories": ["chicken", "sides"],
+			"nutrition": {
+				"energyKcal": 302,
+				"proteinG": 17,
+				"totalFatG": 20,
+				"saturatedFatG": 4,
+				"cholesterolMg": 87,
+				"carbohydratesG": 12,
+				"dietaryFibreG": 2,
+				"sodiumMg": 682
+			}
+		},
+		{
+			"id": "54",
+			"name": "McWings® (4pc)",
+			"description": "If chicken’s your thing, our McWings® will send you right over the edge. Coated with a light batter, we guarantee you’ll be impressed.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcwings-4pc",
+			"categories": ["chicken", "sides"],
+			"nutrition": {
+				"energyKcal": 603,
+				"proteinG": 35,
+				"totalFatG": 41,
+				"saturatedFatG": 8,
+				"cholesterolMg": 175,
+				"carbohydratesG": 25,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1363
+			}
+		},
+		{
+			"id": "31",
+			"name": "Mocha Frappé",
+			"description": "The perfect mix of dark chocolate and espresso, blended with ice to smooth perfection.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mocha-frappe-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 445,
+				"proteinG": 9,
+				"totalFatG": 18,
+				"saturatedFatG": 11,
+				"cholesterolMg": 0,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 1,
+				"sodiumMg": 328
+			}
+		},
+		{
+			"id": "793",
+			"name": "Oatside Chocolate Flavoured Oatmilk",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/oatside-chocolate-flavoured-oatmilk",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 164,
+				"proteinG": 2.6,
+				"totalFatG": 6.2,
+				"saturatedFatG": 0.8,
+				"cholesterolMg": 0,
+				"carbohydratesG": 24.6,
+				"dietaryFibreG": 0,
+				"sodiumMg": 92
+			}
+		},
+		{
+			"id": "792",
+			"name": "Oatside Original Flavoured Oatmilk",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/oatside-original-flavoured-oatmilk",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 130,
+				"proteinG": 1.2,
+				"totalFatG": 6.4,
+				"saturatedFatG": 0.6,
+				"cholesterolMg": 0,
+				"carbohydratesG": 16.2,
+				"dietaryFibreG": 0,
+				"sodiumMg": 94
+			}
+		},
+		{
+			"id": "96",
+			"name": "OREO® McFlurry®",
+			"description": "The original celebrity pairing. Crunchy OREO® bits meets creamy vanilla soft-serve in a combination that’s hard to resist. May contain traces of nuts.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/mcflurry-oreo",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 368,
+				"proteinG": 7,
+				"totalFatG": 13,
+				"saturatedFatG": 6,
+				"cholesterolMg": 5,
+				"carbohydratesG": 56,
+				"dietaryFibreG": 1,
+				"sodiumMg": 221
+			}
+		},
+		{
+			"id": "704",
+			"name": "Quarter Pounder® with Cheese",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/quarter-pounder",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 507,
+				"proteinG": 32,
+				"totalFatG": 25,
+				"saturatedFatG": 13,
+				"cholesterolMg": 89,
+				"carbohydratesG": 38,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1265
+			}
+		},
+		{
+			"id": "820",
+			"name": "Roasted Sesame Dressing",
+			"description": "A creamy sauce with rich sesame flavor that elevates every bite with velvety, toasted goodness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/roasted-sesame-dressing",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 102,
+				"proteinG": 0.6,
+				"totalFatG": 9.1,
+				"saturatedFatG": 1.4,
+				"cholesterolMg": 0,
+				"carbohydratesG": 3.8,
+				"dietaryFibreG": 0.5,
+				"sodiumMg": 282
+			}
+		},
+		{
+			"id": "77",
+			"name": "Sausage McMuffin®",
+			"description": "Simple and delicious. Just a savoury chicken sausage with a slice of melted cheese between toasted wholegrain muffins.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/sausage-mcmuffin",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 258,
+				"proteinG": 16,
+				"totalFatG": 9,
+				"saturatedFatG": 4,
+				"cholesterolMg": 43,
+				"carbohydratesG": 29,
+				"dietaryFibreG": 4,
+				"sodiumMg": 653
+			}
+		},
+		{
+			"id": "63",
+			"name": "Sausage McMuffin® Meal",
+			"description": "Wholegrain Sausage McMuffin® + Corn (Jr) + McCafe® Premium Roast Coffee",
+			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-sausage-mcmuffin-delight-500-meal",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 355,
+				"proteinG": 21,
+				"totalFatG": 12,
+				"saturatedFatG": 5.2,
+				"cholesterolMg": 141,
+				"carbohydratesG": 41,
+				"dietaryFibreG": 5,
+				"sodiumMg": 740
+			}
+		},
+		{
+			"id": "76",
+			"name": "Sausage McMuffin® with Egg",
+			"description": "Basically, an elevated Sausage McMuffin® with the additional egg.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/sausage-mcmuffin-with-egg",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 337,
+				"proteinG": 23,
+				"totalFatG": 14,
+				"saturatedFatG": 6,
+				"cholesterolMg": 264,
+				"carbohydratesG": 30,
+				"dietaryFibreG": 4,
+				"sodiumMg": 732
+			}
+		},
+		{
+			"id": "61",
+			"name": "Sausage McMuffin® with Egg Meal",
+			"description": "Wholegrain Sausage McMuffin® with Egg + Corn (Jr) + McCafe® Premium Roast Coffee",
+			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-sausage-mcmuffin-with-egg-delight-500-meal",
+			"categories": ["eat-light-under-500-calories"],
+			"nutrition": {
+				"energyKcal": 434,
+				"proteinG": 28,
+				"totalFatG": 17,
+				"saturatedFatG": 6.8,
+				"cholesterolMg": 362,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 5,
+				"sodiumMg": 820
+			}
+		},
+		{
+			"id": "739",
+			"name": "Scrambled Egg Burger with Chicken",
+			"description": "Need a little morning pick-me-up? Get the breakfast you deserve with creamy scrambled eggs and crispy chicken patty – a flawless pairing for a fluffy morning.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/scrambled-egg-burger-with-chicken",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 556,
+				"proteinG": 30,
+				"totalFatG": 30,
+				"saturatedFatG": 9,
+				"cholesterolMg": 431,
+				"carbohydratesG": 40,
+				"dietaryFibreG": 2,
+				"sodiumMg": 1050
+			}
+		},
+		{
+			"id": "738",
+			"name": "Scrambled Egg Burger with Sausage",
+			"description": "Start your day on a high note with light, fluffy scrambled eggs paired with chicken sausage patty, glazed buns and yummy mayonnaise. Egg-cellent!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/scrambled-egg-burger-with-sausage",
+			"categories": ["breakfast"],
+			"nutrition": {
+				"energyKcal": 492,
+				"proteinG": 30,
+				"totalFatG": 26,
+				"saturatedFatG": 9,
+				"cholesterolMg": 441,
+				"carbohydratesG": 33,
+				"dietaryFibreG": 3,
+				"sodiumMg": 993
+			}
+		},
+		{
+			"id": "829",
+			"name": "Spicy Chicken McWrap®",
+			"description": "Savour the heat with a crispy, spicy chicken thigh, with crunchy lettuce and purple cabbage, all cozily wrapped in a soft wholegrain tortilla.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/spicy-chicken-mcwrap",
+			"categories": ["salads-and-wraps"],
+			"nutrition": {
+				"energyKcal": 545.2,
+				"proteinG": 22.4,
+				"totalFatG": 33,
+				"saturatedFatG": 9.8,
+				"cholesterolMg": 87.2,
+				"carbohydratesG": 41,
+				"dietaryFibreG": 4.9,
+				"sodiumMg": 1541.9
+			}
+		},
+		{
+			"id": "371",
+			"name": "Sprite® (Large)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-large",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 163,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 40,
+				"dietaryFibreG": 0,
+				"sodiumMg": 95
+			}
+		},
+		{
+			"id": "370",
+			"name": "Sprite® (Medium)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-medium",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 112,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 27,
+				"dietaryFibreG": 0,
+				"sodiumMg": 65
+			}
+		},
+		{
+			"id": "369",
+			"name": "Sprite® (Small)",
+			"description": null,
+			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-small",
+			"categories": ["beverages"],
+			"nutrition": {
+				"energyKcal": 80,
+				"proteinG": 0,
+				"totalFatG": 0,
+				"saturatedFatG": 0,
+				"cholesterolMg": 0,
+				"carbohydratesG": 20,
+				"dietaryFibreG": 0,
+				"sodiumMg": 47
+			}
+		},
+		{
+			"id": "841",
+			"name": "Strawberry Bliss Sundae",
+			"description": "Savour a truly delightful treat with flowy layers of fruity strawberry sauce topped on creamy strawberry soft serve. Each spoonful delivers a blissful burst of sweetness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-bliss-sundae",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 264,
+				"proteinG": 5,
+				"totalFatG": 6,
+				"saturatedFatG": 3,
+				"cholesterolMg": 4,
+				"carbohydratesG": 47,
+				"dietaryFibreG": 0,
+				"sodiumMg": 84
+			}
+		},
+		{
+			"id": "839",
+			"name": "Strawberry ChocoCone®",
+			"description": "Savour the delightfully creamy strawberry soft serve that brings you a burst of fruitiness. Enjoy it topped with luscious chocolate that turns into a crunchy cover.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-chococone",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 283,
+				"proteinG": 3,
+				"totalFatG": 16,
+				"saturatedFatG": 10,
+				"cholesterolMg": 2,
+				"carbohydratesG": 31,
+				"dietaryFibreG": 1,
+				"sodiumMg": 65
+			}
+		},
+		{
+			"id": "838",
+			"name": "Strawberry Cone",
+			"description": "Savour the delightfully creamy strawberry soft serve that brings you a burst of fruitiness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-cone",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 134,
+				"proteinG": 3,
+				"totalFatG": 4,
+				"saturatedFatG": 2,
+				"cholesterolMg": 2,
+				"carbohydratesG": 22,
+				"dietaryFibreG": 0,
+				"sodiumMg": 56
+			}
+		},
+		{
+			"id": "840",
+			"name": "Strawberry Hot Fudge Sundae",
+			"description": "Savour a truly delightful treat with flowy layers of indulgent hot fudge sauce topped on creamy strawberry soft serve. Each spoonful delivers a blissful burst of sweetness.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-hot-fudge-sundae",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 316,
+				"proteinG": 6,
+				"totalFatG": 10,
+				"saturatedFatG": 7,
+				"cholesterolMg": 3,
+				"carbohydratesG": 49,
+				"dietaryFibreG": 1,
+				"sodiumMg": 168
+			}
+		},
+		{
+			"id": "842",
+			"name": "Strawberry OREO® McFlurry®",
+			"description": "Indulge in a creamy strawberry soft serve blended with crunchy OREO® cookie pieces; a delightful contrast of flavours and textures, making every bite a moment to cherish.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-oreo-mcflurry",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 343,
+				"proteinG": 6,
+				"totalFatG": 12,
+				"saturatedFatG": 6,
+				"cholesterolMg": 4,
+				"carbohydratesG": 52,
+				"dietaryFibreG": 1,
+				"sodiumMg": 210
+			}
+		},
+		{
+			"id": "101",
+			"name": "Strawberry Sundae",
+			"description": "It’s refreshing, it’s fruity, it’s juicy strawberry. Cool, creamy soft-serve paired with a lovely strawberry sauce for a fruity burst of flavour.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-sundae",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 261,
+				"proteinG": 5,
+				"totalFatG": 6,
+				"saturatedFatG": 3,
+				"cholesterolMg": 4,
+				"carbohydratesG": 47,
+				"dietaryFibreG": 0,
+				"sodiumMg": 84
+			}
+		},
+		{
+			"id": "794",
+			"name": "Triple Cheeseburger",
+			"description": "Take your love for the Double Cheeseburger to a new level — now with THREE layers of juicy beef patties and even meltier cheese! Topped with savoury onions and refreshing pickles, all sandwiched between our new softer, glazed buns!",
+			"url": "https://www.mcdonalds.com.sg/food-menu/triple-cheeseburger",
+			"categories": ["burgers"],
+			"nutrition": {
+				"energyKcal": 580,
+				"proteinG": 38,
+				"totalFatG": 32,
+				"saturatedFatG": 18,
+				"cholesterolMg": 118,
+				"carbohydratesG": 34,
+				"dietaryFibreG": 4,
+				"sodiumMg": 1719
+			}
+		},
+		{
+			"id": "102",
+			"name": "Vanilla Cone",
+			"description": "The most famed of all our desserts, and a timeless treat for everyone. Our signature soft-serve is served on a crisp cone.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/vanilla-cone",
+			"categories": ["desserts"],
+			"nutrition": {
+				"energyKcal": 133,
+				"proteinG": 3,
+				"totalFatG": 4,
+				"saturatedFatG": 2,
+				"cholesterolMg": 2,
+				"carbohydratesG": 22,
+				"dietaryFibreG": 0,
+				"sodiumMg": 56
+			}
+		},
+		{
+			"id": "818",
+			"name": "Whipped Butter",
+			"description": "Butter to pair with your favourite, fluffy Hotcakes.",
+			"url": "https://www.mcdonalds.com.sg/food-menu/whipped-butter",
+			"categories": [],
+			"nutrition": {
+				"energyKcal": 40.8,
+				"proteinG": 0,
+				"totalFatG": 4.6,
+				"saturatedFatG": 3.1,
+				"cholesterolMg": 11.3,
+				"carbohydratesG": 0,
+				"dietaryFibreG": 0,
+				"sodiumMg": 39.4
+			}
+		}
+	]
+}

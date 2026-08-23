@@ -1,0 +1,20 @@
+{
+	"name": "@kalo-ai/plugin-mcdonalds-sg",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit --project ./tsconfig.json",
+		"test": "bun test",
+		"update-data": "bun run ./scripts/update-data.ts"
+	},
+	"dependencies": {
+		"@kalo-ai/plugin-sdk": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.3.14"
+	}
+}
