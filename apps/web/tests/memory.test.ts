@@ -19,6 +19,21 @@ beforeEach(async () => {
 
 afterAll(() => database.db.close());
 
+async function installExampleFixture() {
+	const { examplePlugin } = await import("@kalo-ai/plugin-example");
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const module = await analyzePluginModuleSource("export default {};");
+	return plugins.installPluginPackage(
+		"npm:@kalo-ai/plugin-example@0.1.0",
+		async () => ({
+			plugin: examplePlugin,
+			module: { ...module, sourceUrl: "https://esm.sh/example.bundle.mjs" },
+		}),
+	);
+}
+
 test("memory uses monotonic versions and optimistic locking", async () => {
 	const { getUserMemory, updateUserMemory } = repositories;
 	expect(await getUserMemory()).toEqual({
@@ -142,6 +157,7 @@ test("enabled plugin contributes tools and a bounded system prompt", async () =>
 		const plugin = await plugins.getPluginState(pluginId);
 		expect(plugin).toMatchObject({ enabled: true, status: "ready" });
 	}
+	await installExampleFixture();
 	const initial = await plugins.getPluginState("example");
 	expect(initial).toMatchObject({ enabled: false, status: "disabled" });
 	const defaultRuntime = await plugins.loadPluginRuntime("en-us", [
@@ -257,9 +273,16 @@ test("user-installed package plugins load disabled and can be removed with their
 			},
 		],
 	});
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const module = await analyzePluginModuleSource("export default {};");
 	const installed = await plugins.installPluginPackage(
 		"npm:@scope/remote-fixture@1.0.0",
-		async () => ({ default: remotePlugin }),
+		async () => ({
+			plugin: remotePlugin,
+			module: { ...module, sourceUrl: "https://esm.sh/fixture.bundle.mjs" },
+		}),
 	);
 	expect(installed).toMatchObject({
 		enabled: false,
@@ -274,8 +297,13 @@ test("user-installed package plugins load disabled and can be removed with their
 		expect.objectContaining({
 			pluginId: "remote_fixture",
 			packageName: "@scope/remote-fixture",
+			moduleSha256: module.sha256,
 		}),
 	]);
+	expect(await repositories.getPluginModule("remote_fixture")).toMatchObject({
+		sha256: module.sha256,
+		source: "export default {};",
+	});
 
 	await plugins.savePluginSettings("remote_fixture", {}, true);
 	const runtime = await plugins.loadPluginRuntime("en-us", []);
@@ -295,6 +323,7 @@ test("user-installed package plugins load disabled and can be removed with their
 	expect(
 		await repositories.getPluginData("remote_fixture", "sample"),
 	).toBeUndefined();
+	expect(await repositories.getPluginModule("remote_fixture")).toBeUndefined();
 });
 
 test("remote package and plugin manifest versions must match", async () => {
@@ -312,16 +341,76 @@ test("remote package and plugin manifest versions must match", async () => {
 		defaultConfig: {},
 		createTools: () => [],
 	});
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const module = await analyzePluginModuleSource("export default {};");
 	await expect(
 		plugins.installPluginPackage(
 			"npm:@scope/version-mismatch@1.0.0",
-			async () => ({ default: mismatched }),
+			async () => ({
+				plugin: mismatched,
+				module: { ...module, sourceUrl: "https://esm.sh/mismatch.bundle.mjs" },
+			}),
 		),
 	).rejects.toThrow("版本");
 	expect(await repositories.listPluginInstallations()).toEqual([]);
 });
 
+test("local single-file plugins persist source, install disabled, and require version bumps", async () => {
+	const { definePlugin, Type } = await import("@kalo-ai/plugin-sdk");
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const localPlugin = definePlugin({
+		manifest: {
+			id: "local_fixture",
+			apiVersion: 1,
+			version: "1.0.0",
+			configVersion: 1,
+			name: { "zh-cn": "本地测试", "en-us": "Local fixture" },
+			description: { "zh-cn": "测试", "en-us": "Test fixture" },
+		},
+		configSchema: Type.Object({}),
+		defaultConfig: {},
+		createTools: () => [],
+	});
+	const analyzed = await analyzePluginModuleSource("export default {};");
+	const installed = await plugins.installLocalPlugin(
+		{ fileName: "local-fixture.js", ...analyzed },
+		async () => ({ default: localPlugin }),
+	);
+	expect(installed).toMatchObject({
+		enabled: false,
+		status: "disabled",
+		source: { type: "local", packageName: "local-fixture.js" },
+	});
+	expect(await repositories.getPluginModule("local_fixture")).toMatchObject({
+		sha256: analyzed.sha256,
+		source: analyzed.source,
+	});
+	const backup = await repositories.exportAll();
+	expect(backup.pluginModules).toEqual([
+		expect.objectContaining({
+			pluginId: "local_fixture",
+			sha256: analyzed.sha256,
+			source: analyzed.source,
+		}),
+	]);
+
+	const changed = await analyzePluginModuleSource(
+		"export default { changed: true };",
+	);
+	await expect(
+		plugins.installLocalPlugin(
+			{ fileName: "local-fixture.js", ...changed },
+			async () => ({ default: localPlugin }),
+		),
+	).rejects.toThrow("manifest.version");
+});
+
 test("plugin configuration migrates to the package config version", async () => {
+	await installExampleFixture();
 	await repositories.savePluginConfig({
 		pluginId: "example",
 		enabled: true,
@@ -346,6 +435,7 @@ test("plugin configuration migrates to the package config version", async () => 
 });
 
 test("resetting a plugin removes its configuration and scoped data", async () => {
+	await installExampleFixture();
 	await plugins.savePluginSettings(
 		"example",
 		{
@@ -751,6 +841,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		calculatedBMR: 1342,
 	});
 	await updateUserMemory("Remember this", 0);
+	await installExampleFixture();
 	await plugins.savePluginSettings(
 		"example",
 		{
@@ -767,20 +858,36 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		key: "sample",
 		value: ["saved", 1],
 	});
-	await repositories.savePluginInstallation({
-		pluginId: "backup_remote",
-		registry: "jsr",
-		packageName: "@scope/backup-plugin",
-		packageVersion: "1.2.3",
-		manifest: {
-			id: "backup_remote",
-			apiVersion: 1,
-			version: "1.2.3",
-			configVersion: 1,
-			name: { "zh-cn": "备份插件", "en-us": "Backup plugin" },
-			description: { "zh-cn": "备份测试", "en-us": "Backup test" },
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const cachedModule = await analyzePluginModuleSource("export default {};");
+	await repositories.savePluginInstallationWithModule(
+		{
+			pluginId: "backup_remote",
+			registry: "jsr",
+			packageName: "@scope/backup-plugin",
+			packageVersion: "1.2.3",
+			moduleSha256: cachedModule.sha256,
+			moduleSize: cachedModule.size,
+			manifest: {
+				id: "backup_remote",
+				apiVersion: 1,
+				version: "1.2.3",
+				configVersion: 1,
+				name: { "zh-cn": "备份插件", "en-us": "Backup plugin" },
+				description: { "zh-cn": "备份测试", "en-us": "Backup test" },
+			},
 		},
-	});
+		{
+			pluginId: "backup_remote",
+			source: cachedModule.source,
+			sha256: cachedModule.sha256,
+			size: cachedModule.size,
+			fileName: "backup_remote-1.2.3.js",
+			sourceUrl: "https://esm.sh/backup.bundle.mjs",
+		},
+	);
 	await repositories.savePluginConfig({
 		pluginId: "backup_remote",
 		enabled: true,
@@ -806,7 +913,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		caloriesBurned: 180,
 	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(5);
+	expect(backup.version).toBe(6);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",
@@ -849,14 +956,28 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 			value: ["saved", 1],
 		}),
 	]);
-	expect(backup.pluginInstallations).toEqual([
-		expect.objectContaining({
-			pluginId: "backup_remote",
-			registry: "jsr",
-			packageName: "@scope/backup-plugin",
-			packageVersion: "1.2.3",
-		}),
-	]);
+	expect(backup.pluginInstallations).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({ pluginId: "example", registry: "npm" }),
+			expect.objectContaining({
+				pluginId: "backup_remote",
+				registry: "jsr",
+				packageName: "@scope/backup-plugin",
+				packageVersion: "1.2.3",
+				moduleSha256: cachedModule.sha256,
+			}),
+		]),
+	);
+	expect(backup.pluginModules).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({ pluginId: "example" }),
+			expect.objectContaining({
+				pluginId: "backup_remote",
+				sha256: cachedModule.sha256,
+				source: cachedModule.source,
+			}),
+		]),
+	);
 	expect(backup.userMemory).toEqual([
 		expect.objectContaining({
 			id: "user-memory",
@@ -872,11 +993,17 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	await expect(importAll(invalidPluginBackup)).rejects.toThrow(
 		"pluginInstallations 数据格式无效",
 	);
+	const invalidModuleBackup = structuredClone(backup);
+	invalidModuleBackup.pluginModules[0].source =
+		"export default { changed: true };";
+	await expect(importAll(invalidModuleBackup)).rejects.toThrow(
+		"pluginModules 数据格式无效",
+	);
 
 	await repositories.clearAllData();
 	await importAll(backup);
 	expect(await repositories.getPluginConfig("example")).toMatchObject({
-		enabled: true,
+		enabled: false,
 		config: {
 			prefix: "Backup plugin",
 			apiKey: "backup-secret",
@@ -888,14 +1015,20 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	expect(await repositories.getPluginData("example", "sample")).toMatchObject({
 		value: ["saved", 1],
 	});
-	expect(await repositories.listPluginInstallations()).toEqual([
-		expect.objectContaining({
-			pluginId: "backup_remote",
-			packageVersion: "1.2.3",
-		}),
-	]);
+	expect(await repositories.listPluginInstallations()).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({ pluginId: "example" }),
+			expect.objectContaining({
+				pluginId: "backup_remote",
+				packageVersion: "1.2.3",
+			}),
+		]),
+	);
 	expect(await repositories.getPluginConfig("backup_remote")).toMatchObject({
 		enabled: false,
+	});
+	expect(await repositories.getPluginModule("backup_remote")).toMatchObject({
+		sha256: cachedModule.sha256,
 	});
 	expect(await repositories.getTrainingPlans()).toHaveLength(1);
 	const restoredWorkouts = await repositories.getPlannedWorkouts(
@@ -933,4 +1066,5 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 	expect(await repositories.getTrainingPlans()).toEqual([]);
 	expect(await repositories.listPluginConfigs()).toEqual([]);
 	expect(await repositories.listPluginInstallations()).toEqual([]);
+	expect(await repositories.listPluginModules()).toEqual([]);
 });

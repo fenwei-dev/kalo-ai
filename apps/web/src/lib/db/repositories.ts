@@ -1,6 +1,7 @@
 import { getLocale } from "$lib/paraglide/runtime";
+import { analyzePluginModuleSource } from "$lib/plugins/moduleSource";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV5, parseKaloBackup } from "./backup";
+import { type KaloBackupV6, parseKaloBackup } from "./backup";
 
 export type {
 	KaloBackup,
@@ -9,6 +10,7 @@ export type {
 	KaloBackupV3,
 	KaloBackupV4,
 	KaloBackupV5,
+	KaloBackupV6,
 } from "./backup";
 
 import {
@@ -26,6 +28,7 @@ import type {
 	PluginConfigRecord,
 	PluginDataRecord,
 	PluginInstallation,
+	PluginModuleRecord,
 	Session,
 	TrainingPlan,
 	TrainingPlanStatus,
@@ -236,14 +239,54 @@ export async function savePluginInstallation(
 	return saved;
 }
 
+export async function getPluginModule(
+	pluginId: string,
+): Promise<PluginModuleRecord | undefined> {
+	return db.pluginModules.get(pluginId);
+}
+
+export async function listPluginModules(): Promise<PluginModuleRecord[]> {
+	return db.pluginModules.toArray();
+}
+
+export async function savePluginModule(
+	record: Omit<PluginModuleRecord, "createdAt" | "updatedAt">,
+): Promise<PluginModuleRecord> {
+	const existing = await db.pluginModules.get(record.pluginId);
+	const timestamp = now();
+	const saved: PluginModuleRecord = {
+		...record,
+		createdAt: existing?.createdAt ?? timestamp,
+		updatedAt: timestamp,
+	};
+	await db.pluginModules.put(saved);
+	return saved;
+}
+
+export async function savePluginInstallationWithModule(
+	installation: Omit<PluginInstallation, "installedAt" | "updatedAt">,
+	module: Omit<PluginModuleRecord, "createdAt" | "updatedAt">,
+): Promise<{ installation: PluginInstallation; module: PluginModuleRecord }> {
+	return db.transaction(
+		"rw",
+		[db.pluginInstallations, db.pluginModules],
+		async () => {
+			const savedInstallation = await savePluginInstallation(installation);
+			const savedModule = await savePluginModule(module);
+			return { installation: savedInstallation, module: savedModule };
+		},
+	);
+}
+
 export async function deletePluginInstallation(
 	pluginId: string,
 ): Promise<void> {
 	await db.transaction(
 		"rw",
-		[db.pluginInstallations, db.pluginConfigs, db.pluginData],
+		[db.pluginInstallations, db.pluginModules, db.pluginConfigs, db.pluginData],
 		async () => {
 			await db.pluginInstallations.delete(pluginId);
+			await db.pluginModules.delete(pluginId);
 			await db.pluginConfigs.delete(pluginId);
 			await db.pluginData.where("pluginId").equals(pluginId).delete();
 		},
@@ -1314,6 +1357,7 @@ export async function clearAllData(): Promise<void> {
 			db.pluginConfigs,
 			db.pluginData,
 			db.pluginInstallations,
+			db.pluginModules,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1331,6 +1375,7 @@ export async function clearAllData(): Promise<void> {
 				db.pluginConfigs.clear(),
 				db.pluginData.clear(),
 				db.pluginInstallations.clear(),
+				db.pluginModules.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1352,7 +1397,14 @@ export async function importAll(value: unknown): Promise<void> {
 		pluginConfigs,
 		pluginData,
 		pluginInstallations,
+		pluginModules,
 	} = data;
+	for (const module of pluginModules) {
+		const analyzed = await analyzePluginModuleSource(module.source);
+		if (analyzed.sha256 !== module.sha256 || analyzed.size !== module.size) {
+			throw new Error(`插件模块 ${module.pluginId} 的 hash 或大小无效`);
+		}
+	}
 	const installedPluginIds = new Set(
 		pluginInstallations.map((installation) => installation.pluginId),
 	);
@@ -1375,6 +1427,7 @@ export async function importAll(value: unknown): Promise<void> {
 			db.pluginConfigs,
 			db.pluginData,
 			db.pluginInstallations,
+			db.pluginModules,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1392,6 +1445,7 @@ export async function importAll(value: unknown): Promise<void> {
 				db.pluginConfigs.clear(),
 				db.pluginData.clear(),
 				db.pluginInstallations.clear(),
+				db.pluginModules.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1407,6 +1461,7 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.pluginConfigs.bulkPut(safePluginConfigs);
 			await db.pluginData.bulkPut(pluginData);
 			await db.pluginInstallations.bulkPut(pluginInstallations);
+			await db.pluginModules.bulkPut(pluginModules);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);
 			await db.sessions.bulkPut(data.sessions);
@@ -1416,7 +1471,7 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV5> {
+export async function exportAll(): Promise<KaloBackupV6> {
 	const [
 		user,
 		aiConfig,
@@ -1428,6 +1483,7 @@ export async function exportAll(): Promise<KaloBackupV5> {
 		pluginConfigs,
 		pluginData,
 		pluginInstallations,
+		pluginModules,
 		weightEntries,
 		foodLibrary,
 		sessions,
@@ -1443,13 +1499,14 @@ export async function exportAll(): Promise<KaloBackupV5> {
 		db.pluginConfigs.toArray(),
 		db.pluginData.toArray(),
 		db.pluginInstallations.toArray(),
+		db.pluginModules.toArray(),
 		db.weightEntries.toArray(),
 		db.foodLibrary.toArray(),
 		db.sessions.toArray(),
 		db.messages.toArray(),
 	]);
 	return {
-		version: 5,
+		version: 6,
 		exportedAt: now(),
 		user,
 		aiConfig,
@@ -1461,6 +1518,7 @@ export async function exportAll(): Promise<KaloBackupV5> {
 		pluginConfigs,
 		pluginData,
 		pluginInstallations,
+		pluginModules,
 		weightEntries,
 		foodLibrary,
 		sessions,

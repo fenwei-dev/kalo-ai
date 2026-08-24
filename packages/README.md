@@ -7,7 +7,7 @@ All plugin packages use the same module entry contract: the plugin object is ava
 Current packages:
 
 - `plugin-sdk` — typed plugin manifest, config fields, Agent tools, services, System Prompt extension contract, and npm/JSR package export documentation.
-- `plugin-example` — disabled-by-default example proving all schema-driven setting types, tool injection, and prompt injection.
+- `plugin-example` — publishable npm/JSR reference plugin proving schema-driven settings, tool injection, prompt injection, and migration.
 - `plugin-mcdonalds-sg` — bundled McDonald's Singapore nutrition lookup backed by an automatically refreshed static snapshot.
 - `plugin-subway-sg` — bundled Subway Singapore nutrition lookup backed by an automatically refreshed static snapshot.
 - `plugin-kfc-sg` — bundled KFC Singapore nutrition and allergen lookup backed by an automatically refreshed static snapshot.

@@ -1,10 +1,46 @@
 import { expect, test } from "bun:test";
 import { definePlugin, Type } from "@kalo-ai/plugin-sdk";
+import { prepareLocalPluginFile } from "../src/lib/plugins/local";
 import {
-	importRemotePlugin,
+	analyzePluginModuleSource,
+	importPluginModuleSource,
+} from "../src/lib/plugins/moduleSource";
+import {
+	downloadRemotePluginModule,
+	loadRemotePlugin,
 	parsePluginPackageSpecifier,
 	remotePluginModuleUrl,
 } from "../src/lib/plugins/remote";
+
+const fixturePlugin = definePlugin({
+	manifest: {
+		id: "remote_fixture",
+		apiVersion: 1,
+		version: "1.2.3",
+		configVersion: 1,
+		name: { "zh-cn": "远程测试", "en-us": "Remote fixture" },
+		description: { "zh-cn": "测试", "en-us": "Test fixture" },
+	},
+	configSchema: Type.Object({}),
+	defaultConfig: {},
+	createTools: () => [],
+});
+
+function fixtureFetcher(requests: string[]) {
+	return async (input: RequestInfo | URL): Promise<Response> => {
+		const url = String(input);
+		requests.push(url);
+		if (url.includes("?bundle")) {
+			return new Response("entry", {
+				status: 200,
+				headers: {
+					"x-esm-path": "/@scope/plugin@1.2.3/es2022/plugin.bundle.mjs",
+				},
+			});
+		}
+		return new Response("export default {};", { status: 200 });
+	};
+}
 
 test("parses exact npm and JSR package specifiers", () => {
 	expect(parsePluginPackageSpecifier("npm:kalo-plugin@1.2.3")).toEqual({
@@ -54,37 +90,36 @@ test("maps package references to pinned esm.sh module URLs", () => {
 	).toBe("https://esm.sh/jsr/@scope/plugin@1.2.3?bundle&target=es2022");
 });
 
-test("loads a compatible default-exported plugin module", async () => {
-	const plugin = definePlugin({
-		manifest: {
-			id: "remote_fixture",
-			apiVersion: 1,
-			version: "1.0.0",
-			configVersion: 1,
-			name: { "zh-cn": "远程测试", "en-us": "Remote fixture" },
-			description: { "zh-cn": "测试", "en-us": "Test fixture" },
-		},
-		configSchema: Type.Object({}),
-		defaultConfig: {},
-		createTools: () => [],
-	});
-	let importedUrl = "";
-	const loaded = await importRemotePlugin(
+test("downloads the final self-contained esm.sh bundle", async () => {
+	const requests: string[] = [];
+	const downloaded = await downloadRemotePluginModule(
 		parsePluginPackageSpecifier("npm:@scope/plugin@1.2.3"),
-		async (url) => {
-			importedUrl = url;
-			return { default: plugin };
+		fixtureFetcher(requests),
+	);
+	expect(requests).toEqual([
+		"https://esm.sh/@scope/plugin@1.2.3?bundle&target=es2022",
+		"https://esm.sh/@scope/plugin@1.2.3/es2022/plugin.bundle.mjs",
+	]);
+	expect(downloaded.source).toBe("export default {};");
+	expect(downloaded.sha256).toMatch(/^[a-f0-9]{64}$/);
+});
+
+test("downloads and loads a compatible registry plugin", async () => {
+	const loaded = await loadRemotePlugin(
+		parsePluginPackageSpecifier("npm:@scope/plugin@1.2.3"),
+		{
+			fetcher: fixtureFetcher([]),
+			importer: async () => ({ default: fixturePlugin }),
 		},
 	);
-	expect(importedUrl).toBe(
-		"https://esm.sh/@scope/plugin@1.2.3?bundle&target=es2022",
-	);
-	expect(loaded.manifest.id).toBe("remote_fixture");
+	expect(loaded.plugin.manifest.id).toBe("remote_fixture");
+	expect(loaded.module.source).toBe("export default {};");
 });
 
 test("hydrates a dependency-free raw definition exported as kaloPlugin", async () => {
-	const loaded = await importRemotePlugin(
-		parsePluginPackageSpecifier("jsr:@scope/plain-plugin@1.0.0"),
+	const loaded = await importPluginModuleSource(
+		"export const placeholder = true;",
+		"plain-plugin.js",
 		async () => ({
 			kaloPlugin: {
 				manifest: {
@@ -101,6 +136,26 @@ test("hydrates a dependency-free raw definition exported as kaloPlugin", async (
 			},
 		}),
 	);
-	expect(loaded.manifest.id).toBe("plain_remote");
-	expect(loaded.validateConfig({})).toBe(true);
+	expect(loaded.plugin.manifest.id).toBe("plain_remote");
+	expect(loaded.plugin.validateConfig({})).toBe(true);
+});
+
+test("local plugin preparation rejects imports and records a stable hash", async () => {
+	await expect(
+		analyzePluginModuleSource(
+			'import value from "example"; export default value;',
+		),
+	).rejects.toThrow("无 import");
+	await expect(
+		analyzePluginModuleSource(
+			'export default import("https://example.com/x.js");',
+		),
+	).rejects.toThrow("无 import");
+	const prepared = await prepareLocalPluginFile({
+		name: "fixture.js",
+		size: 23,
+		text: async () => "export default { ok: 1 };",
+	});
+	expect(prepared.fileName).toBe("fixture.js");
+	expect(prepared.sha256).toMatch(/^[a-f0-9]{64}$/);
 });

@@ -14,6 +14,7 @@
 		"test": "bun run i18n:compile && bun test"
 	},
 	"devDependencies": {
+		"@kalo-ai/plugin-example": "workspace:*",
 		"@inlang/paraglide-js": "^2.23.2",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.70.2",
@@ -31,7 +32,6 @@
 		"workbox-window": "^7.4.1"
 	},
 	"dependencies": {
-		"@kalo-ai/plugin-example": "workspace:*",
 		"@kalo-ai/plugin-kfc-sg": "workspace:*",
 		"@kalo-ai/plugin-mcdonalds-sg": "workspace:*",
 		"@kalo-ai/plugin-sdk": "workspace:*",
@@ -40,6 +40,7 @@
 		"@earendil-works/pi-ai": "^0.84.1",
 		"dexie": "^4.4.4",
 		"dompurify": "^3.4.13",
+		"es-module-lexer": "^2.3.2",
 		"konsta": "^5.3.0",
 		"layerchart": "^2.1.0",
 		"marked": "^18.0.9"

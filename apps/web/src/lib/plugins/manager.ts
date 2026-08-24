@@ -12,18 +12,27 @@ import {
 	deletePluginInstallation,
 	getPluginConfig,
 	getPluginInstallation,
+	getPluginModule,
 	listPluginInstallations,
 	savePluginConfig,
-	savePluginInstallation,
+	savePluginInstallationWithModule,
 } from "$lib/db/repositories";
 import type { PluginInstallation, PluginPackageRegistry } from "$lib/db/schema";
+import { clonePluginManifest } from "./contract";
+import {
+	importPreparedLocalPlugin,
+	type PreparedLocalPluginFile,
+} from "./local";
+import {
+	importPluginModuleSource,
+	type PluginSourceImporter,
+} from "./moduleSource";
 import { bundledPlugins, getPlugin } from "./registry";
 import {
-	clonePluginManifest,
-	importRemotePlugin,
+	loadRemotePlugin,
 	parsePluginPackageSpecifier,
 	pluginInstallationSpecifier,
-	type RemotePluginImporter,
+	type RemotePluginLoader,
 } from "./remote";
 import { createPluginServices } from "./services";
 
@@ -60,7 +69,7 @@ export interface PluginState {
 	loadError?: string;
 }
 
-const remotePluginCache = new Map<string, Promise<KaloPlugin>>();
+const installedPluginCache = new Map<string, Promise<KaloPlugin>>();
 
 function cloneJsonValue(value: PluginJsonValue): PluginJsonValue {
 	if (Array.isArray(value)) return value.map(cloneJsonValue);
@@ -94,24 +103,23 @@ function sourceForInstallation(installation: PluginInstallation): PluginSource {
 	};
 }
 
-function installationCacheKey(
-	installation: Pick<
-		PluginInstallation,
-		"registry" | "packageName" | "packageVersion"
-	>,
-): string {
-	return `${installation.registry}:${installation.packageName}@${installation.packageVersion}`;
+function installedPluginCacheKey(pluginId: string, sha256: string): string {
+	return `${pluginId}:${sha256}`;
 }
 
-function rememberRemotePlugin(
-	installation: Pick<
-		PluginInstallation,
-		"registry" | "packageName" | "packageVersion"
-	>,
+function evictInstalledPlugin(pluginId: string): void {
+	for (const key of installedPluginCache.keys()) {
+		if (key.startsWith(`${pluginId}:`)) installedPluginCache.delete(key);
+	}
+}
+
+function rememberInstalledPlugin(
+	pluginId: string,
+	sha256: string,
 	plugin: KaloPlugin,
 ): void {
-	remotePluginCache.set(
-		installationCacheKey(installation),
+	installedPluginCache.set(
+		installedPluginCacheKey(pluginId, sha256),
 		Promise.resolve(plugin),
 	);
 }
@@ -119,14 +127,65 @@ function rememberRemotePlugin(
 async function loadInstalledPlugin(
 	installation: PluginInstallation,
 ): Promise<KaloPlugin> {
-	const key = installationCacheKey(installation);
-	let pending = remotePluginCache.get(key);
+	const storedModule = await getPluginModule(installation.pluginId);
+	const cacheKey = storedModule
+		? installedPluginCacheKey(installation.pluginId, storedModule.sha256)
+		: `${installation.pluginId}:source:${installation.registry}:${installation.packageVersion}`;
+	let pending = installedPluginCache.get(cacheKey);
 	if (!pending) {
-		pending = importRemotePlugin(installation).catch((error) => {
-			remotePluginCache.delete(key);
+		pending = (async () => {
+			if (storedModule) {
+				if (
+					(installation.moduleSha256 &&
+						installation.moduleSha256 !== storedModule.sha256) ||
+					(installation.moduleSize &&
+						installation.moduleSize !== storedModule.size)
+				) {
+					throw new Error("插件模块与安装记录的 hash 或大小不一致");
+				}
+				return (
+					await importPluginModuleSource(
+						storedModule.source,
+						storedModule.fileName,
+					)
+				).plugin;
+			}
+			if (installation.registry === "local") {
+				throw new Error("本地插件源码不存在，请重新上传插件文件");
+			}
+			const source = {
+				registry: installation.registry,
+				packageName: installation.packageName,
+				packageVersion: installation.packageVersion,
+				canonicalSpecifier: `${installation.registry}:${installation.packageName}@${installation.packageVersion}`,
+			};
+			const loaded = await loadRemotePlugin(source);
+			await savePluginInstallationWithModule(
+				{
+					...installation,
+					moduleSha256: loaded.module.sha256,
+					moduleSize: loaded.module.size,
+				},
+				{
+					pluginId: installation.pluginId,
+					source: loaded.module.source,
+					sha256: loaded.module.sha256,
+					size: loaded.module.size,
+					fileName: `${installation.pluginId}-${installation.packageVersion}.js`,
+					sourceUrl: loaded.module.sourceUrl,
+				},
+			);
+			rememberInstalledPlugin(
+				installation.pluginId,
+				loaded.module.sha256,
+				loaded.plugin,
+			);
+			return loaded.plugin;
+		})().catch((error) => {
+			installedPluginCache.delete(cacheKey);
 			throw error;
 		});
-		remotePluginCache.set(key, pending);
+		installedPluginCache.set(cacheKey, pending);
 	}
 	const plugin = await pending;
 	if (plugin.manifest.id !== installation.pluginId) {
@@ -390,7 +449,7 @@ export async function resetPluginSettings(
 
 export async function installPluginPackage(
 	packageSpecifier: string,
-	importer?: RemotePluginImporter,
+	loader: RemotePluginLoader = loadRemotePlugin,
 ): Promise<PluginState> {
 	const source = parsePluginPackageSpecifier(packageSpecifier);
 	const installations = await listPluginInstallations();
@@ -400,17 +459,18 @@ export async function installPluginPackage(
 			record.packageName === source.packageName,
 	);
 	if (!samePackage && installations.length >= MAX_INSTALLED_PLUGIN_PACKAGES) {
-		throw new Error(`最多只能安装 ${MAX_INSTALLED_PLUGIN_PACKAGES} 个远程插件`);
+		throw new Error(`最多只能安装 ${MAX_INSTALLED_PLUGIN_PACKAGES} 个插件`);
 	}
 
-	let plugin: KaloPlugin;
+	let loaded: Awaited<ReturnType<RemotePluginLoader>>;
 	try {
-		plugin = await importRemotePlugin(source, importer);
+		loaded = await loader(source);
 	} catch (error) {
 		throw new Error(
 			`无法加载 ${source.canonicalSpecifier}：${errorMessage(error)}`,
 		);
 	}
+	const plugin = loaded.plugin;
 	if (plugin.manifest.version !== source.packageVersion) {
 		throw new Error(
 			`插件 manifest 版本 ${plugin.manifest.version} 与 package 版本 ${source.packageVersion} 不一致`,
@@ -427,7 +487,7 @@ export async function installPluginPackage(
 		(sameId.registry !== source.registry ||
 			sameId.packageName !== source.packageName)
 	) {
-		throw new Error(`插件 ID ${plugin.manifest.id} 已由其他 package 使用`);
+		throw new Error(`插件 ID ${plugin.manifest.id} 已由其他来源使用`);
 	}
 	if (samePackage && samePackage.pluginId !== plugin.manifest.id) {
 		throw new Error(
@@ -435,13 +495,6 @@ export async function installPluginPackage(
 		);
 	}
 
-	const installation = await savePluginInstallation({
-		pluginId: plugin.manifest.id,
-		registry: source.registry,
-		packageName: source.packageName,
-		packageVersion: source.packageVersion,
-		manifest: clonePluginManifest(plugin.manifest),
-	});
 	if (!sameId) {
 		// Importing code is already sensitive; activation always requires a second,
 		// explicit user action even when the package requests defaultEnabled.
@@ -452,12 +505,113 @@ export async function installPluginPackage(
 			config: cloneConfig(plugin.defaultConfig),
 		});
 	}
-	if (sameId) remotePluginCache.delete(installationCacheKey(sameId));
-	rememberRemotePlugin(installation, plugin);
+	let saved: Awaited<ReturnType<typeof savePluginInstallationWithModule>>;
+	try {
+		saved = await savePluginInstallationWithModule(
+			{
+				pluginId: plugin.manifest.id,
+				registry: source.registry,
+				packageName: source.packageName,
+				packageVersion: source.packageVersion,
+				moduleSha256: loaded.module.sha256,
+				moduleSize: loaded.module.size,
+				manifest: clonePluginManifest(plugin.manifest),
+			},
+			{
+				pluginId: plugin.manifest.id,
+				source: loaded.module.source,
+				sha256: loaded.module.sha256,
+				size: loaded.module.size,
+				fileName: `${plugin.manifest.id}-${source.packageVersion}.js`,
+				sourceUrl: loaded.module.sourceUrl,
+			},
+		);
+	} catch (error) {
+		if (!sameId) await deletePluginConfig(plugin.manifest.id);
+		throw error;
+	}
+	if (sameId) evictInstalledPlugin(sameId.pluginId);
+	rememberInstalledPlugin(plugin.manifest.id, loaded.module.sha256, plugin);
 	return resolvePluginState(
 		plugin,
-		sourceForInstallation(installation),
-		installation,
+		sourceForInstallation(saved.installation),
+		saved.installation,
+	);
+}
+
+const LOCAL_PLUGIN_VERSION_PATTERN =
+	/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+export async function installLocalPlugin(
+	prepared: PreparedLocalPluginFile,
+	importer?: PluginSourceImporter,
+): Promise<PluginState> {
+	const loaded = await importPreparedLocalPlugin(prepared, importer);
+	const plugin = loaded.plugin;
+	if (!LOCAL_PLUGIN_VERSION_PATTERN.test(plugin.manifest.version)) {
+		throw new Error("本地插件 manifest.version 必须是有效的 SemVer");
+	}
+	if (getPlugin(plugin.manifest.id)) {
+		throw new Error(`插件 ID ${plugin.manifest.id} 与内置插件冲突`);
+	}
+	const installations = await listPluginInstallations();
+	const sameId = installations.find(
+		(record) => record.pluginId === plugin.manifest.id,
+	);
+	if (sameId && sameId.registry !== "local") {
+		throw new Error(`插件 ID ${plugin.manifest.id} 已由 registry package 使用`);
+	}
+	if (!sameId && installations.length >= MAX_INSTALLED_PLUGIN_PACKAGES) {
+		throw new Error(`最多只能安装 ${MAX_INSTALLED_PLUGIN_PACKAGES} 个插件`);
+	}
+	if (
+		sameId &&
+		sameId.moduleSha256 !== prepared.sha256 &&
+		sameId.packageVersion === plugin.manifest.version
+	) {
+		throw new Error("替换本地插件文件时必须更新 manifest.version");
+	}
+
+	const existingConfig = await getPluginConfig(plugin.manifest.id);
+	await savePluginConfig({
+		pluginId: plugin.manifest.id,
+		enabled: false,
+		configVersion:
+			existingConfig?.configVersion ?? plugin.manifest.configVersion,
+		config: existingConfig
+			? cloneConfig(existingConfig.config)
+			: cloneConfig(plugin.defaultConfig),
+	});
+	let saved: Awaited<ReturnType<typeof savePluginInstallationWithModule>>;
+	try {
+		saved = await savePluginInstallationWithModule(
+			{
+				pluginId: plugin.manifest.id,
+				registry: "local",
+				packageName: prepared.fileName,
+				packageVersion: plugin.manifest.version,
+				moduleSha256: prepared.sha256,
+				moduleSize: prepared.size,
+				manifest: clonePluginManifest(plugin.manifest),
+			},
+			{
+				pluginId: plugin.manifest.id,
+				source: prepared.source,
+				sha256: prepared.sha256,
+				size: prepared.size,
+				fileName: prepared.fileName,
+			},
+		);
+	} catch (error) {
+		if (!sameId) await deletePluginConfig(plugin.manifest.id);
+		throw error;
+	}
+	if (sameId) evictInstalledPlugin(sameId.pluginId);
+	rememberInstalledPlugin(plugin.manifest.id, prepared.sha256, plugin);
+	return resolvePluginState(
+		plugin,
+		sourceForInstallation(saved.installation),
+		saved.installation,
 	);
 }
 
@@ -481,13 +635,17 @@ export async function removePluginPackage(pluginId: string): Promise<void> {
 	const installation = await getPluginInstallation(pluginId);
 	if (!installation) throw new Error("未找到已安装的插件");
 	await deletePluginInstallation(pluginId);
-	remotePluginCache.delete(installationCacheKey(installation));
+	evictInstalledPlugin(pluginId);
 }
 
 export function pluginSourceLabel(state: PluginState): string {
 	return state.installation
 		? pluginInstallationSpecifier(state.installation)
 		: "bundled";
+}
+
+export async function getInstalledPluginSource(pluginId: string) {
+	return (await getPluginModule(pluginId)) ?? null;
 }
 
 export interface PluginRuntime {

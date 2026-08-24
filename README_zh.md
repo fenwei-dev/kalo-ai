@@ -27,7 +27,7 @@ apps/
   web/       SvelteKit PWA
 packages/
   plugin-sdk/             稳定插件协议
-  plugin-example/         默认停用的集成示例
+  plugin-example/         可发布到 npm/JSR 的参考插件
   plugin-mcdonalds-sg/    新加坡麦当劳营养静态数据工具
   plugin-subway-sg/       新加坡赛百味营养静态数据工具
   plugin-kfc-sg/          新加坡肯德基营养与过敏原静态数据工具
@@ -38,7 +38,7 @@ packages/
 
 ## npm / JSR 插件 package
 
-用户可以在**设置 → 插件**中导入固定到精确版本的 Kalo 插件 package：
+用户可以在**设置 → 插件**中导入固定到精确版本的 Kalo 插件 package，或上传单个自包含的本地 `.js` / `.mjs` 文件：
 
 ```text
 npm:package@1.2.3
@@ -46,7 +46,7 @@ npm:@scope/package@1.2.3
 jsr:@scope/package@1.2.3
 ```
 
-卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。浏览器模块通过 esm.sh 解析；新安装的 package 默认停用，从备份恢复后也必须再次明确启用。package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
+卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。Registry package 会通过 esm.sh 下载一次自包含 bundle 并存入 IndexedDB，后续可离线使用；本地文件最大 2 MiB 且不得包含 import。新安装插件默认停用，可执行缓存源码会包含在完整备份中，从备份恢复后必须再次明确启用。package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
 
 ## 开发
 

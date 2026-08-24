@@ -1,15 +1,57 @@
 {
 	"name": "@kalo-ai/plugin-example",
 	"version": "0.1.0",
-	"private": true,
+	"description": "Reference Kalo AI plugin demonstrating tools, settings, prompt extensions, and storage",
+	"license": "MIT",
+	"private": false,
 	"type": "module",
+	"sideEffects": false,
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": "./src/index.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fenwei-dev/kalo-ai.git",
+		"directory": "packages/plugin-example"
+	},
+	"homepage": "https://github.com/fenwei-dev/kalo-ai/tree/main/packages/plugin-example#readme",
+	"bugs": {
+		"url": "https://github.com/fenwei-dev/kalo-ai/issues"
+	},
+	"keywords": [
+		"kalo-ai",
+		"plugin",
+		"example",
+		"agent",
+		"ai"
+	],
 	"scripts": {
-		"check": "tsc --noEmit --project ./tsconfig.json"
+		"clean": "rm -rf ./dist",
+		"build": "tsc --project ./tsconfig.build.json",
+		"check": "bun run build",
+		"prepack": "bun run clean && bun run build",
+		"pack:check": "npm pack --dry-run",
+		"prepare:jsr": "bun run ./scripts/prepare-jsr.ts",
+		"publish:npm": "if [ -t 0 ] && [ -t 1 ]; then npm publish --access public; else echo 'Interactive npm publish needs a TTY. Run: cd packages/plugin-example && npm publish --access public' >&2; exit 1; fi",
+		"publish:jsr": "if [ -t 0 ] && [ -t 1 ]; then bun run prepare:jsr && VERSION=$(node -p \"require('./package.json').version\") && cd ./.jsr-publish && deno publish --set-version \"$VERSION\"; else echo 'Interactive JSR publish needs a TTY. Run bun run publish:jsr from packages/plugin-example.' >&2; exit 1; fi"
 	},
 	"dependencies": {
-		"@kalo-ai/plugin-sdk": "workspace:*"
+		"@kalo-ai/plugin-sdk": "^0.1.1"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=18"
 	}
 }

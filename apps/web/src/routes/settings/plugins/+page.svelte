@@ -7,7 +7,12 @@
 	import * as m from "$lib/paraglide/messages";
 	import { getLocale } from "$lib/paraglide/runtime";
 	import {
+		type PreparedLocalPluginFile,
+		prepareLocalPluginFile,
+	} from "$lib/plugins/local";
+	import {
 		getPluginStates,
+		installLocalPlugin,
 		installPluginPackage,
 		type PluginState,
 		type PluginStateStatus,
@@ -20,6 +25,12 @@
 	let riskConfirmed = $state(false);
 	let installing = $state(false);
 	let installError = $state("");
+	let localFileInput = $state<HTMLInputElement>();
+	let preparedLocal = $state<PreparedLocalPluginFile | null>(null);
+	let preparingLocal = $state(false);
+	let localRiskConfirmed = $state(false);
+	let localInstalling = $state(false);
+	let localError = $state("");
 
 	onMount(() => void reload());
 
@@ -58,6 +69,46 @@
 		} finally {
 			installing = false;
 		}
+	}
+
+	async function selectLocalFile(event: Event) {
+		if (!(event.currentTarget instanceof HTMLInputElement)) return;
+		const file = event.currentTarget.files?.[0];
+		preparedLocal = null;
+		localRiskConfirmed = false;
+		localError = "";
+		if (!file) return;
+		preparingLocal = true;
+		try {
+			preparedLocal = await prepareLocalPluginFile(file);
+		} catch (error) {
+			localError = error instanceof Error ? error.message : String(error);
+			event.currentTarget.value = "";
+		} finally {
+			preparingLocal = false;
+		}
+	}
+
+	async function installLocal() {
+		if (!preparedLocal || !localRiskConfirmed || localInstalling) return;
+		localInstalling = true;
+		localError = "";
+		try {
+			const state = await installLocalPlugin(preparedLocal);
+			preparedLocal = null;
+			localRiskConfirmed = false;
+			if (localFileInput) localFileInput.value = "";
+			await reload();
+			await goto(`/settings/plugins/${state.plugin.manifest.id}`);
+		} catch (error) {
+			localError = error instanceof Error ? error.message : String(error);
+		} finally {
+			localInstalling = false;
+		}
+	}
+
+	function formatBytes(bytes: number): string {
+		return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KiB`;
 	}
 </script>
 
@@ -149,6 +200,52 @@
 						class="w-full rounded-full bg-emerald-500 py-3 text-sm font-medium text-white disabled:opacity-40"
 					>
 						{installing ? m.plugins_installing() : m.plugins_install()}
+					</button>
+				</div>
+			</Block>
+
+			<BlockTitle>{m.plugins_add_local()}</BlockTitle>
+			<Block inset strong>
+				<div class="space-y-3">
+					<input
+						bind:this={localFileInput}
+						type="file"
+						aria-label={m.plugins_add_local()}
+						accept=".js,.mjs,text/javascript,application/javascript"
+						onchange={selectLocalFile}
+						class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-emerald-700"
+					/>
+					<p class="text-xs leading-relaxed text-gray-500">{m.plugins_local_hint()}</p>
+					{#if preparingLocal}
+						<p class="text-xs text-gray-400">{m.plugins_local_preparing()}</p>
+					{:else if preparedLocal}
+						<div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+							<p class="font-medium text-gray-700">{preparedLocal.fileName}</p>
+							<p class="mt-1">{formatBytes(preparedLocal.size)}</p>
+							<p class="mt-1 break-all font-mono text-[10px]">sha256:{preparedLocal.sha256}</p>
+						</div>
+					{/if}
+					<div class="rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
+						{m.plugins_local_risk()}
+					</div>
+					<label class="flex items-start gap-2 text-xs leading-relaxed text-gray-600">
+						<input
+							type="checkbox"
+							bind:checked={localRiskConfirmed}
+							class="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-500"
+						/>
+						<span>{m.plugins_local_confirm()}</span>
+					</label>
+					{#if localError}
+						<p class="text-xs leading-relaxed text-red-500">{localError}</p>
+					{/if}
+					<button
+						type="button"
+						onclick={installLocal}
+						disabled={!preparedLocal || !localRiskConfirmed || localInstalling || preparingLocal}
+						class="w-full rounded-full bg-emerald-500 py-3 text-sm font-medium text-white disabled:opacity-40"
+					>
+						{localInstalling ? m.plugins_installing() : m.plugins_local_install()}
 					</button>
 				</div>
 			</Block>

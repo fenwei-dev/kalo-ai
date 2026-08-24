@@ -1,6 +1,21 @@
-import { type AgentTool, definePlugin, Type } from "@kalo-ai/plugin-sdk";
+import {
+	type AgentTool,
+	definePlugin,
+	type KaloPlugin,
+	type PluginJsonObject,
+	type TSchema,
+	Type,
+} from "@kalo-ai/plugin-sdk";
 
-const configSchema = Type.Object({
+interface ExampleConfig extends PluginJsonObject {
+	prefix: string;
+	apiKey: string;
+	repeatCount: number;
+	mode: "plain" | "bracketed";
+	uppercase: boolean;
+}
+
+const configSchema: TSchema = Type.Object({
 	prefix: Type.String({ minLength: 1, maxLength: 40 }),
 	apiKey: Type.String({ maxLength: 100 }),
 	repeatCount: Type.Integer({ minimum: 1, maximum: 5 }),
@@ -12,7 +27,10 @@ const echoParameters = Type.Object({
 	text: Type.String({ minLength: 1, maxLength: 500 }),
 });
 
-export const examplePlugin = definePlugin({
+export const examplePlugin: KaloPlugin = definePlugin<
+	typeof configSchema,
+	ExampleConfig
+>({
 	manifest: {
 		id: "example",
 		apiVersion: 1,

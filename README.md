@@ -27,7 +27,7 @@ apps/
   web/       SvelteKit PWA
 packages/
   plugin-sdk/             Stable plugin contract
-  plugin-example/         Disabled-by-default integration example
+  plugin-example/         Publishable npm/JSR reference plugin
   plugin-mcdonalds-sg/    McDonald's Singapore nutrition snapshot tools
   plugin-subway-sg/       Subway Singapore nutrition snapshot tools
   plugin-kfc-sg/          KFC Singapore nutrition and allergen snapshot tools
@@ -38,7 +38,7 @@ The root scripts proxy the web workspace, so the usual commands remain unchanged
 
 ## npm / JSR plugin packages
 
-From **Settings → Plugins**, users can import Kalo plugin packages pinned to exact versions:
+From **Settings → Plugins**, users can import Kalo plugin packages pinned to exact versions or upload one self-contained local `.js` / `.mjs` file:
 
 ```text
 npm:package@1.2.3
@@ -46,7 +46,7 @@ npm:@scope/package@1.2.3
 jsr:@scope/package@1.2.3
 ```
 
-Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Browser modules are resolved through esm.sh, installed packages start disabled, and restored packages must be explicitly re-enabled. See [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package export contract and security boundary.
+Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Registry packages are downloaded once as self-contained esm.sh bundles and stored in IndexedDB for offline use. Local files must be at most 2 MiB and contain no imports. Installed plugins start disabled, executable cached source is included in full backups, and restored plugins must be explicitly re-enabled. See [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package export contract and security boundary.
 
 ## Development
 

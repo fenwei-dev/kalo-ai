@@ -16,6 +16,7 @@
 	import { getLocale } from "$lib/paraglide/runtime";
 	import {
 		disableInstalledPlugin,
+		getInstalledPluginSource,
 		getPluginState,
 		type PluginState,
 		pluginSourceLabel,
@@ -33,6 +34,8 @@
 	let error = $state("");
 	let resetDialogOpen = $state(false);
 	let removeDialogOpen = $state(false);
+	let installedSource =
+		$state<Awaited<ReturnType<typeof getInstalledPluginSource>>>(null);
 
 	onMount(() => void load());
 
@@ -47,6 +50,10 @@
 			pluginState = loaded;
 			config = structuredClone(loaded.config);
 			enabled = loaded.enabled;
+			installedSource =
+				loaded.source.type === "bundled"
+					? null
+					: await getInstalledPluginSource(loaded.plugin.manifest.id);
 		} finally {
 			loading = false;
 		}
@@ -126,6 +133,18 @@
 		}
 	}
 
+	function downloadSource() {
+		if (!installedSource) return;
+		const url = URL.createObjectURL(
+			new Blob([installedSource.source], { type: "text/javascript" }),
+		);
+		const anchor = document.createElement("a");
+		anchor.href = url;
+		anchor.download = installedSource.fileName;
+		anchor.click();
+		setTimeout(() => URL.revokeObjectURL(url), 0);
+	}
+
 	async function remove() {
 		if (!pluginState || pluginState.source.type === "bundled") return;
 		try {
@@ -167,6 +186,18 @@
 					<p class="mt-2 break-all text-xs text-gray-400">
 						{m.plugins_source()}: {pluginSourceLabel(pluginState)}
 					</p>
+					{#if installedSource}
+						<p class="mt-2 break-all font-mono text-[10px] text-gray-400">
+							sha256:{installedSource.sha256}
+						</p>
+						<button
+							type="button"
+							onclick={downloadSource}
+							class="mt-2 text-xs font-medium text-emerald-600"
+						>
+							{m.plugins_download_source()}
+						</button>
+					{/if}
 					{#if pluginState.loadError}
 						<div class="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-relaxed text-red-600">
 							<p>{m.plugins_load_error()}: {pluginState.loadError}</p>

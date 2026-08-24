@@ -11,6 +11,7 @@ import type {
 	PluginConfigRecord,
 	PluginDataRecord,
 	PluginInstallation,
+	PluginModuleRecord,
 	Session,
 	TrainingPlan,
 	User,
@@ -56,13 +57,19 @@ export interface KaloBackupV5 extends Omit<KaloBackupV4, "version"> {
 	pluginInstallations: PluginInstallation[];
 }
 
+export interface KaloBackupV6 extends Omit<KaloBackupV5, "version"> {
+	version: 6;
+	pluginModules: PluginModuleRecord[];
+}
+
 export type KaloBackup =
 	| KaloBackupV1
 	| KaloBackupV2
 	| KaloBackupV3
 	| KaloBackupV4
-	| KaloBackupV5;
-export type ParsedKaloBackup = Omit<KaloBackupV5, "version" | "exportedAt">;
+	| KaloBackupV5
+	| KaloBackupV6;
+export type ParsedKaloBackup = Omit<KaloBackupV6, "version" | "exportedAt">;
 
 type DataRecord = Record<string, unknown>;
 type ValueGuard<T> = (value: unknown) => value is T;
@@ -377,6 +384,9 @@ const NPM_PACKAGE_PATTERN =
 const JSR_PACKAGE_PATTERN = /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/;
 const EXACT_VERSION_PATTERN =
 	/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+const LOCAL_PLUGIN_FILE_PATTERN = /^[^/\\\0]{1,200}\.(?:js|mjs)$/i;
+const SHA256_PATTERN = /^[a-f0-9]{64}$/;
+const MAX_PLUGIN_MODULE_BYTES = 2 * 1024 * 1024;
 
 function isPluginManifest(
 	value: unknown,
@@ -436,18 +446,59 @@ function isPluginInstallation(value: unknown): value is PluginInstallation {
 		isString(value.pluginId) &&
 		value.pluginId.length <= 64 &&
 		PLUGIN_ID_PATTERN.test(value.pluginId) &&
-		isOneOf(value.registry, ["npm", "jsr"] as const) &&
+		isOneOf(value.registry, ["npm", "jsr", "local"] as const) &&
 		isString(value.packageName) &&
 		value.packageName.length <= 214 &&
 		(value.registry === "npm"
 			? NPM_PACKAGE_PATTERN.test(value.packageName)
-			: JSR_PACKAGE_PATTERN.test(value.packageName)) &&
+			: value.registry === "jsr"
+				? JSR_PACKAGE_PATTERN.test(value.packageName)
+				: LOCAL_PLUGIN_FILE_PATTERN.test(value.packageName)) &&
 		isString(value.packageVersion) &&
 		EXACT_VERSION_PATTERN.test(value.packageVersion) &&
+		isOptional(
+			value.moduleSha256,
+			(item): item is string => isString(item) && SHA256_PATTERN.test(item),
+		) &&
+		isOptional(
+			value.moduleSize,
+			(item): item is number =>
+				isFiniteNumber(item) &&
+				Number.isInteger(item) &&
+				item > 0 &&
+				item <= MAX_PLUGIN_MODULE_BYTES,
+		) &&
+		((value.moduleSha256 === undefined && value.moduleSize === undefined) ||
+			(isString(value.moduleSha256) && isFiniteNumber(value.moduleSize))) &&
+		(value.registry !== "local" ||
+			(isString(value.moduleSha256) && isFiniteNumber(value.moduleSize))) &&
 		isPluginManifest(value.manifest) &&
 		value.manifest.id === value.pluginId &&
 		value.manifest.version === value.packageVersion &&
 		isFiniteNumber(value.installedAt) &&
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
+function isPluginModuleRecord(value: unknown): value is PluginModuleRecord {
+	return (
+		isRecord(value) &&
+		isString(value.pluginId) &&
+		value.pluginId.length <= 64 &&
+		PLUGIN_ID_PATTERN.test(value.pluginId) &&
+		isString(value.source) &&
+		value.source.length > 0 &&
+		isString(value.sha256) &&
+		SHA256_PATTERN.test(value.sha256) &&
+		isFiniteNumber(value.size) &&
+		Number.isInteger(value.size) &&
+		value.size > 0 &&
+		value.size <= MAX_PLUGIN_MODULE_BYTES &&
+		new TextEncoder().encode(value.source).byteLength === value.size &&
+		isString(value.fileName) &&
+		LOCAL_PLUGIN_FILE_PATTERN.test(value.fileName) &&
+		isOptional(value.sourceUrl, isString) &&
+		isFiniteNumber(value.createdAt) &&
 		isFiniteNumber(value.updatedAt)
 	);
 }
@@ -516,7 +567,8 @@ export function parseKaloBackup(
 		value.version !== 2 &&
 		value.version !== 3 &&
 		value.version !== 4 &&
-		value.version !== 5
+		value.version !== 5 &&
+		value.version !== 6
 	)
 		throw new Error("备份版本不受支持");
 	if (!isFiniteNumber(value.exportedAt))
@@ -550,6 +602,10 @@ export function parseKaloBackup(
 		value.version >= 5
 			? requireArray(value, "pluginInstallations", isPluginInstallation)
 			: [];
+	const pluginModules =
+		value.version >= 6
+			? requireArray(value, "pluginModules", isPluginModuleRecord)
+			: [];
 	if (user.length > 1) throw new Error("用户资料格式无效");
 	if (aiConfig.length > 1) throw new Error("AI 配置格式无效");
 	if (userMemory.length > 1) throw new Error("用户记忆格式无效");
@@ -576,12 +632,49 @@ export function parseKaloBackup(
 	}
 	if (
 		new Set(
-			pluginInstallations.map(
-				(record) => `${record.registry}\u0000${record.packageName}`,
+			pluginInstallations.map((record) =>
+				record.registry === "local"
+					? `local\u0000${record.pluginId}`
+					: `${record.registry}\u0000${record.packageName}`,
 			),
 		).size !== pluginInstallations.length
 	) {
-		throw new Error("已安装插件包含重复 package");
+		throw new Error("已安装插件包含重复来源");
+	}
+	if (
+		new Set(pluginModules.map((record) => record.pluginId)).size !==
+		pluginModules.length
+	) {
+		throw new Error("插件模块包含重复 pluginId");
+	}
+	const installationById = new Map(
+		pluginInstallations.map((installation) => [
+			installation.pluginId,
+			installation,
+		]),
+	);
+	if (
+		pluginModules.some((module) => !installationById.has(module.pluginId)) ||
+		pluginInstallations.some(
+			(installation) =>
+				installation.registry === "local" &&
+				!pluginModules.some(
+					(module) => module.pluginId === installation.pluginId,
+				),
+		)
+	) {
+		throw new Error("插件安装记录与本地模块不一致");
+	}
+	if (
+		pluginModules.some((module) => {
+			const installation = installationById.get(module.pluginId);
+			return (
+				installation?.moduleSha256 !== module.sha256 ||
+				installation.moduleSize !== module.size
+			);
+		})
+	) {
+		throw new Error("插件模块 hash 或大小与安装记录不一致");
 	}
 	if (
 		trainingPlans.filter(
@@ -640,6 +733,7 @@ export function parseKaloBackup(
 		pluginConfigs,
 		pluginData,
 		pluginInstallations,
+		pluginModules,
 		foodEntries: requireArray(value, "foodEntries", isFoodEntry),
 		exerciseEntries,
 		weightEntries: requireArray(value, "weightEntries", isWeightEntry),

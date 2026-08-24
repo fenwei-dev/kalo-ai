@@ -22,7 +22,7 @@ import sdkJsrPackage from "../../../packages/plugin-sdk/jsr.json";
 import sdkNpmPackage from "../../../packages/plugin-sdk/package.json";
 import subwayPackage from "../../../packages/plugin-subway-sg/package.json";
 
-test("bundled plugin packages expose the standard remote package entry points", () => {
+test("plugin workspace packages expose the standard remote package entry points", () => {
 	expect(exampleDefault).toBe(examplePlugin);
 	expect(exampleKaloPlugin).toBe(examplePlugin);
 	expect(mcdonaldsDefault).toBe(mcdonaldsSGPlugin);

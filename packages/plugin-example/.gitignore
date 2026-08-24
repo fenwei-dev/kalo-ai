@@ -1,0 +1,4 @@
+# Generated npm artifacts
+/dist/
+/*.tgz
+/.jsr-publish/

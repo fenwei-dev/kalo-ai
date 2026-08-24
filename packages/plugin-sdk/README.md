@@ -51,6 +51,19 @@ export default definePlugin({
 
 Tool names must start with `${pluginId}_`, be provider-compatible, and remain globally unique.
 
+## Importing one local JavaScript file
+
+Kalo can import one self-contained browser ESM `.js` or `.mjs` file up to 2 MiB. The final file must contain no static imports, dynamic imports, relative imports, bare package imports, or URL imports. Bundle this SDK and every other dependency into one output before selecting the file:
+
+```bash
+bun build src/plugin.ts \
+  --outfile dist/plugin.js \
+  --format esm \
+  --target browser
+```
+
+The local file uses the same default / `kaloPlugin` export contract. Kalo shows its size and SHA-256 before executing it, stores the exact source in IndexedDB for offline use, and includes it in full backups. Replacing a local plugin with different source requires a new `manifest.version` and forces the plugin back to disabled.
+
 ## Installing from a registry
 
 Kalo accepts only exact package versions:
@@ -61,7 +74,7 @@ npm:@scope/package@1.2.3
 jsr:@scope/package@1.2.3
 ```
 
-Tags such as `latest`, semver ranges, arbitrary URLs, and unversioned packages are rejected. Browser modules are resolved through `https://esm.sh` and therefore need network access after a fresh application load. At most 10 remote packages can be installed. Newly installed and backup-restored packages are disabled until the user explicitly enables them.
+Tags such as `latest`, semver ranges, arbitrary URLs, and unversioned packages are rejected. Kalo resolves the package through `https://esm.sh`, follows `X-ESM-Path` to the final self-contained bundle, rejects any remaining imports, and stores the exact JavaScript plus SHA-256 in IndexedDB. Network access is needed for installation, not for later use. At most 10 user-installed registry and local plugins can be stored. Newly installed and backup-restored plugins are disabled until the user explicitly enables them.
 
 ## Publishing this SDK
 
@@ -123,4 +136,4 @@ The `plugin-sdk-v<version>` tag triggers `.github/workflows/publish-plugin-sdk.y
 
 ## Security boundary
 
-Runtime-installed packages are **not sandboxed**. Importing the package immediately executes third-party JavaScript in Kalo's browser context. It can potentially access IndexedDB, local health data, chats, plugin secrets, and the AI API key directly, regardless of declared permissions. Permission declarations are informational, not a security control. Install only independently reviewed code from a trusted publisher and exact version.
+Runtime-installed registry packages and local files are **not sandboxed**. Importing a plugin immediately executes third-party JavaScript in Kalo's browser context. It can potentially access IndexedDB, local health data, chats, plugin secrets, and the AI API key directly, regardless of declared permissions. Permission declarations are informational, not a security control. Install only independently reviewed code from a trusted publisher and exact version.

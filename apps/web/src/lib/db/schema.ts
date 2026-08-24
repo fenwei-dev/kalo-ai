@@ -184,16 +184,32 @@ export interface PluginDataRecord {
 	updatedAt: number;
 }
 
-export type PluginPackageRegistry = "npm" | "jsr";
+export type PluginPackageRegistry = "npm" | "jsr" | "local";
 
-/** Exact, user-installed package reference and a displayable manifest snapshot. */
+/** Exact user-installed source reference and a displayable manifest snapshot. */
 export interface PluginInstallation {
 	pluginId: string;
 	registry: PluginPackageRegistry;
+	/** Registry package name, or the original file name for local plugins. */
 	packageName: string;
+	/** Exact registry version, or manifest version for local plugins. */
 	packageVersion: string;
+	moduleSha256?: string;
+	moduleSize?: number;
 	manifest: PluginManifest;
 	installedAt: number;
+	updatedAt: number;
+}
+
+/** Cached, self-contained JavaScript used for offline plugin loading. */
+export interface PluginModuleRecord {
+	pluginId: string;
+	source: string;
+	sha256: string;
+	size: number;
+	fileName: string;
+	sourceUrl?: string;
+	createdAt: number;
 	updatedAt: number;
 }
 
@@ -246,6 +262,7 @@ class KaloDB extends Dexie {
 	pluginConfigs!: Table<PluginConfigRecord, string>;
 	pluginData!: Table<PluginDataRecord, [string, string]>;
 	pluginInstallations!: Table<PluginInstallation, string>;
+	pluginModules!: Table<PluginModuleRecord, string>;
 	weightEntries!: Table<WeightEntry, string>;
 	foodLibrary!: Table<FoodLibraryItem, string>;
 	sessions!: Table<Session, string>;
@@ -340,6 +357,25 @@ class KaloDB extends Dexie {
 			pluginData: "[pluginId+key], pluginId",
 			pluginInstallations:
 				"pluginId, registry, packageName, installedAt, updatedAt",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
+		});
+		this.version(7).stores({
+			user: "id",
+			aiConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source, plannedWorkoutId",
+			trainingPlans: "id, status, startDate, updatedAt",
+			plannedWorkouts:
+				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			pluginConfigs: "pluginId, enabled",
+			pluginData: "[pluginId+key], pluginId",
+			pluginInstallations:
+				"pluginId, registry, packageName, installedAt, updatedAt",
+			pluginModules: "pluginId, updatedAt",
 			weightEntries: "id, date",
 			foodLibrary: "id, name, category, lastUsedAt",
 			sessions: "id, updatedAt, lastMessageAt",
