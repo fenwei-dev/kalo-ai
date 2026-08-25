@@ -107,4 +107,4 @@ The workflow publishes npm and JSR with GitHub OIDC. Existing versions are skipp
 
 ## Security
 
-This plugin runs without a sandbox when installed in Kalo, just like every user-installed plugin. Review the exact package version before enabling it.
+Kalo executes this plugin in an opaque-origin iframe Worker sandbox. It declares no host-service permissions; direct DOM, IndexedDB, browser-storage, and network access are blocked. Its tools and System Prompt still influence Agent behavior, so review the exact package version before enabling it.

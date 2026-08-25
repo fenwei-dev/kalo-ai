@@ -1,7 +1,7 @@
 {
 	"name": "@kalo-ai/plugin-example",
 	"version": "0.1.0",
-	"description": "Reference Kalo AI plugin demonstrating tools, settings, prompt extensions, and storage",
+	"description": "Reference Kalo AI plugin demonstrating tools, settings, prompt extensions, and migration",
 	"license": "MIT",
 	"private": false,
 	"type": "module",
