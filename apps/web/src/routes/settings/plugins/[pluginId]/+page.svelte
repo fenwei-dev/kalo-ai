@@ -186,6 +186,11 @@
 					<p class="mt-2 break-all text-xs text-gray-400">
 						{m.plugins_source()}: {pluginSourceLabel(pluginState)}
 					</p>
+					{#if pluginState.source.type !== 'bundled' && pluginState.status !== 'load_error'}
+						<p class="mt-2 text-xs font-medium text-emerald-600">
+							{m.plugins_sandboxed()}
+						</p>
+					{/if}
 					{#if installedSource}
 						<p class="mt-2 break-all font-mono text-[10px] text-gray-400">
 							sha256:{installedSource.sha256}

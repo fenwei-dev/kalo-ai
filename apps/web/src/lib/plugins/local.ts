@@ -1,8 +1,6 @@
 import {
 	analyzePluginModuleSource,
-	importPluginModuleSource,
 	MAX_PLUGIN_MODULE_BYTES,
-	type PluginSourceImporter,
 } from "./moduleSource";
 
 const LOCAL_PLUGIN_FILE_PATTERN = /^[^/\\\0]{1,200}\.(?:js|mjs)$/i;
@@ -28,20 +26,11 @@ export async function prepareLocalPluginFile(
 	return { fileName: file.name, ...analyzed };
 }
 
-export async function importPreparedLocalPlugin(
+export async function verifyPreparedLocalPlugin(
 	prepared: PreparedLocalPluginFile,
-	importer?: PluginSourceImporter,
-) {
-	const loaded = await importPluginModuleSource(
-		prepared.source,
-		prepared.fileName,
-		importer,
-	);
-	if (
-		loaded.analyzed.sha256 !== prepared.sha256 ||
-		loaded.analyzed.size !== prepared.size
-	) {
+): Promise<void> {
+	const analyzed = await analyzePluginModuleSource(prepared.source);
+	if (analyzed.sha256 !== prepared.sha256 || analyzed.size !== prepared.size) {
 		throw new Error("本地插件文件在安装前发生了变化");
 	}
-	return loaded;
 }

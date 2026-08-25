@@ -1,13 +1,10 @@
 import { expect, test } from "bun:test";
 import { definePlugin, Type } from "@kalo-ai/plugin-sdk";
+import { normalizePluginModule } from "../src/lib/plugins/contract";
 import { prepareLocalPluginFile } from "../src/lib/plugins/local";
-import {
-	analyzePluginModuleSource,
-	importPluginModuleSource,
-} from "../src/lib/plugins/moduleSource";
+import { analyzePluginModuleSource } from "../src/lib/plugins/moduleSource";
 import {
 	downloadRemotePluginModule,
-	loadRemotePlugin,
 	parsePluginPackageSpecifier,
 	remotePluginModuleUrl,
 } from "../src/lib/plugins/remote";
@@ -104,40 +101,29 @@ test("downloads the final self-contained esm.sh bundle", async () => {
 	expect(downloaded.sha256).toMatch(/^[a-f0-9]{64}$/);
 });
 
-test("downloads and loads a compatible registry plugin", async () => {
-	const loaded = await loadRemotePlugin(
-		parsePluginPackageSpecifier("npm:@scope/plugin@1.2.3"),
-		{
-			fetcher: fixtureFetcher([]),
-			importer: async () => ({ default: fixturePlugin }),
-		},
-	);
-	expect(loaded.plugin.manifest.id).toBe("remote_fixture");
-	expect(loaded.module.source).toBe("export default {};");
+test("normalizes a compatible registry plugin export without executing source", () => {
+	const loaded = normalizePluginModule({ default: fixturePlugin });
+	expect(loaded.manifest.id).toBe("remote_fixture");
 });
 
-test("hydrates a dependency-free raw definition exported as kaloPlugin", async () => {
-	const loaded = await importPluginModuleSource(
-		"export const placeholder = true;",
-		"plain-plugin.js",
-		async () => ({
-			kaloPlugin: {
-				manifest: {
-					id: "plain_remote",
-					apiVersion: 1,
-					version: "1.0.0",
-					configVersion: 1,
-					name: { "zh-cn": "纯对象", "en-us": "Plain definition" },
-					description: { "zh-cn": "测试", "en-us": "Test fixture" },
-				},
-				configSchema: { type: "object", properties: {}, required: [] },
-				defaultConfig: {},
-				createTools: () => [],
+test("hydrates a dependency-free raw definition exported as kaloPlugin", () => {
+	const loaded = normalizePluginModule({
+		kaloPlugin: {
+			manifest: {
+				id: "plain_remote",
+				apiVersion: 1,
+				version: "1.0.0",
+				configVersion: 1,
+				name: { "zh-cn": "纯对象", "en-us": "Plain definition" },
+				description: { "zh-cn": "测试", "en-us": "Test fixture" },
 			},
-		}),
-	);
-	expect(loaded.plugin.manifest.id).toBe("plain_remote");
-	expect(loaded.plugin.validateConfig({})).toBe(true);
+			configSchema: { type: "object", properties: {}, required: [] },
+			defaultConfig: {},
+			createTools: () => [],
+		},
+	});
+	expect(loaded.manifest.id).toBe("plain_remote");
+	expect(loaded.validateConfig({})).toBe(true);
 });
 
 test("local plugin preparation rejects imports and records a stable hash", async () => {

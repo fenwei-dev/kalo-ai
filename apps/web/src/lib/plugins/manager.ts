@@ -20,20 +20,17 @@ import {
 import type { PluginInstallation, PluginPackageRegistry } from "$lib/db/schema";
 import { clonePluginManifest } from "./contract";
 import {
-	importPreparedLocalPlugin,
 	type PreparedLocalPluginFile,
+	verifyPreparedLocalPlugin,
 } from "./local";
-import {
-	importPluginModuleSource,
-	type PluginSourceImporter,
-} from "./moduleSource";
 import { bundledPlugins, getPlugin } from "./registry";
 import {
-	loadRemotePlugin,
+	type DownloadedRemotePluginModule,
+	downloadRemotePluginModule,
 	parsePluginPackageSpecifier,
 	pluginInstallationSpecifier,
-	type RemotePluginLoader,
 } from "./remote";
+import { SandboxPluginClient } from "./sandbox";
 import { createPluginServices } from "./services";
 
 const TOOL_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
@@ -69,7 +66,43 @@ export interface PluginState {
 	loadError?: string;
 }
 
+export type PluginModuleExecutor = (
+	source: string,
+	debugName: string,
+) => Promise<KaloPlugin>;
+
 const installedPluginCache = new Map<string, Promise<KaloPlugin>>();
+const sandboxClientByPlugin = new WeakMap<KaloPlugin, SandboxPluginClient>();
+const activeSandboxClients = new Map<string, SandboxPluginClient>();
+
+async function executeSandboxedModule(
+	source: string,
+	debugName: string,
+): Promise<KaloPlugin> {
+	const client = await SandboxPluginClient.create(source, debugName);
+	const plugin = client.proxyPlugin;
+	sandboxClientByPlugin.set(plugin, client);
+	return plugin;
+}
+
+function sandboxClient(plugin: KaloPlugin): SandboxPluginClient | undefined {
+	return sandboxClientByPlugin.get(plugin);
+}
+
+function activateSandboxPlugin(plugin: KaloPlugin): void {
+	const client = sandboxClient(plugin);
+	if (!client) return;
+	const previous = activeSandboxClients.get(plugin.manifest.id);
+	if (previous !== client) previous?.dispose();
+	activeSandboxClients.set(plugin.manifest.id, client);
+}
+
+function disposeSandboxCandidate(plugin: KaloPlugin): void {
+	const client = sandboxClient(plugin);
+	if (client && activeSandboxClients.get(plugin.manifest.id) !== client) {
+		client.dispose();
+	}
+}
 
 function cloneJsonValue(value: PluginJsonValue): PluginJsonValue {
 	if (Array.isArray(value)) return value.map(cloneJsonValue);
@@ -108,6 +141,8 @@ function installedPluginCacheKey(pluginId: string, sha256: string): string {
 }
 
 function evictInstalledPlugin(pluginId: string): void {
+	activeSandboxClients.get(pluginId)?.dispose();
+	activeSandboxClients.delete(pluginId);
 	for (const key of installedPluginCache.keys()) {
 		if (key.startsWith(`${pluginId}:`)) installedPluginCache.delete(key);
 	}
@@ -118,6 +153,7 @@ function rememberInstalledPlugin(
 	sha256: string,
 	plugin: KaloPlugin,
 ): void {
+	activateSandboxPlugin(plugin);
 	installedPluginCache.set(
 		installedPluginCacheKey(pluginId, sha256),
 		Promise.resolve(plugin),
@@ -143,12 +179,10 @@ async function loadInstalledPlugin(
 				) {
 					throw new Error("插件模块与安装记录的 hash 或大小不一致");
 				}
-				return (
-					await importPluginModuleSource(
-						storedModule.source,
-						storedModule.fileName,
-					)
-				).plugin;
+				return executeSandboxedModule(
+					storedModule.source,
+					storedModule.fileName,
+				);
 			}
 			if (installation.registry === "local") {
 				throw new Error("本地插件源码不存在，请重新上传插件文件");
@@ -159,28 +193,28 @@ async function loadInstalledPlugin(
 				packageVersion: installation.packageVersion,
 				canonicalSpecifier: `${installation.registry}:${installation.packageName}@${installation.packageVersion}`,
 			};
-			const loaded = await loadRemotePlugin(source);
+			const downloaded = await downloadRemotePluginModule(source);
+			const plugin = await executeSandboxedModule(
+				downloaded.source,
+				`${installation.pluginId}-${installation.packageVersion}.js`,
+			);
 			await savePluginInstallationWithModule(
 				{
 					...installation,
-					moduleSha256: loaded.module.sha256,
-					moduleSize: loaded.module.size,
+					moduleSha256: downloaded.sha256,
+					moduleSize: downloaded.size,
 				},
 				{
 					pluginId: installation.pluginId,
-					source: loaded.module.source,
-					sha256: loaded.module.sha256,
-					size: loaded.module.size,
+					source: downloaded.source,
+					sha256: downloaded.sha256,
+					size: downloaded.size,
 					fileName: `${installation.pluginId}-${installation.packageVersion}.js`,
-					sourceUrl: loaded.module.sourceUrl,
+					sourceUrl: downloaded.sourceUrl,
 				},
 			);
-			rememberInstalledPlugin(
-				installation.pluginId,
-				loaded.module.sha256,
-				loaded.plugin,
-			);
-			return loaded.plugin;
+			rememberInstalledPlugin(installation.pluginId, downloaded.sha256, plugin);
+			return plugin;
 		})().catch((error) => {
 			installedPluginCache.delete(cacheKey);
 			throw error;
@@ -189,15 +223,18 @@ async function loadInstalledPlugin(
 	}
 	const plugin = await pending;
 	if (plugin.manifest.id !== installation.pluginId) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(
 			`Package now exports plugin id ${plugin.manifest.id}, expected ${installation.pluginId}`,
 		);
 	}
 	if (plugin.manifest.version !== installation.packageVersion) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(
 			`Package version ${installation.packageVersion} exports plugin version ${plugin.manifest.version}`,
 		);
 	}
+	activateSandboxPlugin(plugin);
 	return plugin;
 }
 
@@ -228,6 +265,26 @@ async function loadErrorState(
 		updatedAt: record?.updatedAt ?? installation.updatedAt,
 		loadError: errorMessage(error),
 	};
+}
+
+async function isPluginConfigured(
+	plugin: KaloPlugin,
+	config: PluginJsonObject,
+): Promise<boolean> {
+	const client = sandboxClient(plugin);
+	return client ? client.isConfigured(config) : plugin.isConfigured(config);
+}
+
+async function migratePluginConfig(
+	plugin: KaloPlugin,
+	config: PluginJsonObject,
+	fromVersion: number,
+): Promise<PluginJsonObject> {
+	const client = sandboxClient(plugin);
+	if (client) return client.migrateConfig(config, fromVersion);
+	if (!plugin.migrateConfig)
+		throw new Error("Plugin does not support migration");
+	return plugin.migrateConfig(config, fromVersion);
 }
 
 async function resolvePluginState(
@@ -269,7 +326,7 @@ async function resolvePluginState(
 			};
 		}
 		try {
-			config = plugin.migrateConfig(config, configVersion);
+			config = await migratePluginConfig(plugin, config, configVersion);
 			configVersion = plugin.manifest.configVersion;
 		} catch {
 			return {
@@ -305,7 +362,7 @@ async function resolvePluginState(
 	let configured = false;
 	try {
 		validConfig = plugin.validateConfig(config);
-		configured = validConfig && plugin.isConfigured(config);
+		configured = validConfig && (await isPluginConfigured(plugin, config));
 	} catch {
 		validConfig = false;
 	}
@@ -420,7 +477,7 @@ export async function savePluginSettings(
 	const state = await getLoadablePluginState(pluginId);
 	const plugin = state.plugin;
 	if (!plugin.validateConfig(config)) throw new Error("插件配置格式无效");
-	if (enabled && !plugin.isConfigured(config))
+	if (enabled && !(await isPluginConfigured(plugin, config)))
 		throw new Error("请先完成插件必填配置");
 	await savePluginConfig({
 		pluginId,
@@ -428,7 +485,13 @@ export async function savePluginSettings(
 		configVersion: plugin.manifest.configVersion,
 		config: cloneConfig(config),
 	});
-	return resolvePluginState(plugin, state.source, state.installation);
+	const resolved = await resolvePluginState(
+		plugin,
+		state.source,
+		state.installation,
+	);
+	if (!enabled && state.installation) evictInstalledPlugin(pluginId);
+	return resolved;
 }
 
 export async function setPluginEnabled(
@@ -444,12 +507,21 @@ export async function resetPluginSettings(
 ): Promise<PluginState> {
 	const state = await getLoadablePluginState(pluginId);
 	await deletePluginConfig(pluginId);
-	return resolvePluginState(state.plugin, state.source, state.installation);
+	const resolved = await resolvePluginState(
+		state.plugin,
+		state.source,
+		state.installation,
+	);
+	if (state.installation) evictInstalledPlugin(pluginId);
+	return resolved;
 }
 
 export async function installPluginPackage(
 	packageSpecifier: string,
-	loader: RemotePluginLoader = loadRemotePlugin,
+	downloader: (
+		source: ReturnType<typeof parsePluginPackageSpecifier>,
+	) => Promise<DownloadedRemotePluginModule> = downloadRemotePluginModule,
+	executor: PluginModuleExecutor = executeSandboxedModule,
 ): Promise<PluginState> {
 	const source = parsePluginPackageSpecifier(packageSpecifier);
 	const installations = await listPluginInstallations();
@@ -462,21 +534,27 @@ export async function installPluginPackage(
 		throw new Error(`最多只能安装 ${MAX_INSTALLED_PLUGIN_PACKAGES} 个插件`);
 	}
 
-	let loaded: Awaited<ReturnType<RemotePluginLoader>>;
+	let downloaded: DownloadedRemotePluginModule;
+	let plugin: KaloPlugin;
 	try {
-		loaded = await loader(source);
+		downloaded = await downloader(source);
+		plugin = await executor(
+			downloaded.source,
+			`${source.packageName}@${source.packageVersion}.js`,
+		);
 	} catch (error) {
 		throw new Error(
 			`无法加载 ${source.canonicalSpecifier}：${errorMessage(error)}`,
 		);
 	}
-	const plugin = loaded.plugin;
 	if (plugin.manifest.version !== source.packageVersion) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(
 			`插件 manifest 版本 ${plugin.manifest.version} 与 package 版本 ${source.packageVersion} 不一致`,
 		);
 	}
 	if (getPlugin(plugin.manifest.id)) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(`插件 ID ${plugin.manifest.id} 与内置插件冲突`);
 	}
 	const sameId = installations.find(
@@ -487,9 +565,11 @@ export async function installPluginPackage(
 		(sameId.registry !== source.registry ||
 			sameId.packageName !== source.packageName)
 	) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(`插件 ID ${plugin.manifest.id} 已由其他来源使用`);
 	}
 	if (samePackage && samePackage.pluginId !== plugin.manifest.id) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(
 			`该 package 已安装为插件 ${samePackage.pluginId}，新版本导出了不同 ID`,
 		);
@@ -513,25 +593,26 @@ export async function installPluginPackage(
 				registry: source.registry,
 				packageName: source.packageName,
 				packageVersion: source.packageVersion,
-				moduleSha256: loaded.module.sha256,
-				moduleSize: loaded.module.size,
+				moduleSha256: downloaded.sha256,
+				moduleSize: downloaded.size,
 				manifest: clonePluginManifest(plugin.manifest),
 			},
 			{
 				pluginId: plugin.manifest.id,
-				source: loaded.module.source,
-				sha256: loaded.module.sha256,
-				size: loaded.module.size,
+				source: downloaded.source,
+				sha256: downloaded.sha256,
+				size: downloaded.size,
 				fileName: `${plugin.manifest.id}-${source.packageVersion}.js`,
-				sourceUrl: loaded.module.sourceUrl,
+				sourceUrl: downloaded.sourceUrl,
 			},
 		);
 	} catch (error) {
+		disposeSandboxCandidate(plugin);
 		if (!sameId) await deletePluginConfig(plugin.manifest.id);
 		throw error;
 	}
 	if (sameId) evictInstalledPlugin(sameId.pluginId);
-	rememberInstalledPlugin(plugin.manifest.id, loaded.module.sha256, plugin);
+	rememberInstalledPlugin(plugin.manifest.id, downloaded.sha256, plugin);
 	return resolvePluginState(
 		plugin,
 		sourceForInstallation(saved.installation),
@@ -544,14 +625,16 @@ const LOCAL_PLUGIN_VERSION_PATTERN =
 
 export async function installLocalPlugin(
 	prepared: PreparedLocalPluginFile,
-	importer?: PluginSourceImporter,
+	executor: PluginModuleExecutor = executeSandboxedModule,
 ): Promise<PluginState> {
-	const loaded = await importPreparedLocalPlugin(prepared, importer);
-	const plugin = loaded.plugin;
+	await verifyPreparedLocalPlugin(prepared);
+	const plugin = await executor(prepared.source, prepared.fileName);
 	if (!LOCAL_PLUGIN_VERSION_PATTERN.test(plugin.manifest.version)) {
+		disposeSandboxCandidate(plugin);
 		throw new Error("本地插件 manifest.version 必须是有效的 SemVer");
 	}
 	if (getPlugin(plugin.manifest.id)) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(`插件 ID ${plugin.manifest.id} 与内置插件冲突`);
 	}
 	const installations = await listPluginInstallations();
@@ -559,9 +642,11 @@ export async function installLocalPlugin(
 		(record) => record.pluginId === plugin.manifest.id,
 	);
 	if (sameId && sameId.registry !== "local") {
+		disposeSandboxCandidate(plugin);
 		throw new Error(`插件 ID ${plugin.manifest.id} 已由 registry package 使用`);
 	}
 	if (!sameId && installations.length >= MAX_INSTALLED_PLUGIN_PACKAGES) {
+		disposeSandboxCandidate(plugin);
 		throw new Error(`最多只能安装 ${MAX_INSTALLED_PLUGIN_PACKAGES} 个插件`);
 	}
 	if (
@@ -569,6 +654,7 @@ export async function installLocalPlugin(
 		sameId.moduleSha256 !== prepared.sha256 &&
 		sameId.packageVersion === plugin.manifest.version
 	) {
+		disposeSandboxCandidate(plugin);
 		throw new Error("替换本地插件文件时必须更新 manifest.version");
 	}
 
@@ -603,6 +689,7 @@ export async function installLocalPlugin(
 			},
 		);
 	} catch (error) {
+		disposeSandboxCandidate(plugin);
 		if (!sameId) await deletePluginConfig(plugin.manifest.id);
 		throw error;
 	}
@@ -627,6 +714,7 @@ export async function disableInstalledPlugin(
 		configVersion: record?.configVersion ?? installation.manifest.configVersion,
 		config: record ? cloneConfig(record.config) : {},
 	});
+	evictInstalledPlugin(pluginId);
 	return summarizeInstalledState(installation);
 }
 
@@ -689,12 +777,22 @@ export async function loadPluginRuntime(
 		if (!state.enabled || state.status !== "ready") continue;
 		const plugin = state.plugin;
 		try {
-			const context = {
-				config: state.config,
-				locale,
-				services: createPluginServices(plugin.manifest.id),
-			};
-			const pluginTools = plugin.createTools(context);
+			const client = sandboxClient(plugin);
+			let pluginTools: AgentTool[];
+			let prompt: string;
+			if (client) {
+				const runtime = await client.runtime(state.config, locale);
+				pluginTools = runtime.tools.map((tool) => client.createToolProxy(tool));
+				prompt = runtime.prompt.trim();
+			} else {
+				const context = {
+					config: state.config,
+					locale,
+					services: createPluginServices(plugin.manifest.id),
+				};
+				pluginTools = plugin.createTools(context);
+				prompt = plugin.systemPrompt(context).trim();
+			}
 			if (
 				!Array.isArray(pluginTools) ||
 				pluginTools.length > MAX_TOOLS_PER_PLUGIN
@@ -719,7 +817,6 @@ export async function loadPluginRuntime(
 				localToolNames.add(tool.name);
 			}
 
-			const prompt = plugin.systemPrompt(context).trim();
 			let section = "";
 			if (prompt) {
 				if (prompt.length > MAX_PLUGIN_PROMPT_LENGTH) {
@@ -738,6 +835,7 @@ export async function loadPluginRuntime(
 				promptLength += section.length;
 			}
 		} catch (error) {
+			if (sandboxClient(plugin)) evictInstalledPlugin(plugin.manifest.id);
 			console.error(`Failed to initialize plugin ${plugin.manifest.id}`, error);
 		}
 	}

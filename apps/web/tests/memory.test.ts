@@ -28,9 +28,10 @@ async function installExampleFixture() {
 	return plugins.installPluginPackage(
 		"npm:@kalo-ai/plugin-example@0.1.0",
 		async () => ({
-			plugin: examplePlugin,
-			module: { ...module, sourceUrl: "https://esm.sh/example.bundle.mjs" },
+			...module,
+			sourceUrl: "https://esm.sh/example.bundle.mjs",
 		}),
+		async () => examplePlugin,
 	);
 }
 
@@ -280,9 +281,10 @@ test("user-installed package plugins load disabled and can be removed with their
 	const installed = await plugins.installPluginPackage(
 		"npm:@scope/remote-fixture@1.0.0",
 		async () => ({
-			plugin: remotePlugin,
-			module: { ...module, sourceUrl: "https://esm.sh/fixture.bundle.mjs" },
+			...module,
+			sourceUrl: "https://esm.sh/fixture.bundle.mjs",
 		}),
+		async () => remotePlugin,
 	);
 	expect(installed).toMatchObject({
 		enabled: false,
@@ -349,9 +351,10 @@ test("remote package and plugin manifest versions must match", async () => {
 		plugins.installPluginPackage(
 			"npm:@scope/version-mismatch@1.0.0",
 			async () => ({
-				plugin: mismatched,
-				module: { ...module, sourceUrl: "https://esm.sh/mismatch.bundle.mjs" },
+				...module,
+				sourceUrl: "https://esm.sh/mismatch.bundle.mjs",
 			}),
+			async () => mismatched,
 		),
 	).rejects.toThrow("版本");
 	expect(await repositories.listPluginInstallations()).toEqual([]);
@@ -378,7 +381,7 @@ test("local single-file plugins persist source, install disabled, and require ve
 	const analyzed = await analyzePluginModuleSource("export default {};");
 	const installed = await plugins.installLocalPlugin(
 		{ fileName: "local-fixture.js", ...analyzed },
-		async () => ({ default: localPlugin }),
+		async () => localPlugin,
 	);
 	expect(installed).toMatchObject({
 		enabled: false,
@@ -404,7 +407,7 @@ test("local single-file plugins persist source, install disabled, and require ve
 	await expect(
 		plugins.installLocalPlugin(
 			{ fileName: "local-fixture.js", ...changed },
-			async () => ({ default: localPlugin }),
+			async () => localPlugin,
 		),
 	).rejects.toThrow("manifest.version");
 });

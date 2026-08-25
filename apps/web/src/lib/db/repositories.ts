@@ -200,6 +200,12 @@ export async function getPluginData(
 	return db.pluginData.get([pluginId, key]);
 }
 
+export async function listPluginData(
+	pluginId: string,
+): Promise<PluginDataRecord[]> {
+	return db.pluginData.where("pluginId").equals(pluginId).toArray();
+}
+
 export async function setPluginData(
 	record: Omit<PluginDataRecord, "updatedAt">,
 ): Promise<PluginDataRecord> {

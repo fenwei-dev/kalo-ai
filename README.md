@@ -84,7 +84,7 @@ bun run deploy
 
 The app has no application backend. Health data and the API key stay in the current browser, while AI requests are sent directly to the user-configured service. The API key is stored in plain text in IndexedDB and is included in full backup exports.
 
-User-installed npm/JSR plugins are fetched through esm.sh and execute as unsandboxed third-party JavaScript in the same browser context as Kalo. They may directly access local health data, chats, and the AI API key regardless of declared permissions. Install only exact versions of code you have independently reviewed and trust.
+User-installed registry and local plugins execute in an opaque-origin iframe Worker sandbox with a deny-by-default CSP. Direct DOM, IndexedDB, browser-storage, and network access are blocked; declared host services are permission-checked and plugin storage is scoped. The sandbox does not make tool semantics or System Prompt text trustworthy, so install only exact code you have independently reviewed and trust. Cached executable source is included in full backups.
 
 Large language models may provide inaccurate information because their knowledge can be wrong, outdated, or hallucinated. This project does not provide medical, nutritional, or other professional advice.
 

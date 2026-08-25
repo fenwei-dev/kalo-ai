@@ -129,15 +129,20 @@ function isSettingField(
 	);
 }
 
-function hasValidSettings(plugin: KaloPlugin): boolean {
+export function isPluginSettings(
+	value: unknown,
+): value is { fields: PluginSettingField<PluginJsonObject>[] } | undefined {
+	if (value === undefined) return true;
+	if (!isRecord(value) || !Array.isArray(value.fields)) return false;
 	return (
-		plugin.settings === undefined ||
-		(Array.isArray(plugin.settings.fields) &&
-			plugin.settings.fields.length <= MAX_SETTING_FIELDS &&
-			plugin.settings.fields.every(isSettingField) &&
-			new Set(plugin.settings.fields.map((field) => field.key)).size ===
-				plugin.settings.fields.length)
+		value.fields.length <= MAX_SETTING_FIELDS &&
+		value.fields.every(isSettingField) &&
+		new Set(value.fields.map((field) => field.key)).size === value.fields.length
 	);
+}
+
+function hasValidSettings(plugin: KaloPlugin): boolean {
+	return isPluginSettings(plugin.settings);
 }
 
 function isPluginDefinition(

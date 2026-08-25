@@ -49,7 +49,7 @@ export default definePlugin({
 });
 ```
 
-Tool names must start with `${pluginId}_`, be provider-compatible, and remain globally unique.
+Tool names must start with `${pluginId}_`, be provider-compatible, and remain globally unique. User-installed tool descriptors cross a JSON RPC boundary; `name`, `label`, `description`, `parameters`, `executionMode`, `constrainedSampling`, and `execute` are supported. Additional function-valued hooks such as a custom `prepareArguments` cannot cross the sandbox boundary and should not be used by registry or local plugins.
 
 ## Importing one local JavaScript file
 
@@ -136,4 +136,6 @@ The `plugin-sdk-v<version>` tag triggers `.github/workflows/publish-plugin-sdk.y
 
 ## Security boundary
 
-Runtime-installed registry packages and local files are **not sandboxed**. Importing a plugin immediately executes third-party JavaScript in Kalo's browser context. It can potentially access IndexedDB, local health data, chats, plugin secrets, and the AI API key directly, regardless of declared permissions. Permission declarations are informational, not a security control. Install only independently reviewed code from a trusted publisher and exact version.
+Runtime-installed registry packages and local files execute inside an opaque-origin sandboxed iframe and dedicated Worker. A deny-by-default CSP blocks direct DOM, IndexedDB, Cache Storage, localStorage, fetch, WebSocket, navigation, and same-origin access. `context.services` calls cross a size- and timeout-bounded MessageChannel; the host enforces declared permissions, scopes storage by plugin ID, limits values, and restricts network requests to public HTTPS without credentials.
+
+This boundary protects Kalo's browser origin, but it cannot eliminate browser-engine vulnerabilities or all CPU/memory denial-of-service risks, and it does not make plugin semantics trustworthy. Agent-selected tool arguments may contain conversation or health data, an approved service can expose its documented snapshot, network-capable plugins can transmit data they legitimately receive, and System Prompt text can influence model behavior. Install only independently reviewed code from a trusted publisher and exact version.

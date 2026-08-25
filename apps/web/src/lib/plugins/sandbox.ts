@@ -1,0 +1,738 @@
+import type {
+	AgentTool,
+	KaloPlugin,
+	PluginJsonObject,
+	PluginJsonValue,
+	PluginManifest,
+	PluginPermission,
+	PluginSettingField,
+	TSchema,
+} from "@kalo-ai/plugin-sdk";
+import { Value } from "typebox/value";
+import { listPluginData } from "$lib/db/repositories";
+import { isPluginManifest, isPluginSettings } from "./contract";
+import { createPluginServices } from "./services";
+
+const INITIALIZE_TIMEOUT_MS = 10_000;
+const RPC_TIMEOUT_MS = 30_000;
+const MAX_RPC_JSON_BYTES = 1024 * 1024;
+const MAX_NETWORK_RESPONSE_BYTES = 1024 * 1024;
+const MAX_STORAGE_VALUE_BYTES = 64 * 1024;
+const MAX_STORAGE_TOTAL_BYTES = 512 * 1024;
+const MAX_STORAGE_RECORDS = 100;
+const STORAGE_KEY_PATTERN = /^[A-Za-z0-9_.-]{1,100}$/;
+
+interface SandboxToolDescriptor {
+	name: string;
+	label: string;
+	description: string;
+	parameters: TSchema;
+	executionMode?: "parallel" | "sequential";
+	constrainedSampling?: AgentTool["constrainedSampling"];
+}
+
+interface SandboxDescriptor {
+	manifest: PluginManifest;
+	configSchema: TSchema;
+	defaultConfig: PluginJsonObject;
+	settings?: { fields: PluginSettingField<PluginJsonObject>[] };
+	supportsIsConfigured: boolean;
+	supportsMigration: boolean;
+}
+
+interface SandboxRuntimeDescriptor {
+	tools: SandboxToolDescriptor[];
+	prompt: string;
+}
+
+interface SandboxReadyMessage {
+	kind: "ready";
+	descriptor: SandboxDescriptor;
+}
+
+interface SandboxResponseMessage {
+	kind: "response";
+	id: string;
+	ok: boolean;
+	value?: unknown;
+	error?: string;
+}
+
+interface SandboxServiceRequest {
+	kind: "service_request";
+	id: string;
+	service: string;
+	args: unknown[];
+}
+
+type SandboxMessage =
+	| SandboxReadyMessage
+	| SandboxResponseMessage
+	| SandboxServiceRequest;
+
+interface PendingRequest {
+	resolve: (value: unknown) => void;
+	reject: (reason: unknown) => void;
+	timer: ReturnType<typeof setTimeout>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function serializedSize(value: unknown): number {
+	try {
+		return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+	} catch {
+		return Number.POSITIVE_INFINITY;
+	}
+}
+
+function cloneRpcValue(value: unknown): unknown {
+	try {
+		const cloned = JSON.parse(JSON.stringify(value));
+		if (serializedSize(cloned) > MAX_RPC_JSON_BYTES) {
+			throw new Error("插件 RPC 数据超过 1 MiB 限制");
+		}
+		return cloned;
+	} catch (error) {
+		if (error instanceof Error && error.message.includes("1 MiB")) throw error;
+		throw new Error("插件 RPC 数据必须可 JSON 序列化", { cause: error });
+	}
+}
+
+function assertRpcSize(value: unknown): void {
+	if (serializedSize(value) > MAX_RPC_JSON_BYTES) {
+		throw new Error("插件 RPC 数据超过 1 MiB 限制");
+	}
+}
+
+function privateNetworkHost(hostname: string): boolean {
+	const normalized = hostname.toLowerCase();
+	if (
+		normalized === "localhost" ||
+		normalized === "::1" ||
+		normalized.endsWith(".local") ||
+		/^127\./.test(normalized) ||
+		/^10\./.test(normalized) ||
+		/^192\.168\./.test(normalized)
+	) {
+		return true;
+	}
+	const match = /^172\.(\d+)\./.exec(normalized);
+	return !!match?.[1] && Number(match[1]) >= 16 && Number(match[1]) <= 31;
+}
+
+function validatedNetworkUrl(input: unknown): URL {
+	if (typeof input !== "string") {
+		throw new Error("插件网络请求 URL 必须是字符串");
+	}
+	const url = new URL(input);
+	if (url.protocol !== "https:") {
+		throw new Error("插件网络请求只允许 HTTPS");
+	}
+	if (privateNetworkHost(url.hostname) || url.origin === location.origin) {
+		throw new Error("插件网络请求不能访问 Kalo origin、本机或私有网络");
+	}
+	return url;
+}
+
+function validatedStorageKey(value: unknown): string {
+	if (typeof value !== "string" || !STORAGE_KEY_PATTERN.test(value)) {
+		throw new Error("插件存储 key 必须是 1–100 位字母、数字、点、横线或下划线");
+	}
+	return value;
+}
+
+function permissionSet(
+	manifest: PluginManifest,
+): ReadonlySet<PluginPermission> {
+	return new Set(manifest.permissions ?? []);
+}
+
+const SANDBOX_FRAME_HTML = `<!doctype html>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; worker-src blob:; connect-src 'none'; img-src 'none'; media-src 'none'; font-src 'none'; style-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'">
+<script>
+addEventListener("message", function connect(event) {
+  if (!event.data || event.data.type !== "kalo-sandbox-connect" || !event.data.rpcPort || !event.data.controlPort) return;
+  const rpcPort = event.data.rpcPort;
+  const controlPort = event.data.controlPort;
+  let worker;
+  try {
+    const workerUrl = URL.createObjectURL(new Blob([event.data.workerSource], { type: "text/javascript" }));
+    worker = new Worker(workerUrl, { name: "kalo-plugin-sandbox" });
+    setTimeout(() => URL.revokeObjectURL(workerUrl), 1000);
+    worker.onerror = function (error) {
+      controlPort.postMessage({ type: "worker_error", error: error.message || "Sandbox worker failed" });
+    };
+    worker.onmessageerror = function () {
+      controlPort.postMessage({ type: "worker_error", error: "Sandbox worker message failed" });
+    };
+    worker.postMessage({ type: "connect", source: event.data.pluginSource, debugName: event.data.debugName, rpcPort }, [rpcPort]);
+  } catch (error) {
+    controlPort.postMessage({ type: "worker_error", error: error instanceof Error ? error.message : String(error) });
+    return;
+  }
+  controlPort.onmessage = function (message) {
+    if (message.data && message.data.type === "terminate") worker?.terminate();
+  };
+  controlPort.start();
+}, { once: true });
+</script>`;
+
+const SANDBOX_WORKER_SOURCE = String.raw`
+let rpcPort;
+let plugin;
+let activeTools = new Map();
+const serviceRequests = new Map();
+const toolControllers = new Map();
+let nextServiceId = 0;
+
+function cloneJson(value, label) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (error) {
+    throw new Error(label + " must be JSON serializable: " + String(error));
+  }
+}
+
+function asPlugin(module) {
+  if (!module || typeof module !== "object") throw new Error("Invalid ESM plugin module");
+  const candidate = module.kaloPlugin ?? module.default;
+  if (!candidate || typeof candidate !== "object") throw new Error("Missing default or kaloPlugin export");
+  if (!candidate.manifest || !candidate.configSchema || !candidate.defaultConfig || typeof candidate.createTools !== "function") {
+    throw new Error("Invalid Kalo plugin export");
+  }
+  return candidate;
+}
+
+function callService(service, args) {
+  return new Promise((resolve, reject) => {
+    const id = "service_" + (++nextServiceId);
+    serviceRequests.set(id, { resolve, reject });
+    rpcPort.postMessage({ kind: "service_request", id, service, args: cloneJson(args, "Service arguments") });
+  });
+}
+
+function services() {
+  return {
+    profile: { get: () => callService("profile.get", []) },
+    logs: { getDay: (date) => callService("logs.getDay", [date]) },
+    storage: {
+      get: (key) => callService("storage.get", [key]),
+      set: (key, value) => callService("storage.set", [key, value]),
+      delete: (key) => callService("storage.delete", [key])
+    },
+    fetch: async (input, init) => {
+      const result = await callService("network.fetch", [String(input), init ?? {}]);
+      return new Response(result.body, {
+        status: result.status,
+        statusText: result.statusText,
+        headers: result.headers
+      });
+    }
+  };
+}
+
+function descriptor(candidate) {
+  return cloneJson({
+    manifest: candidate.manifest,
+    configSchema: candidate.configSchema,
+    defaultConfig: candidate.defaultConfig,
+    settings: candidate.settings,
+    supportsIsConfigured: typeof candidate.isConfigured === "function",
+    supportsMigration: typeof candidate.migrateConfig === "function"
+  }, "Plugin descriptor");
+}
+
+async function initialize(source, debugName) {
+  const suffix = String(debugName || "plugin.js").replace(/[^a-zA-Z0-9_.-]+/g, "_").slice(0, 120);
+  const url = URL.createObjectURL(new Blob([source + "\n//# sourceURL=kalo-sandbox:" + suffix + "\n"], { type: "text/javascript" }));
+  try {
+    plugin = asPlugin(await import(url));
+    rpcPort.postMessage({ kind: "ready", descriptor: descriptor(plugin) });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function handleRequest(message) {
+  const payload = message.payload || {};
+  if (message.method === "isConfigured") {
+    return typeof plugin.isConfigured === "function" ? !!(await plugin.isConfigured(payload.config)) : true;
+  }
+  if (message.method === "migrateConfig") {
+    if (typeof plugin.migrateConfig !== "function") throw new Error("Plugin does not support migration");
+    return cloneJson(await plugin.migrateConfig(payload.config, payload.fromVersion), "Migrated config");
+  }
+  if (message.method === "runtime") {
+    const context = { config: payload.config, locale: payload.locale, services: services() };
+    const tools = await plugin.createTools(context);
+    if (!Array.isArray(tools)) throw new Error("createTools must return an array");
+    activeTools = new Map();
+    const toolDescriptors = tools.map((tool) => {
+      if (!tool || typeof tool !== "object" || typeof tool.name !== "string" || typeof tool.execute !== "function") {
+        throw new Error("Invalid plugin tool");
+      }
+      activeTools.set(tool.name, tool);
+      return cloneJson({
+        name: tool.name,
+        label: tool.label,
+        description: tool.description,
+        parameters: tool.parameters,
+        executionMode: tool.executionMode,
+        constrainedSampling: tool.constrainedSampling
+      }, "Tool descriptor");
+    });
+    const prompt = typeof plugin.systemPrompt === "function" ? await plugin.systemPrompt(context) : "";
+    if (typeof prompt !== "string") throw new Error("systemPrompt must return a string");
+    return { tools: toolDescriptors, prompt };
+  }
+  if (message.method === "executeTool") {
+    const tool = activeTools.get(payload.name);
+    if (!tool) throw new Error("Tool not initialized: " + String(payload.name));
+    const controller = new AbortController();
+    toolControllers.set(payload.toolCallId, controller);
+    try {
+      return cloneJson(await tool.execute(payload.toolCallId, payload.params, controller.signal), "Tool result");
+    } finally {
+      toolControllers.delete(payload.toolCallId);
+    }
+  }
+  if (message.method === "cancelTool") {
+    toolControllers.get(payload.toolCallId)?.abort();
+    return null;
+  }
+  throw new Error("Unknown sandbox method: " + String(message.method));
+}
+
+addEventListener("message", async (event) => {
+  if (!event.data || event.data.type !== "connect" || !event.data.rpcPort) return;
+  rpcPort = event.data.rpcPort;
+  rpcPort.onmessage = async (rpcEvent) => {
+    const message = rpcEvent.data;
+    if (!message || typeof message !== "object") return;
+    if (message.kind === "service_response") {
+      const pending = serviceRequests.get(message.id);
+      if (!pending) return;
+      serviceRequests.delete(message.id);
+      if (message.ok) pending.resolve(message.value);
+      else pending.reject(new Error(message.error || "Service failed"));
+      return;
+    }
+    if (message.kind !== "request") return;
+    try {
+      const value = await handleRequest(message);
+      rpcPort.postMessage({ kind: "response", id: message.id, ok: true, value });
+    } catch (error) {
+      rpcPort.postMessage({ kind: "response", id: message.id, ok: false, error: error instanceof Error ? error.message : String(error) });
+    }
+  };
+  rpcPort.start();
+  try {
+    await initialize(event.data.source, event.data.debugName);
+  } catch (error) {
+    rpcPort.postMessage({ kind: "response", id: "initialize", ok: false, error: error instanceof Error ? error.message : String(error) });
+  }
+}, { once: true });
+`;
+
+export class SandboxPluginClient {
+	readonly descriptor: SandboxDescriptor;
+	readonly proxyPlugin: KaloPlugin;
+	readonly #iframe: HTMLIFrameElement;
+	readonly #rpcPort: MessagePort;
+	readonly #controlPort: MessagePort;
+	readonly #pending = new Map<string, PendingRequest>();
+	#nextRequestId = 0;
+	#disposed = false;
+
+	private constructor(
+		descriptor: SandboxDescriptor,
+		iframe: HTMLIFrameElement,
+		rpcPort: MessagePort,
+		controlPort: MessagePort,
+	) {
+		this.descriptor = descriptor;
+		this.#iframe = iframe;
+		this.#rpcPort = rpcPort;
+		this.#controlPort = controlPort;
+		this.#controlPort.onmessage = (event) => {
+			if (event.data?.type === "worker_error") this.dispose();
+		};
+		this.#controlPort.start();
+		this.proxyPlugin = {
+			manifest: descriptor.manifest,
+			configSchema: descriptor.configSchema,
+			defaultConfig: descriptor.defaultConfig,
+			settings: descriptor.settings,
+			validateConfig: (config) => Value.Check(descriptor.configSchema, config),
+			isConfigured: () => {
+				throw new Error(
+					"Sandbox isConfigured must be awaited through the manager",
+				);
+			},
+			createTools: () => {
+				throw new Error("Sandbox tools must be created asynchronously");
+			},
+			systemPrompt: () => {
+				throw new Error("Sandbox prompt must be created asynchronously");
+			},
+			migrateConfig: descriptor.supportsMigration
+				? () => {
+						throw new Error(
+							"Sandbox migration must be awaited through the manager",
+						);
+					}
+				: undefined,
+		};
+	}
+
+	static async create(
+		source: string,
+		debugName: string,
+	): Promise<SandboxPluginClient> {
+		if (typeof document === "undefined") {
+			throw new Error("用户插件沙箱只能在浏览器中启动");
+		}
+		const iframe = document.createElement("iframe");
+		iframe.hidden = true;
+		iframe.tabIndex = -1;
+		iframe.setAttribute("aria-hidden", "true");
+		iframe.setAttribute("sandbox", "allow-scripts");
+		iframe.srcdoc = SANDBOX_FRAME_HTML;
+		document.body.appendChild(iframe);
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const timer = setTimeout(
+					() => reject(new Error("创建插件沙箱超时")),
+					INITIALIZE_TIMEOUT_MS,
+				);
+				iframe.addEventListener(
+					"load",
+					() => {
+						clearTimeout(timer);
+						resolve();
+					},
+					{ once: true },
+				);
+			});
+		} catch (error) {
+			iframe.remove();
+			throw error;
+		}
+		const rpcChannel = new MessageChannel();
+		const controlChannel = new MessageChannel();
+		let descriptor: SandboxDescriptor;
+		try {
+			descriptor = await new Promise<SandboxDescriptor>((resolve, reject) => {
+				const timer = setTimeout(() => {
+					reject(new Error("初始化插件沙箱超时"));
+				}, INITIALIZE_TIMEOUT_MS);
+				rpcChannel.port1.onmessage = (event: MessageEvent<SandboxMessage>) => {
+					const message = event.data;
+					if (message.kind === "ready") {
+						clearTimeout(timer);
+						resolve(message.descriptor);
+					} else if (
+						message.kind === "response" &&
+						message.id === "initialize" &&
+						!message.ok
+					) {
+						clearTimeout(timer);
+						reject(new Error(message.error ?? "插件初始化失败"));
+					}
+				};
+				controlChannel.port1.onmessage = (event) => {
+					if (event.data?.type === "worker_error") {
+						clearTimeout(timer);
+						reject(new Error(event.data.error ?? "插件 Worker 启动失败"));
+					}
+				};
+				controlChannel.port1.start();
+				rpcChannel.port1.start();
+				iframe.contentWindow?.postMessage(
+					{
+						type: "kalo-sandbox-connect",
+						workerSource: SANDBOX_WORKER_SOURCE,
+						pluginSource: source,
+						debugName,
+						rpcPort: rpcChannel.port2,
+						controlPort: controlChannel.port2,
+					},
+					"*",
+					[rpcChannel.port2, controlChannel.port2],
+				);
+			});
+		} catch (error) {
+			controlChannel.port1.postMessage({ type: "terminate" });
+			rpcChannel.port1.close();
+			controlChannel.port1.close();
+			iframe.remove();
+			throw error;
+		}
+		if (
+			!isPluginManifest(descriptor.manifest) ||
+			!isRecord(descriptor.configSchema) ||
+			!isRecord(descriptor.defaultConfig) ||
+			!isPluginSettings(descriptor.settings) ||
+			!Value.Check(descriptor.configSchema, descriptor.defaultConfig) ||
+			serializedSize(descriptor) > MAX_RPC_JSON_BYTES
+		) {
+			controlChannel.port1.postMessage({ type: "terminate" });
+			iframe.remove();
+			throw new Error("插件沙箱返回了无效 descriptor");
+		}
+		const client = new SandboxPluginClient(
+			descriptor,
+			iframe,
+			rpcChannel.port1,
+			controlChannel.port1,
+		);
+		client.#rpcPort.onmessage = (event: MessageEvent<SandboxMessage>) => {
+			void client.#handleMessage(event.data);
+		};
+		return client;
+	}
+
+	async isConfigured(config: PluginJsonObject): Promise<boolean> {
+		return (await this.#request("isConfigured", { config })) === true;
+	}
+
+	async migrateConfig(
+		config: PluginJsonObject,
+		fromVersion: number,
+	): Promise<PluginJsonObject> {
+		const value = await this.#request("migrateConfig", {
+			config,
+			fromVersion,
+		});
+		if (!isRecord(value)) throw new Error("插件迁移返回了无效配置");
+		return value as PluginJsonObject;
+	}
+
+	async runtime(
+		config: PluginJsonObject,
+		locale: "zh-cn" | "en-us",
+	): Promise<SandboxRuntimeDescriptor> {
+		const value = await this.#request("runtime", { config, locale });
+		if (
+			!isRecord(value) ||
+			!Array.isArray(value.tools) ||
+			typeof value.prompt !== "string" ||
+			!value.tools.every(
+				(tool) =>
+					isRecord(tool) &&
+					typeof tool.name === "string" &&
+					typeof tool.label === "string" &&
+					typeof tool.description === "string" &&
+					isRecord(tool.parameters) &&
+					(tool.executionMode === undefined ||
+						tool.executionMode === "parallel" ||
+						tool.executionMode === "sequential"),
+			)
+		) {
+			throw new Error("插件沙箱返回了无效 runtime");
+		}
+		return value as unknown as SandboxRuntimeDescriptor;
+	}
+
+	createToolProxy(descriptor: SandboxToolDescriptor): AgentTool {
+		return {
+			name: descriptor.name,
+			label: descriptor.label,
+			description: descriptor.description,
+			parameters: descriptor.parameters,
+			executionMode: descriptor.executionMode,
+			constrainedSampling: descriptor.constrainedSampling,
+			execute: async (toolCallId, params, signal) => {
+				if (signal?.aborted) throw new Error("Request cancelled");
+				const abort = () => {
+					void this.#request("cancelTool", { toolCallId }).catch(
+						() => undefined,
+					);
+				};
+				signal?.addEventListener("abort", abort, { once: true });
+				try {
+					const value = await this.#request("executeTool", {
+						toolCallId,
+						name: descriptor.name,
+						params,
+					});
+					if (!isRecord(value) || !Array.isArray(value.content)) {
+						throw new Error("插件工具返回格式无效");
+					}
+					return value as unknown as Awaited<ReturnType<AgentTool["execute"]>>;
+				} finally {
+					signal?.removeEventListener("abort", abort);
+				}
+			},
+		};
+	}
+
+	dispose(): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.#controlPort.postMessage({ type: "terminate" });
+		this.#rpcPort.close();
+		this.#controlPort.close();
+		this.#iframe.remove();
+		for (const pending of this.#pending.values()) {
+			clearTimeout(pending.timer);
+			pending.reject(new Error("插件沙箱已关闭"));
+		}
+		this.#pending.clear();
+	}
+
+	async #request(method: string, payload: unknown): Promise<unknown> {
+		if (this.#disposed) throw new Error("插件沙箱已关闭");
+		const safePayload = cloneRpcValue(payload);
+		const id = `request_${++this.#nextRequestId}`;
+		return new Promise((resolve, reject) => {
+			const timer = setTimeout(() => {
+				this.#pending.delete(id);
+				this.dispose();
+				reject(new Error(`插件沙箱调用超时：${method}`));
+			}, RPC_TIMEOUT_MS);
+			this.#pending.set(id, { resolve, reject, timer });
+			this.#rpcPort.postMessage({
+				kind: "request",
+				id,
+				method,
+				payload: safePayload,
+			});
+		});
+	}
+
+	async #handleMessage(message: SandboxMessage): Promise<void> {
+		if (message.kind === "response") {
+			const pending = this.#pending.get(message.id);
+			if (!pending) return;
+			this.#pending.delete(message.id);
+			clearTimeout(pending.timer);
+			if (message.ok) {
+				if (serializedSize(message.value) > MAX_RPC_JSON_BYTES) {
+					pending.reject(new Error("插件 RPC 响应超过 1 MiB 限制"));
+				} else {
+					pending.resolve(message.value);
+				}
+			} else {
+				pending.reject(new Error(message.error ?? "插件沙箱调用失败"));
+			}
+			return;
+		}
+		if (message.kind !== "service_request") return;
+		try {
+			assertRpcSize(message.args);
+			const value = await this.#executeService(message.service, message.args);
+			assertRpcSize(value);
+			this.#rpcPort.postMessage({
+				kind: "service_response",
+				id: message.id,
+				ok: true,
+				value,
+			});
+		} catch (error) {
+			this.#rpcPort.postMessage({
+				kind: "service_response",
+				id: message.id,
+				ok: false,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
+	async #executeService(service: string, args: unknown[]): Promise<unknown> {
+		const permissions = permissionSet(this.descriptor.manifest);
+		const services = createPluginServices(this.descriptor.manifest.id);
+		if (service === "profile.get") {
+			if (!permissions.has("profile.read"))
+				throw new Error("插件未获 profile.read 权限");
+			return services.profile.get();
+		}
+		if (service === "logs.getDay") {
+			if (!permissions.has("logs.read"))
+				throw new Error("插件未获 logs.read 权限");
+			if (typeof args[0] !== "string") throw new Error("日期参数无效");
+			return services.logs.getDay(args[0]);
+		}
+		if (service === "storage.get") {
+			if (!permissions.has("storage")) throw new Error("插件未获 storage 权限");
+			return services.storage.get(validatedStorageKey(args[0]));
+		}
+		if (service === "storage.set") {
+			if (!permissions.has("storage")) throw new Error("插件未获 storage 权限");
+			const key = validatedStorageKey(args[0]);
+			if (serializedSize(args[1]) > MAX_STORAGE_VALUE_BYTES) {
+				throw new Error("插件单个存储值不能超过 64 KiB");
+			}
+			const records = await listPluginData(this.descriptor.manifest.id);
+			const otherRecords = records.filter((record) => record.key !== key);
+			if (otherRecords.length >= MAX_STORAGE_RECORDS) {
+				throw new Error("插件存储最多允许 100 个 key");
+			}
+			const totalBytes =
+				otherRecords.reduce(
+					(total, record) =>
+						total +
+						serializedSize(record.value) +
+						new TextEncoder().encode(record.key).byteLength,
+					0,
+				) +
+				serializedSize(args[1]) +
+				new TextEncoder().encode(key).byteLength;
+			if (totalBytes > MAX_STORAGE_TOTAL_BYTES) {
+				throw new Error("插件存储总量不能超过 512 KiB");
+			}
+			await services.storage.set(key, args[1] as PluginJsonValue);
+			return null;
+		}
+		if (service === "storage.delete") {
+			if (!permissions.has("storage")) throw new Error("插件未获 storage 权限");
+			await services.storage.delete(validatedStorageKey(args[0]));
+			return null;
+		}
+		if (service === "network.fetch") {
+			if (!permissions.has("network")) throw new Error("插件未获 network 权限");
+			const url = validatedNetworkUrl(args[0]);
+			const init = isRecord(args[1]) ? args[1] : {};
+			const response = await fetch(url, {
+				method: typeof init.method === "string" ? init.method : "GET",
+				headers: isRecord(init.headers)
+					? Object.fromEntries(
+							Object.entries(init.headers).filter(
+								(entry): entry is [string, string] =>
+									typeof entry[1] === "string",
+							),
+						)
+					: undefined,
+				body: typeof init.body === "string" ? init.body : undefined,
+				credentials: "omit",
+				redirect: "follow",
+				signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+			});
+			const finalUrl = validatedNetworkUrl(response.url);
+			if (finalUrl.origin !== url.origin) {
+				throw new Error("插件网络请求不允许跨 origin 重定向");
+			}
+			const declaredLength = Number(
+				response.headers.get("content-length") ?? 0,
+			);
+			if (declaredLength > MAX_NETWORK_RESPONSE_BYTES) {
+				throw new Error("插件网络响应超过 1 MiB 限制");
+			}
+			const body = await response.arrayBuffer();
+			if (body.byteLength > MAX_NETWORK_RESPONSE_BYTES) {
+				throw new Error("插件网络响应超过 1 MiB 限制");
+			}
+			return {
+				status: response.status,
+				statusText: response.statusText,
+				headers: [...response.headers.entries()],
+				body,
+			};
+		}
+		throw new Error(`未知插件 service：${service}`);
+	}
+}

@@ -84,7 +84,7 @@ bun run deploy
 
 App 没有业务后端。健康数据及 API Key 仅保存在当前浏览器；AI 请求直接发送到用户配置的服务。API Key 在 IndexedDB 中明文保存，完整备份也会包含密钥。
 
-用户安装的 npm/JSR 插件会通过 esm.sh 获取，并以无沙箱第三方 JavaScript 身份运行在卡卡的同一浏览器上下文中。无论声明了什么权限，它们都可能直接访问本地健康资料、聊天和 AI API Key。请只安装你已独立审查并信任的精确版本。
+用户安装的 registry 与本地插件会在采用默认拒绝 CSP 的 opaque-origin iframe Worker 沙箱中执行，无法直接访问 DOM、IndexedDB、浏览器存储或网络；声明的 host services 会强制检查权限，插件存储按 ID 隔离。沙箱不能保证工具语义或 System Prompt 文本可信，因此请只安装你已独立审查并信任的精确代码。缓存的可执行源码会包含在完整备份中。
 
 大语言模型可能因知识错误、过时或幻觉给出不准确信息。本项目不提供医疗、营养或其他专业建议。
 

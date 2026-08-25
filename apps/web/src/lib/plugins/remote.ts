@@ -1,10 +1,7 @@
-import type { KaloPlugin } from "@kalo-ai/plugin-sdk";
 import type { PluginInstallation, PluginPackageRegistry } from "$lib/db/schema";
 import {
 	type AnalyzedPluginModuleSource,
 	analyzePluginModuleSource,
-	importPluginModuleSource,
-	type PluginSourceImporter,
 } from "./moduleSource";
 
 const NPM_PACKAGE_PATTERN =
@@ -27,19 +24,10 @@ export interface DownloadedRemotePluginModule
 	sourceUrl: string;
 }
 
-export interface LoadedRemotePlugin {
-	plugin: KaloPlugin;
-	module: DownloadedRemotePluginModule;
-}
-
 export type RemotePluginFetcher = (
 	input: RequestInfo | URL,
 	init?: RequestInit,
 ) => Promise<Response>;
-export type RemotePluginLoader = (
-	source: ParsedPluginPackageSpecifier,
-) => Promise<LoadedRemotePlugin>;
-
 export function parsePluginPackageSpecifier(
 	input: string,
 ): ParsedPluginPackageSpecifier {
@@ -132,24 +120,5 @@ export async function downloadRemotePluginModule(
 	return {
 		...analyzed,
 		sourceUrl: bundleResponse.url || bundleUrl.href,
-	};
-}
-
-export async function loadRemotePlugin(
-	source: ParsedPluginPackageSpecifier,
-	options: {
-		fetcher?: RemotePluginFetcher;
-		importer?: PluginSourceImporter;
-	} = {},
-): Promise<LoadedRemotePlugin> {
-	const downloaded = await downloadRemotePluginModule(source, options.fetcher);
-	const loaded = await importPluginModuleSource(
-		downloaded.source,
-		`${source.packageName}@${source.packageVersion}.js`,
-		options.importer,
-	);
-	return {
-		plugin: loaded.plugin,
-		module: { ...downloaded, ...loaded.analyzed },
 	};
 }
