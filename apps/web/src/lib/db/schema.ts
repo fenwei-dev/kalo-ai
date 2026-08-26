@@ -157,14 +157,52 @@ export interface FoodLibraryItem {
 	updatedAt: number;
 }
 
+export type SessionMode = "standard" | "plugin_development";
+
 export interface Session {
 	id: string;
 	title: string;
+	mode: SessionMode;
+	/** First persisted conversation message; once set, mode can never change. */
+	modeLockedAt?: number;
 	createdAt: number;
 	updatedAt: number;
 	lastMessageAt: number;
 	/** 此会话最近读取或写入成功的全局用户记忆版本。 */
 	memoryVersion?: number;
+}
+
+export type PluginDraftStatus = "draft" | "valid" | "invalid";
+export type PluginDraftDiagnosticLevel = "info" | "warning" | "error";
+
+export interface PluginDraftDiagnostic {
+	level: PluginDraftDiagnosticLevel;
+	code: string;
+	message: string;
+}
+
+/** Model-authored source stays a draft until a user explicitly installs it. */
+export interface PluginDraft {
+	id: string;
+	sessionId: string;
+	fileName: string;
+	source: string;
+	size: number;
+	sha256: string;
+	status: PluginDraftStatus;
+	revision: number;
+	diagnostics: PluginDraftDiagnostic[];
+	createdAt: number;
+	updatedAt: number;
+}
+
+export interface PluginDraftRevision {
+	draftId: string;
+	revision: number;
+	source: string;
+	size: number;
+	sha256: string;
+	createdAt: number;
 }
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -275,6 +313,8 @@ class KaloDB extends Dexie {
 	pluginData!: Table<PluginDataRecord, [string, string]>;
 	pluginInstallations!: Table<PluginInstallation, string>;
 	pluginModules!: Table<PluginModuleRecord, string>;
+	pluginDrafts!: Table<PluginDraft, string>;
+	pluginDraftRevisions!: Table<PluginDraftRevision, [string, number]>;
 	weightEntries!: Table<WeightEntry, string>;
 	foodLibrary!: Table<FoodLibraryItem, string>;
 	sessions!: Table<Session, string>;
@@ -393,6 +433,54 @@ class KaloDB extends Dexie {
 			sessions: "id, updatedAt, lastMessageAt",
 			messages: "id, sessionId, [sessionId+order], order",
 		});
+		this.version(8)
+			.stores({
+				user: "id",
+				aiConfig: "id",
+				userMemory: "id",
+				foodEntries: "id, date, [date+time], source",
+				exerciseEntries: "id, date, source, plannedWorkoutId",
+				trainingPlans: "id, status, startDate, updatedAt",
+				plannedWorkouts:
+					"id, planId, date, status, exerciseEntryId, [planId+date]",
+				pluginConfigs: "pluginId, enabled",
+				pluginData: "[pluginId+key], pluginId",
+				pluginInstallations:
+					"pluginId, registry, packageName, installedAt, updatedAt",
+				pluginModules: "pluginId, updatedAt",
+				pluginDrafts: "id, sessionId, updatedAt",
+				pluginDraftRevisions: "[draftId+revision], draftId, createdAt",
+				weightEntries: "id, date",
+				foodLibrary: "id, name, category, lastUsedAt",
+				sessions: "id, mode, updatedAt, lastMessageAt",
+				messages: "id, sessionId, [sessionId+order], order",
+			})
+			.upgrade(async (transaction) => {
+				const messages = (await transaction.table("messages").toArray()) as {
+					sessionId: string;
+					createdAt: number;
+				}[];
+				const firstMessageAt = new Map<string, number>();
+				for (const message of messages) {
+					const previous = firstMessageAt.get(message.sessionId);
+					if (previous === undefined || message.createdAt < previous) {
+						firstMessageAt.set(message.sessionId, message.createdAt);
+					}
+				}
+				await transaction
+					.table("sessions")
+					.toCollection()
+					.modify(
+						(session: {
+							id: string;
+							mode?: SessionMode;
+							modeLockedAt?: number;
+						}) => {
+							session.mode = "standard";
+							session.modeLockedAt ??= firstMessageAt.get(session.id);
+						},
+					);
+			});
 	}
 }
 

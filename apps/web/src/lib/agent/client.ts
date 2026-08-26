@@ -7,6 +7,7 @@ import type {
 import { app } from "$lib/context/appContext.svelte";
 import {
 	addMessage,
+	getSession,
 	listMessages,
 	markSessionMemoryVersion,
 } from "$lib/db/repositories";
@@ -19,6 +20,8 @@ import type {
 import { getLocale } from "$lib/paraglide/runtime";
 import { loadPluginRuntime } from "$lib/plugins/manager";
 import { localMessageTimestamp } from "$lib/utils/date";
+import { getPluginDevelopmentSystemPrompt } from "./pluginDevelopmentPrompt";
+import { createPluginDevelopmentTools } from "./pluginDevelopmentTools";
 import { buildModels } from "./provider";
 import { getKaloSystemPrompt } from "./systemPrompt";
 import { agentTools, type ToolOutcome } from "./tools";
@@ -232,7 +235,14 @@ export async function runTurn(
 		return;
 	}
 
-	const history = await listMessages(sessionId);
+	const [session, history] = await Promise.all([
+		getSession(sessionId),
+		listMessages(sessionId),
+	]);
+	if (!session) {
+		cb.onError?.("对话不存在或已被删除");
+		return;
+	}
 	if (history.length === 0) {
 		cb.onError?.("没有可处理的用户消息");
 		return;
@@ -240,19 +250,29 @@ export async function runTurn(
 
 	const { models, model } = buildModels(cfg);
 	const locale = getLocale();
-	const pluginRuntime = await loadPluginRuntime(
-		locale,
-		agentTools.map((tool) => tool.name),
-	);
-	const tools = [...agentTools, ...pluginRuntime.tools];
+	const developmentMode = session.mode === "plugin_development";
+	const developmentTools = developmentMode
+		? createPluginDevelopmentTools(sessionId)
+		: [];
+	const pluginRuntime = developmentMode
+		? { tools: [], promptSections: [] }
+		: await loadPluginRuntime(
+				locale,
+				agentTools.map((tool) => tool.name),
+			);
+	const tools = developmentMode
+		? developmentTools
+		: [...agentTools, ...pluginRuntime.tools];
 	let toolTurnCount = 0;
 	const agent = new Agent({
 		initialState: {
-			systemPrompt: extendSystemPrompt(
-				getKaloSystemPrompt(locale),
-				pluginRuntime.promptSections,
-				locale,
-			),
+			systemPrompt: developmentMode
+				? getPluginDevelopmentSystemPrompt(locale)
+				: extendSystemPrompt(
+						getKaloSystemPrompt(locale),
+						pluginRuntime.promptSections,
+						locale,
+					),
 			model,
 			tools,
 			messages: history.map(dbToAgentMessage),

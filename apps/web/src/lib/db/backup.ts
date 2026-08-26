@@ -10,9 +10,12 @@ import type {
 	PlannedWorkout,
 	PluginConfigRecord,
 	PluginDataRecord,
+	PluginDraft,
+	PluginDraftRevision,
 	PluginInstallation,
 	PluginModuleRecord,
 	Session,
+	SessionMode,
 	TrainingPlan,
 	User,
 	UserMemory,
@@ -62,14 +65,21 @@ export interface KaloBackupV6 extends Omit<KaloBackupV5, "version"> {
 	pluginModules: PluginModuleRecord[];
 }
 
+export interface KaloBackupV7 extends Omit<KaloBackupV6, "version"> {
+	version: 7;
+	pluginDrafts: PluginDraft[];
+	pluginDraftRevisions: PluginDraftRevision[];
+}
+
 export type KaloBackup =
 	| KaloBackupV1
 	| KaloBackupV2
 	| KaloBackupV3
 	| KaloBackupV4
 	| KaloBackupV5
-	| KaloBackupV6;
-export type ParsedKaloBackup = Omit<KaloBackupV6, "version" | "exportedAt">;
+	| KaloBackupV6
+	| KaloBackupV7;
+export type ParsedKaloBackup = Omit<KaloBackupV7, "version" | "exportedAt">;
 
 type DataRecord = Record<string, unknown>;
 type ValueGuard<T> = (value: unknown) => value is T;
@@ -517,15 +527,91 @@ function isPluginModuleRecord(value: unknown): value is PluginModuleRecord {
 	);
 }
 
-function isSession(value: unknown): value is Session {
+const isSessionMode = (value: unknown): value is SessionMode =>
+	isOneOf(value, ["standard", "plugin_development"] as const);
+
+function parseSession(value: unknown, legacy: boolean): Session | null {
+	if (
+		!isRecord(value) ||
+		!isString(value.id) ||
+		!isString(value.title) ||
+		(!legacy && !isSessionMode(value.mode)) ||
+		(legacy && !isOptional(value.mode, isSessionMode)) ||
+		!isOptional(value.modeLockedAt, isFiniteNumber) ||
+		!isFiniteNumber(value.createdAt) ||
+		!isFiniteNumber(value.updatedAt) ||
+		!isFiniteNumber(value.lastMessageAt) ||
+		!isOptional(value.memoryVersion, isFiniteNumber)
+	) {
+		return null;
+	}
+	return {
+		id: value.id,
+		title: value.title,
+		mode: isSessionMode(value.mode) ? value.mode : "standard",
+		modeLockedAt: value.modeLockedAt,
+		createdAt: value.createdAt,
+		updatedAt: value.updatedAt,
+		lastMessageAt: value.lastMessageAt,
+		memoryVersion: value.memoryVersion,
+	};
+}
+
+function isPluginDraftDiagnostic(
+	value: unknown,
+): value is PluginDraft["diagnostics"][number] {
+	return (
+		isRecord(value) &&
+		isOneOf(value.level, ["info", "warning", "error"] as const) &&
+		isString(value.code) &&
+		isString(value.message)
+	);
+}
+
+function isPluginDraft(value: unknown): value is PluginDraft {
 	return (
 		isRecord(value) &&
 		isString(value.id) &&
-		isString(value.title) &&
+		isString(value.sessionId) &&
+		isString(value.fileName) &&
+		LOCAL_PLUGIN_FILE_PATTERN.test(value.fileName) &&
+		isString(value.source) &&
+		value.source.length > 0 &&
+		isFiniteNumber(value.size) &&
+		Number.isInteger(value.size) &&
+		value.size > 0 &&
+		value.size <= 256 * 1024 &&
+		new TextEncoder().encode(value.source).byteLength === value.size &&
+		isString(value.sha256) &&
+		SHA256_PATTERN.test(value.sha256) &&
+		isOneOf(value.status, ["draft", "valid", "invalid"] as const) &&
+		isFiniteNumber(value.revision) &&
+		Number.isInteger(value.revision) &&
+		value.revision >= 1 &&
+		Array.isArray(value.diagnostics) &&
+		value.diagnostics.every(isPluginDraftDiagnostic) &&
 		isFiniteNumber(value.createdAt) &&
-		isFiniteNumber(value.updatedAt) &&
-		isFiniteNumber(value.lastMessageAt) &&
-		isOptional(value.memoryVersion, isFiniteNumber)
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
+function isPluginDraftRevision(value: unknown): value is PluginDraftRevision {
+	return (
+		isRecord(value) &&
+		isString(value.draftId) &&
+		isFiniteNumber(value.revision) &&
+		Number.isInteger(value.revision) &&
+		value.revision >= 1 &&
+		isString(value.source) &&
+		value.source.length > 0 &&
+		isFiniteNumber(value.size) &&
+		Number.isInteger(value.size) &&
+		value.size > 0 &&
+		value.size <= 256 * 1024 &&
+		new TextEncoder().encode(value.source).byteLength === value.size &&
+		isString(value.sha256) &&
+		SHA256_PATTERN.test(value.sha256) &&
+		isFiniteNumber(value.createdAt)
 	);
 }
 
@@ -576,13 +662,15 @@ export function parseKaloBackup(
 	maxMemoryLength: number,
 ): ParsedKaloBackup {
 	if (!isRecord(value)) throw new Error("备份文件不是有效对象");
+	const version = value.version;
 	if (
-		value.version !== 1 &&
-		value.version !== 2 &&
-		value.version !== 3 &&
-		value.version !== 4 &&
-		value.version !== 5 &&
-		value.version !== 6
+		version !== 1 &&
+		version !== 2 &&
+		version !== 3 &&
+		version !== 4 &&
+		version !== 5 &&
+		version !== 6 &&
+		version !== 7
 	)
 		throw new Error("备份版本不受支持");
 	if (!isFiniteNumber(value.exportedAt))
@@ -591,34 +679,36 @@ export function parseKaloBackup(
 	const user = requireArray(value, "user", isUser);
 	const aiConfig = requireArray(value, "aiConfig", isAIConfig);
 	const userMemory =
-		value.version >= 2
+		version >= 2
 			? requireArray(value, "userMemory", (item): item is UserMemory =>
 					isUserMemory(item, maxMemoryLength),
 				)
 			: [];
 	const trainingPlans =
-		value.version >= 3
-			? requireArray(value, "trainingPlans", isTrainingPlan)
-			: [];
+		version >= 3 ? requireArray(value, "trainingPlans", isTrainingPlan) : [];
 	const plannedWorkouts =
-		value.version >= 3
+		version >= 3
 			? requireArray(value, "plannedWorkouts", isPlannedWorkout)
 			: [];
 	const pluginConfigs =
-		value.version >= 4
+		version >= 4
 			? requireArray(value, "pluginConfigs", isPluginConfigRecord)
 			: [];
 	const pluginData =
-		value.version >= 4
-			? requireArray(value, "pluginData", isPluginDataRecord)
-			: [];
+		version >= 4 ? requireArray(value, "pluginData", isPluginDataRecord) : [];
 	const pluginInstallations =
-		value.version >= 5
+		version >= 5
 			? requireArray(value, "pluginInstallations", isPluginInstallation)
 			: [];
 	const pluginModules =
-		value.version >= 6
+		version >= 6
 			? requireArray(value, "pluginModules", isPluginModuleRecord)
+			: [];
+	const pluginDrafts =
+		version >= 7 ? requireArray(value, "pluginDrafts", isPluginDraft) : [];
+	const pluginDraftRevisions =
+		version >= 7
+			? requireArray(value, "pluginDraftRevisions", isPluginDraftRevision)
 			: [];
 	if (user.length > 1) throw new Error("用户资料格式无效");
 	if (aiConfig.length > 1) throw new Error("AI 配置格式无效");
@@ -738,6 +828,61 @@ export function parseKaloBackup(
 		throw new Error("计划训练与运动记录的关联不一致");
 	}
 
+	const messages = requireArray(value, "messages", isMessage);
+	const sessionValues = value.sessions;
+	if (!Array.isArray(sessionValues)) {
+		throw new Error("备份中的 sessions 数据格式无效");
+	}
+	const sessions = sessionValues.map((session) =>
+		parseSession(session, version < 7),
+	);
+	if (sessions.some((session) => session === null)) {
+		throw new Error("备份中的 sessions 数据格式无效");
+	}
+	const normalizedSessions = sessions.filter(
+		(session): session is Session => session !== null,
+	);
+	const firstMessageAt = new Map<string, number>();
+	for (const message of messages) {
+		const previous = firstMessageAt.get(message.sessionId);
+		if (previous === undefined || message.createdAt < previous) {
+			firstMessageAt.set(message.sessionId, message.createdAt);
+		}
+	}
+	for (const session of normalizedSessions) {
+		session.modeLockedAt ??= firstMessageAt.get(session.id);
+	}
+	const sessionById = new Map(
+		normalizedSessions.map((session) => [session.id, session]),
+	);
+	if (messages.some((message) => !sessionById.has(message.sessionId))) {
+		throw new Error("聊天消息关联了不存在的会话");
+	}
+	if (
+		pluginDrafts.some(
+			(draft) =>
+				sessionById.get(draft.sessionId)?.mode !== "plugin_development",
+		)
+	) {
+		throw new Error("插件草稿关联了无效的开发会话");
+	}
+	const draftById = new Map(pluginDrafts.map((draft) => [draft.id, draft]));
+	if (
+		new Set(pluginDrafts.map((draft) => draft.id)).size !== pluginDrafts.length
+	) {
+		throw new Error("插件草稿包含重复 id");
+	}
+	if (
+		pluginDraftRevisions.some((revision) => !draftById.has(revision.draftId)) ||
+		new Set(
+			pluginDraftRevisions.map(
+				(revision) => `${revision.draftId}\u0000${revision.revision}`,
+			),
+		).size !== pluginDraftRevisions.length
+	) {
+		throw new Error("插件草稿 revision 关联无效");
+	}
+
 	return {
 		user,
 		aiConfig,
@@ -748,11 +893,13 @@ export function parseKaloBackup(
 		pluginData,
 		pluginInstallations,
 		pluginModules,
+		pluginDrafts,
+		pluginDraftRevisions,
 		foodEntries: requireArray(value, "foodEntries", isFoodEntry),
 		exerciseEntries,
 		weightEntries: requireArray(value, "weightEntries", isWeightEntry),
 		foodLibrary: requireArray(value, "foodLibrary", isFoodLibraryItem),
-		sessions: requireArray(value, "sessions", isSession),
-		messages: requireArray(value, "messages", isMessage),
+		sessions: normalizedSessions,
+		messages,
 	};
 }

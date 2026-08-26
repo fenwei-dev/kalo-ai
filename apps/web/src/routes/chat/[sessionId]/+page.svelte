@@ -6,6 +6,7 @@
 	import AppDialog from "$lib/components/AppDialog.svelte";
 	import Markdown from "$lib/components/chat/Markdown.svelte";
 	import MessageContextMenu from "$lib/components/chat/MessageContextMenu.svelte";
+	import PluginDraftPanel from "$lib/components/chat/PluginDraftPanel.svelte";
 	import SessionDrawer from "$lib/components/chat/SessionDrawer.svelte";
 	import ToolChip from "$lib/components/chat/ToolChip.svelte";
 	import { app } from "$lib/context/appContext.svelte";
@@ -16,6 +17,7 @@
 		getSession,
 		listMessages,
 		renameSession,
+		updateSessionMode,
 	} from "$lib/db/repositories";
 	import type {
 		ContentBlock,
@@ -60,6 +62,7 @@
 	let destroyed = false;
 	let imeComposing = false;
 	let messageMenu = $state<MessageMenuState | null>(null);
+	let modeChanging = $state(false);
 	let pendingRevert = $state<DBMessage | null>(null);
 	let revertDialogOpen = $state(false);
 	let longPressTimer: ReturnType<typeof setTimeout> | undefined;
@@ -361,6 +364,30 @@
 		errorMsg = error instanceof Error ? error.message : String(error);
 	}
 
+	async function chooseMode(mode: Session["mode"]) {
+		const activeSession = session;
+		if (
+			!activeSession ||
+			activeSession.modeLockedAt !== undefined ||
+			messages.length > 0 ||
+			modeChanging ||
+			sending
+		) {
+			return;
+		}
+		modeChanging = true;
+		errorMsg = "";
+		try {
+			session = await updateSessionMode(activeSession.id, mode);
+			await app.refreshSessions();
+		} catch (error) {
+			errorMsg =
+				error instanceof Error ? error.message : m.chat_mode_change_failed();
+		} finally {
+			modeChanging = false;
+		}
+	}
+
 	function beginTurn(id: string): AbortController {
 		const controller = new AbortController();
 		turnController = controller;
@@ -568,7 +595,14 @@
 			</svg>
 		</button>
 		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-semibold">{session?.title ?? m.chat_session_fallback()}</p>
+			<div class="flex items-center gap-2">
+				<p class="truncate text-sm font-semibold">{session?.title ?? m.chat_session_fallback()}</p>
+				{#if session?.mode === 'plugin_development' && session.modeLockedAt !== undefined}
+					<span class="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-semibold text-violet-700">
+						{m.chat_mode_development_badge()}
+					</span>
+				{/if}
+			</div>
 			<p class="text-[11px] text-gray-400">{m.chat_list_title()} · {app.aiConfig?.model ?? m.chat_unconfigured()}</p>
 		</div>
 		<a href="/chat/new" class="block rounded-lg p-1.5 text-gray-400 hover:bg-gray-100" aria-label={m.chat_new()}>
@@ -585,12 +619,46 @@
 		class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 [-webkit-overflow-scrolling:touch]"
 	>
 		<div class="mx-auto max-w-md space-y-3">
+			{#if session?.mode === 'plugin_development'}
+				<PluginDraftPanel sessionId={session.id} refreshKey={messages.length} />
+			{/if}
+
 			{#if messages.length === 0 && !sending}
-				<div class="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
-					<div class="mb-2 text-3xl">🌿</div>
-					<p class="text-sm font-medium text-gray-700">{m.chat_empty_title()}</p>
+				{#if session && session.modeLockedAt === undefined}
+					<section class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+						<p class="text-sm font-semibold text-gray-800">{m.chat_mode_title()}</p>
+						<p class="mt-1 text-[11px] leading-relaxed text-gray-400">{m.chat_mode_hint()}</p>
+						<div class="mt-3 grid grid-cols-2 gap-2">
+							<button
+								type="button"
+								aria-pressed={session.mode === 'standard'}
+								disabled={modeChanging}
+								onclick={() => chooseMode('standard')}
+								class="rounded-xl border p-3 text-left transition disabled:opacity-50 {session.mode === 'standard' ? 'border-emerald-400 bg-emerald-50 ring-1 ring-emerald-200' : 'border-gray-200 bg-white'}"
+							>
+								<p class="text-xs font-semibold {session.mode === 'standard' ? 'text-emerald-800' : 'text-gray-700'}">{m.chat_mode_standard()}</p>
+								<p class="mt-1 text-[10px] leading-relaxed text-gray-500">{m.chat_mode_standard_body()}</p>
+							</button>
+							<button
+								type="button"
+								aria-pressed={session.mode === 'plugin_development'}
+								disabled={modeChanging}
+								onclick={() => chooseMode('plugin_development')}
+								class="rounded-xl border p-3 text-left transition disabled:opacity-50 {session.mode === 'plugin_development' ? 'border-violet-400 bg-violet-50 ring-1 ring-violet-200' : 'border-gray-200 bg-white'}"
+							>
+								<p class="text-xs font-semibold {session.mode === 'plugin_development' ? 'text-violet-800' : 'text-gray-700'}">{m.chat_mode_development()}</p>
+								<p class="mt-1 text-[10px] leading-relaxed text-gray-500">{m.chat_mode_development_body()}</p>
+							</button>
+						</div>
+					</section>
+				{/if}
+				<div class="rounded-2xl bg-white p-6 text-center shadow-sm {session?.modeLockedAt === undefined ? '' : 'mt-8'}">
+					<div class="mb-2 text-3xl">{session?.mode === 'plugin_development' ? '🧩' : '🌿'}</div>
+					<p class="text-sm font-medium text-gray-700">
+						{session?.mode === 'plugin_development' ? m.chat_development_empty_title() : m.chat_empty_title()}
+					</p>
 					<p class="mt-1 text-xs text-gray-400">
-						{m.chat_empty_body()}
+						{session?.mode === 'plugin_development' ? m.chat_development_empty_body() : m.chat_empty_body()}
 					</p>
 				</div>
 			{/if}

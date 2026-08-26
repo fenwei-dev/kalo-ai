@@ -4,12 +4,16 @@ import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 let repositories: typeof import("../src/lib/db/repositories");
 let database: typeof import("../src/lib/db/schema");
 let plugins: typeof import("../src/lib/plugins/manager");
+let drafts: typeof import("../src/lib/plugins/drafts");
+let developmentTools: typeof import("../src/lib/agent/pluginDevelopmentTools");
 let dates: typeof import("../src/lib/utils/date");
 
 beforeAll(async () => {
 	database = await import("../src/lib/db/schema");
 	repositories = await import("../src/lib/db/repositories");
 	plugins = await import("../src/lib/plugins/manager");
+	drafts = await import("../src/lib/plugins/drafts");
+	developmentTools = await import("../src/lib/agent/pluginDevelopmentTools");
 	dates = await import("../src/lib/utils/date");
 });
 
@@ -151,6 +155,142 @@ test("message revert deletion removes the selected range and resets session meta
 	const revertedSession = await repositories.getSession(session.id);
 	expect(revertedSession?.lastMessageAt).toBe(first.createdAt);
 	expect(revertedSession?.memoryVersion).toBeUndefined();
+});
+
+test("new chats default to standard and permanently lock their selected mode", async () => {
+	const session = await repositories.createSession();
+	expect(session).toMatchObject({ mode: "standard" });
+	expect(session.modeLockedAt).toBeUndefined();
+
+	const development = await repositories.updateSessionMode(
+		session.id,
+		"plugin_development",
+	);
+	expect(development.mode).toBe("plugin_development");
+	await repositories.addUserMessageWithMemorySync({
+		sessionId: session.id,
+		content: [{ type: "text", text: "Build an echo plugin" }],
+	});
+	expect(
+		(await repositories.listMessages(session.id)).map((item) => item.role),
+	).toEqual(["user"]);
+	const locked = await repositories.getSession(session.id);
+	expect(locked?.mode).toBe("plugin_development");
+	expect(locked?.modeLockedAt).toBeNumber();
+	await expect(
+		repositories.updateSessionMode(session.id, "standard"),
+	).rejects.toThrow("模式不能再修改");
+
+	await repositories.deleteMessagesFrom(session.id, 0);
+	expect(await repositories.listMessages(session.id)).toEqual([]);
+	expect((await repositories.getSession(session.id))?.modeLockedAt).toBe(
+		locked?.modeLockedAt,
+	);
+	await expect(
+		repositories.updateSessionMode(session.id, "standard"),
+	).rejects.toThrow("模式不能再修改");
+
+	const seeded = await repositories.createSession("Seeded");
+	await repositories.addMessage({
+		sessionId: seeded.id,
+		role: "assistant",
+		content: [{ type: "text", text: "Welcome" }],
+	});
+	expect((await repositories.getSession(seeded.id))?.modeLockedAt).toBeNumber();
+});
+
+test("development drafts are session scoped, revisioned, and tool managed", async () => {
+	const session = await repositories.createSession(
+		"Plugin dev",
+		"plugin_development",
+	);
+	const source = `const plugin = {
+  manifest: {
+    id: "draft_echo",
+    apiVersion: 1,
+    version: "1.0.0",
+    configVersion: 1,
+    name: { "zh-cn": "草稿", "en-us": "Draft" },
+    description: { "zh-cn": "测试", "en-us": "Test" },
+    permissions: []
+  },
+  configSchema: { type: "object", properties: {}, required: [], additionalProperties: false },
+  defaultConfig: {},
+  createTools() { return []; }
+};
+export const kaloPlugin = plugin;
+export default kaloPlugin;`;
+	const created = await drafts.createPluginDraft({
+		sessionId: session.id,
+		fileName: "draft-echo.js",
+		source,
+	});
+	expect(created).toMatchObject({ status: "valid", revision: 1 });
+
+	const invalid = await drafts.createPluginDraft({
+		sessionId: session.id,
+		fileName: "invalid.js",
+		source: 'import value from "remote"; export default value;',
+	});
+	expect(invalid.status).toBe("invalid");
+	expect(invalid.diagnostics[0]?.message).toContain("无 import");
+
+	const replaced = await drafts.replacePluginDraft({
+		sessionId: session.id,
+		draftId: created.id,
+		expectedRevision: 1,
+		source: source.replace('version: "1.0.0"', 'version: "1.0.1"'),
+	});
+	expect(replaced.revision).toBe(2);
+	await expect(
+		drafts.replacePluginDraft({
+			sessionId: session.id,
+			draftId: created.id,
+			expectedRevision: 1,
+			source,
+		}),
+	).rejects.toThrow("版本冲突");
+	const restored = await drafts.restorePluginDraftRevision({
+		sessionId: session.id,
+		draftId: created.id,
+		revision: 1,
+		expectedRevision: 2,
+	});
+	expect(restored).toMatchObject({ revision: 3, sha256: created.sha256 });
+
+	const other = await repositories.createSession("Other");
+	await expect(drafts.getPluginDraft(other.id, created.id)).rejects.toThrow(
+		"插件开发模式",
+	);
+
+	const tools = developmentTools.createPluginDevelopmentTools(session.id);
+	expect(tools.map((tool) => tool.name)).toEqual([
+		"createPluginDraft",
+		"listPluginDrafts",
+		"readPluginDraft",
+		"replacePluginDraft",
+		"validatePluginDraft",
+		"restorePluginDraftRevision",
+		"deletePluginDraft",
+	]);
+	const listTool = tools.find((tool) => tool.name === "listPluginDrafts");
+	if (!listTool) throw new Error("Missing listPluginDrafts");
+	const result = await listTool.execute("list-drafts", {});
+	expect(result.content[0]?.type).toBe("text");
+	if (result.content[0]?.type === "text") {
+		expect(JSON.parse(result.content[0].text).drafts).toHaveLength(2);
+	}
+
+	const backup = await repositories.exportAll();
+	expect(backup.version).toBe(7);
+	expect(backup.pluginDrafts).toHaveLength(2);
+	expect(backup.pluginDraftRevisions.length).toBeGreaterThanOrEqual(4);
+	await repositories.clearAllData();
+	await repositories.importAll(backup);
+	expect((await repositories.getSession(session.id))?.mode).toBe(
+		"plugin_development",
+	);
+	expect(await drafts.listPluginDrafts(session.id)).toHaveLength(2);
 });
 
 test("enabled plugin contributes tools and a bounded system prompt", async () => {
@@ -1003,7 +1143,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		caloriesBurned: 180,
 	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(6);
+	expect(backup.version).toBe(7);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",

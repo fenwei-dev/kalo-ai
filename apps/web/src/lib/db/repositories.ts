@@ -1,8 +1,11 @@
 import { getLocale } from "$lib/paraglide/runtime";
 import { descriptorSnapshotHash } from "$lib/plugins/descriptorPolicy";
-import { analyzePluginModuleSource } from "$lib/plugins/moduleSource";
+import {
+	analyzePluginModuleSource,
+	sha256Text,
+} from "$lib/plugins/moduleSource";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV6, parseKaloBackup } from "./backup";
+import { type KaloBackupV7, parseKaloBackup } from "./backup";
 
 export type {
 	KaloBackup,
@@ -12,6 +15,7 @@ export type {
 	KaloBackupV4,
 	KaloBackupV5,
 	KaloBackupV6,
+	KaloBackupV7,
 } from "./backup";
 
 import {
@@ -31,6 +35,7 @@ import type {
 	PluginInstallation,
 	PluginModuleRecord,
 	Session,
+	SessionMode,
 	TrainingPlan,
 	TrainingPlanStatus,
 	User,
@@ -1158,19 +1163,42 @@ export async function markSessionMemoryVersion(
 
 // ---------- Sessions ----------
 
-export async function createSession(title?: string): Promise<Session> {
+export async function createSession(
+	title?: string,
+	mode: SessionMode = "standard",
+): Promise<Session> {
 	const ts = now();
 	const resolvedTitle =
 		title ?? (getLocale() === "en-us" ? "New chat" : "新对话");
 	const session: Session = {
 		id: uid("sess_"),
 		title: resolvedTitle,
+		mode,
 		createdAt: ts,
 		updatedAt: ts,
 		lastMessageAt: ts,
 	};
 	await db.sessions.add(session);
 	return session;
+}
+
+export async function updateSessionMode(
+	id: string,
+	mode: SessionMode,
+): Promise<Session> {
+	return db.transaction("rw", [db.sessions, db.messages], async () => {
+		const session = await db.sessions.get(id);
+		if (!session) throw new Error("对话不存在或已被删除");
+		if (
+			session.modeLockedAt !== undefined ||
+			(await db.messages.where("sessionId").equals(id).count()) > 0
+		) {
+			throw new Error("对话已有内容，模式不能再修改");
+		}
+		const updated: Session = { ...session, mode, updatedAt: now() };
+		await db.sessions.put(updated);
+		return updated;
+	});
 }
 
 export async function getSession(id: string): Promise<Session | undefined> {
@@ -1191,10 +1219,25 @@ export async function touchSession(id: string): Promise<void> {
 }
 
 export async function deleteSession(id: string): Promise<void> {
-	await db.transaction("rw", db.sessions, db.messages, async () => {
-		await db.messages.where("sessionId").equals(id).delete();
-		await db.sessions.delete(id);
-	});
+	await db.transaction(
+		"rw",
+		[db.sessions, db.messages, db.pluginDrafts, db.pluginDraftRevisions],
+		async () => {
+			const drafts = await db.pluginDrafts
+				.where("sessionId")
+				.equals(id)
+				.toArray();
+			for (const draft of drafts) {
+				await db.pluginDraftRevisions
+					.where("draftId")
+					.equals(draft.id)
+					.delete();
+			}
+			await db.pluginDrafts.where("sessionId").equals(id).delete();
+			await db.messages.where("sessionId").equals(id).delete();
+			await db.sessions.delete(id);
+		},
+	);
 }
 
 // ---------- Messages ----------
@@ -1226,6 +1269,8 @@ export async function addMessage(
 		};
 		await db.messages.add(msg);
 		await db.sessions.update(data.sessionId, {
+			mode: session.mode ?? "standard",
+			modeLockedAt: session.modeLockedAt ?? ts,
 			updatedAt: ts,
 			lastMessageAt: ts,
 		});
@@ -1269,6 +1314,7 @@ export async function addUserMessageWithMemorySync(data: {
 			};
 			await db.messages.add(userMessage);
 
+			const mode = session.mode ?? "standard";
 			const memory = await db.userMemory.get("user-memory");
 			const snapshot: UserMemorySnapshot = memory
 				? {
@@ -1277,7 +1323,7 @@ export async function addUserMessageWithMemorySync(data: {
 						updatedAt: memory.updatedAt,
 					}
 				: { content: "", version: 0, updatedAt: null };
-			if (session.memoryVersion !== snapshot.version) {
+			if (mode === "standard" && session.memoryVersion !== snapshot.version) {
 				const toolCallId = uid("memory_");
 				await db.messages.bulkAdd([
 					{
@@ -1313,9 +1359,12 @@ export async function addUserMessageWithMemorySync(data: {
 				]);
 			}
 			await db.sessions.update(data.sessionId, {
+				mode,
+				modeLockedAt: session.modeLockedAt ?? ts,
 				updatedAt: ts,
 				lastMessageAt: ts,
-				memoryVersion: snapshot.version,
+				memoryVersion:
+					mode === "standard" ? snapshot.version : session.memoryVersion,
 			});
 			return userMessage;
 		},
@@ -1369,6 +1418,8 @@ export async function clearAllData(): Promise<void> {
 			db.pluginData,
 			db.pluginInstallations,
 			db.pluginModules,
+			db.pluginDrafts,
+			db.pluginDraftRevisions,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1387,6 +1438,8 @@ export async function clearAllData(): Promise<void> {
 				db.pluginData.clear(),
 				db.pluginInstallations.clear(),
 				db.pluginModules.clear(),
+				db.pluginDrafts.clear(),
+				db.pluginDraftRevisions.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1409,11 +1462,23 @@ export async function importAll(value: unknown): Promise<void> {
 		pluginData,
 		pluginInstallations,
 		pluginModules,
+		pluginDrafts,
+		pluginDraftRevisions,
 	} = data;
 	for (const module of pluginModules) {
 		const analyzed = await analyzePluginModuleSource(module.source);
 		if (analyzed.sha256 !== module.sha256 || analyzed.size !== module.size) {
 			throw new Error(`插件模块 ${module.pluginId} 的 hash 或大小无效`);
+		}
+	}
+	for (const draft of pluginDrafts) {
+		if ((await sha256Text(draft.source)) !== draft.sha256) {
+			throw new Error(`插件草稿 ${draft.id} 的 hash 无效`);
+		}
+	}
+	for (const revision of pluginDraftRevisions) {
+		if ((await sha256Text(revision.source)) !== revision.sha256) {
+			throw new Error(`插件草稿 ${revision.draftId} 的 revision hash 无效`);
 		}
 	}
 	for (const installation of pluginInstallations) {
@@ -1449,6 +1514,8 @@ export async function importAll(value: unknown): Promise<void> {
 			db.pluginData,
 			db.pluginInstallations,
 			db.pluginModules,
+			db.pluginDrafts,
+			db.pluginDraftRevisions,
 			db.weightEntries,
 			db.foodLibrary,
 			db.sessions,
@@ -1467,6 +1534,8 @@ export async function importAll(value: unknown): Promise<void> {
 				db.pluginData.clear(),
 				db.pluginInstallations.clear(),
 				db.pluginModules.clear(),
+				db.pluginDrafts.clear(),
+				db.pluginDraftRevisions.clear(),
 				db.weightEntries.clear(),
 				db.foodLibrary.clear(),
 				db.sessions.clear(),
@@ -1483,6 +1552,8 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.pluginData.bulkPut(pluginData);
 			await db.pluginInstallations.bulkPut(pluginInstallations);
 			await db.pluginModules.bulkPut(pluginModules);
+			await db.pluginDrafts.bulkPut(pluginDrafts);
+			await db.pluginDraftRevisions.bulkPut(pluginDraftRevisions);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);
 			await db.sessions.bulkPut(data.sessions);
@@ -1492,7 +1563,7 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV6> {
+export async function exportAll(): Promise<KaloBackupV7> {
 	const [
 		user,
 		aiConfig,
@@ -1505,6 +1576,8 @@ export async function exportAll(): Promise<KaloBackupV6> {
 		pluginData,
 		pluginInstallations,
 		pluginModules,
+		pluginDrafts,
+		pluginDraftRevisions,
 		weightEntries,
 		foodLibrary,
 		sessions,
@@ -1521,13 +1594,15 @@ export async function exportAll(): Promise<KaloBackupV6> {
 		db.pluginData.toArray(),
 		db.pluginInstallations.toArray(),
 		db.pluginModules.toArray(),
+		db.pluginDrafts.toArray(),
+		db.pluginDraftRevisions.toArray(),
 		db.weightEntries.toArray(),
 		db.foodLibrary.toArray(),
 		db.sessions.toArray(),
 		db.messages.toArray(),
 	]);
 	return {
-		version: 6,
+		version: 7,
 		exportedAt: now(),
 		user,
 		aiConfig,
@@ -1540,6 +1615,8 @@ export async function exportAll(): Promise<KaloBackupV6> {
 		pluginData,
 		pluginInstallations,
 		pluginModules,
+		pluginDrafts,
+		pluginDraftRevisions,
 		weightEntries,
 		foodLibrary,
 		sessions,

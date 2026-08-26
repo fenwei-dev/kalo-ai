@@ -16,19 +16,19 @@
 
 ## Phase 1 — Session mode and local draft workspace
 
-- [ ] Add persisted `Session.mode` (`standard` / `plugin_development`) and `modeLockedAt`.
-- [ ] Upgrade Dexie and backup parsing/export while preserving v1–v6 compatibility.
-- [ ] Add atomic repository guards for changing and locking a session mode.
-- [ ] Add the empty-chat mode selector, defaulting every new chat to Standard.
-- [ ] Hide and permanently lock the selector after the first persisted message.
-- [ ] Show a compact, read-only development-mode badge after locking.
-- [ ] Add `PluginDraft` and bounded revision persistence scoped to a development session.
-- [ ] Add Agent draft tools for create, read, list, replace, validate, and restore.
-- [ ] Give development sessions a dedicated prompt/tool set without health write tools or enabled-plugin prompts.
-- [ ] Add a lightweight draft panel with source, hash, revision, and diagnostics.
-- [ ] Add repository, migration, backup, mode-locking, and draft-tool tests.
-- [ ] Validate formatting, TypeScript, Svelte, tests, production build, and Wrangler dry run.
-- [ ] Commit Phase 1.
+- [x] Add persisted `Session.mode` (`standard` / `plugin_development`) and `modeLockedAt`.
+- [x] Upgrade Dexie and backup parsing/export while preserving v1–v6 compatibility.
+- [x] Add atomic repository guards for changing and locking a session mode.
+- [x] Add the empty-chat mode selector, defaulting every new chat to Standard.
+- [x] Hide and permanently lock the selector after the first persisted message.
+- [x] Show a compact, read-only development-mode badge after locking.
+- [x] Add `PluginDraft` and bounded revision persistence scoped to a development session.
+- [x] Add Agent draft tools for create, read, list, replace, validate, and restore.
+- [x] Give development sessions a dedicated prompt/tool set without health write tools or enabled-plugin prompts.
+- [x] Add a lightweight draft panel with source, hash, revision, and diagnostics.
+- [x] Add repository, migration, backup, mode-locking, and draft-tool tests.
+- [x] Validate formatting, TypeScript, Svelte, tests, production build, and Wrangler dry run.
+- [x] Commit Phase 1.
 
 ## Phase 2 — Zero-permission sandbox testing and explicit installation
 
