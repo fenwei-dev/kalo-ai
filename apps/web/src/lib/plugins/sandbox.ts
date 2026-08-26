@@ -161,6 +161,116 @@ const toolControllers = new Map();
 let nextServiceId = 0;
 const nativeJsonStringify = JSON.stringify.bind(JSON);
 const nativeJsonParse = JSON.parse.bind(JSON);
+const nativeDefineProperty = Object.defineProperty.bind(Object);
+const nativeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor.bind(Object);
+const nativeGetPrototypeOf = Object.getPrototypeOf.bind(Object);
+const nativeReflectGet = Reflect.get.bind(Reflect);
+
+const blockedWorkerGlobals = [
+  "BroadcastChannel",
+  "EventSource",
+  "RTCPeerConnection",
+  "SharedWorker",
+  "WebSocket",
+  "WebSocketStream",
+  "WebTransport",
+  "Worker",
+  "XMLHttpRequest",
+  "caches",
+  "cookieStore",
+  "fetch",
+  "importScripts",
+  "indexedDB",
+  "postMessage",
+  "webkitRTCPeerConnection"
+];
+
+const blockedNavigatorCapabilities = [
+  "bluetooth",
+  "clipboard",
+  "credentials",
+  "geolocation",
+  "gpu",
+  "hid",
+  "keyboard",
+  "locks",
+  "mediaDevices",
+  "permissions",
+  "serial",
+  "serviceWorker",
+  "storage",
+  "usb",
+  "wakeLock"
+];
+
+function lockProperty(root, name, label) {
+  let current = root;
+  let found = false;
+  const visited = new Set();
+  while (current !== null && !visited.has(current)) {
+    visited.add(current);
+    const descriptor = nativeGetOwnPropertyDescriptor(current, name);
+    if (descriptor) {
+      found = true;
+      if (descriptor.configurable) {
+        nativeDefineProperty(current, name, {
+          value: undefined,
+          writable: false,
+          enumerable: descriptor.enumerable,
+          configurable: false
+        });
+      } else if ("value" in descriptor && descriptor.writable) {
+        nativeDefineProperty(current, name, {
+          ...descriptor,
+          value: undefined,
+          writable: false
+        });
+      } else {
+        let value;
+        try {
+          value = nativeReflectGet(current, name, root);
+        } catch {
+          value = undefined;
+        }
+        if (value !== undefined) {
+          throw new Error("Cannot lock sandbox capability: " + label);
+        }
+      }
+    }
+    current = nativeGetPrototypeOf(current);
+  }
+
+  if (!found) return;
+  const ownDescriptor = nativeGetOwnPropertyDescriptor(root, name);
+  if (!ownDescriptor) {
+    nativeDefineProperty(root, name, {
+      value: undefined,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+  }
+  let exposed;
+  try {
+    exposed = nativeReflectGet(root, name);
+  } catch {
+    exposed = undefined;
+  }
+  if (exposed !== undefined) {
+    throw new Error("Sandbox capability remains available: " + label);
+  }
+}
+
+function lockDownDirectCapabilities() {
+  for (const name of blockedWorkerGlobals) {
+    lockProperty(globalThis, name, "globalThis." + name);
+  }
+  if (typeof navigator === "object" && navigator !== null) {
+    for (const name of blockedNavigatorCapabilities) {
+      lockProperty(navigator, name, "navigator." + name);
+    }
+  }
+}
 
 function cloneJson(value, label) {
   try {
@@ -223,6 +333,7 @@ async function initialize(source, debugName) {
   const suffix = String(debugName || "plugin.js").replace(/[^a-zA-Z0-9_.-]+/g, "_").slice(0, 120);
   const url = URL.createObjectURL(new Blob([source + "\n//# sourceURL=kalo-sandbox:" + suffix + "\n"], { type: "text/javascript" }));
   try {
+    lockDownDirectCapabilities();
     plugin = asPlugin(await import(url));
     sendRpc({ kind: "ready", descriptor: descriptor(plugin) });
   } finally {
