@@ -317,6 +317,15 @@ test("user-installed package plugins load disabled and can be removed with their
 		key: "sample",
 		value: { retained: false },
 	});
+	const updated = await plugins.installPluginPackage(
+		"npm:@scope/remote-fixture@1.0.0",
+		async () => ({
+			...module,
+			sourceUrl: "https://esm.sh/fixture.bundle.mjs",
+		}),
+		async () => remotePlugin,
+	);
+	expect(updated).toMatchObject({ enabled: false, status: "disabled" });
 	const disabled = await plugins.disableInstalledPlugin("remote_fixture");
 	expect(disabled).toMatchObject({ enabled: false, status: "disabled" });
 	await plugins.removePluginPackage("remote_fixture");
@@ -326,6 +335,77 @@ test("user-installed package plugins load disabled and can be removed with their
 		await repositories.getPluginData("remote_fixture", "sample"),
 	).toBeUndefined();
 	expect(await repositories.getPluginModule("remote_fixture")).toBeUndefined();
+});
+
+test("installed descriptor drift is rejected before permissions can change", async () => {
+	const { definePlugin, Type } = await import("@kalo-ai/plugin-sdk");
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const plugin = definePlugin({
+		manifest: {
+			id: "descriptor_drift",
+			apiVersion: 1,
+			version: "1.0.0",
+			configVersion: 1,
+			name: { "zh-cn": "漂移测试", "en-us": "Descriptor drift" },
+			description: { "zh-cn": "测试", "en-us": "Test fixture" },
+			permissions: [],
+		},
+		configSchema: Type.Object({}),
+		defaultConfig: {},
+		createTools: () => [],
+	});
+	const module = await analyzePluginModuleSource("export default {};");
+	await plugins.installPluginPackage(
+		"npm:@scope/descriptor-drift@1.0.0",
+		async () => ({
+			...module,
+			sourceUrl: "https://esm.sh/descriptor-drift.bundle.mjs",
+		}),
+		async () => plugin,
+	);
+	plugin.manifest.permissions = ["storage"];
+	await expect(
+		plugins.savePluginSettings("descriptor_drift", {}, true),
+	).rejects.toThrow("descriptor");
+	expect(await repositories.getPluginConfig("descriptor_drift")).toMatchObject({
+		enabled: false,
+	});
+});
+
+test("unsafe user plugin schemas are rejected before installation", async () => {
+	const { definePlugin, Type } = await import("@kalo-ai/plugin-sdk");
+	const { analyzePluginModuleSource } = await import(
+		"../src/lib/plugins/moduleSource"
+	);
+	const unsafe = definePlugin({
+		manifest: {
+			id: "unsafe_schema",
+			apiVersion: 1,
+			version: "1.0.0",
+			configVersion: 1,
+			name: { "zh-cn": "不安全 Schema", "en-us": "Unsafe schema" },
+			description: { "zh-cn": "测试", "en-us": "Test fixture" },
+		},
+		configSchema: Type.Object({ value: Type.String({ pattern: "[" }) }),
+		defaultConfig: { value: "test" },
+		createTools: () => [],
+	});
+	const module = await analyzePluginModuleSource("export default {};");
+	await expect(
+		plugins.installPluginPackage(
+			"npm:@scope/unsafe-schema@1.0.0",
+			async () => ({
+				...module,
+				sourceUrl: "https://esm.sh/unsafe-schema.bundle.mjs",
+			}),
+			async () => unsafe,
+		),
+	).rejects.toThrow("pattern");
+	expect(
+		await repositories.getPluginInstallation("unsafe_schema"),
+	).toBeUndefined();
 });
 
 test("remote package and plugin manifest versions must match", async () => {
@@ -379,9 +459,14 @@ test("local single-file plugins persist source, install disabled, and require ve
 		createTools: () => [],
 	});
 	const analyzed = await analyzePluginModuleSource("export default {};");
+	let executions = 0;
+	const executor = async () => {
+		executions += 1;
+		return localPlugin;
+	};
 	const installed = await plugins.installLocalPlugin(
 		{ fileName: "local-fixture.js", ...analyzed },
-		async () => localPlugin,
+		executor,
 	);
 	expect(installed).toMatchObject({
 		enabled: false,
@@ -392,6 +477,8 @@ test("local single-file plugins persist source, install disabled, and require ve
 		sha256: analyzed.sha256,
 		source: analyzed.source,
 	});
+	await plugins.getPluginState("local_fixture");
+	expect(executions).toBe(1);
 	const backup = await repositories.exportAll();
 	expect(backup.pluginModules).toEqual([
 		expect.objectContaining({
@@ -407,7 +494,7 @@ test("local single-file plugins persist source, install disabled, and require ve
 	await expect(
 		plugins.installLocalPlugin(
 			{ fileName: "local-fixture.js", ...changed },
-			async () => localPlugin,
+			executor,
 		),
 	).rejects.toThrow("manifest.version");
 });
@@ -1001,6 +1088,16 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		"export default { changed: true };";
 	await expect(importAll(invalidModuleBackup)).rejects.toThrow(
 		"pluginModules 数据格式无效",
+	);
+	const invalidDescriptorBackup = structuredClone(backup);
+	const descriptorInstallation =
+		invalidDescriptorBackup.pluginInstallations.find(
+			(installation) => installation.descriptor,
+		);
+	if (!descriptorInstallation) throw new Error("Descriptor fixture missing");
+	descriptorInstallation.manifest.permissions = ["storage"];
+	await expect(importAll(invalidDescriptorBackup)).rejects.toThrow(
+		"descriptor hash",
 	);
 
 	await repositories.clearAllData();

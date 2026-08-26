@@ -1,4 +1,5 @@
 import { getLocale } from "$lib/paraglide/runtime";
+import { descriptorSnapshotHash } from "$lib/plugins/descriptorPolicy";
 import { analyzePluginModuleSource } from "$lib/plugins/moduleSource";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
 import { type KaloBackupV6, parseKaloBackup } from "./backup";
@@ -277,6 +278,10 @@ export async function savePluginInstallationWithModule(
 		"rw",
 		[db.pluginInstallations, db.pluginModules],
 		async () => {
+			const existing = await db.pluginInstallations.get(installation.pluginId);
+			if (!existing && (await db.pluginInstallations.count()) >= 10) {
+				throw new Error("最多只能安装 10 个用户插件");
+			}
 			const savedInstallation = await savePluginInstallation(installation);
 			const savedModule = await savePluginModule(module);
 			return { installation: savedInstallation, module: savedModule };
@@ -1409,6 +1414,16 @@ export async function importAll(value: unknown): Promise<void> {
 		const analyzed = await analyzePluginModuleSource(module.source);
 		if (analyzed.sha256 !== module.sha256 || analyzed.size !== module.size) {
 			throw new Error(`插件模块 ${module.pluginId} 的 hash 或大小无效`);
+		}
+	}
+	for (const installation of pluginInstallations) {
+		if (!installation.descriptor) continue;
+		const expected = await descriptorSnapshotHash(
+			installation.manifest,
+			installation.descriptor,
+		);
+		if (expected !== installation.descriptor.sha256) {
+			throw new Error(`插件 ${installation.pluginId} 的 descriptor hash 无效`);
 		}
 	}
 	const installedPluginIds = new Set(

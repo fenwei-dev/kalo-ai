@@ -440,6 +440,19 @@ function isPluginManifest(
 	);
 }
 
+function isPluginDescriptorSnapshot(
+	value: unknown,
+): value is NonNullable<PluginInstallation["descriptor"]> {
+	return (
+		isRecord(value) &&
+		isJsonObject(value.configSchema) &&
+		isJsonObject(value.defaultConfig) &&
+		isOptional(value.settings, isJsonObject) &&
+		isString(value.sha256) &&
+		SHA256_PATTERN.test(value.sha256)
+	);
+}
+
 function isPluginInstallation(value: unknown): value is PluginInstallation {
 	return (
 		isRecord(value) &&
@@ -473,6 +486,7 @@ function isPluginInstallation(value: unknown): value is PluginInstallation {
 		(value.registry !== "local" ||
 			(isString(value.moduleSha256) && isFiniteNumber(value.moduleSize))) &&
 		isPluginManifest(value.manifest) &&
+		isOptional(value.descriptor, isPluginDescriptorSnapshot) &&
 		value.manifest.id === value.pluginId &&
 		value.manifest.version === value.packageVersion &&
 		isFiniteNumber(value.installedAt) &&

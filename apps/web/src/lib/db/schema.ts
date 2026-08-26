@@ -1,4 +1,8 @@
-import type { PluginManifest } from "@kalo-ai/plugin-sdk";
+import type {
+	PluginJsonObject,
+	PluginManifest,
+	PluginSettingField,
+} from "@kalo-ai/plugin-sdk";
 import Dexie, { type Table } from "dexie";
 
 // ---------- 基础枚举 / 类型 ----------
@@ -186,7 +190,14 @@ export interface PluginDataRecord {
 
 export type PluginPackageRegistry = "npm" | "jsr" | "local";
 
-/** Exact user-installed source reference and a displayable manifest snapshot. */
+export interface PluginDescriptorSnapshot {
+	configSchema: PluginJsonObject;
+	defaultConfig: PluginJsonObject;
+	settings?: { fields: PluginSettingField<PluginJsonObject>[] };
+	sha256: string;
+}
+
+/** Exact user-installed source reference and a displayable descriptor snapshot. */
 export interface PluginInstallation {
 	pluginId: string;
 	registry: PluginPackageRegistry;
@@ -197,6 +208,7 @@ export interface PluginInstallation {
 	moduleSha256?: string;
 	moduleSize?: number;
 	manifest: PluginManifest;
+	descriptor?: PluginDescriptorSnapshot;
 	installedAt: number;
 	updatedAt: number;
 }

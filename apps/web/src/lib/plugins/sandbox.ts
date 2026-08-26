@@ -8,13 +8,18 @@ import type {
 	PluginSettingField,
 	TSchema,
 } from "@kalo-ai/plugin-sdk";
-import { Value } from "typebox/value";
 import { listPluginData } from "$lib/db/repositories";
 import { isPluginManifest, isPluginSettings } from "./contract";
+import { validatePluginNetworkUrl } from "./networkPolicy";
+import { isJsonRpcValue, structuredValueSize } from "./rpcValue";
+import { assertSafePluginSchema, safeCheckPluginConfig } from "./safeSchema";
 import { createPluginServices } from "./services";
+import { validateSandboxToolResult } from "./toolResult";
 
 const INITIALIZE_TIMEOUT_MS = 10_000;
 const RPC_TIMEOUT_MS = 30_000;
+const TOOL_EXECUTION_TIMEOUT_MS = 90_000;
+const TOOL_CANCEL_GRACE_MS = 2_000;
 const MAX_RPC_JSON_BYTES = 1024 * 1024;
 const MAX_NETWORK_RESPONSE_BYTES = 1024 * 1024;
 const MAX_STORAGE_VALUE_BYTES = 64 * 1024;
@@ -82,7 +87,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function serializedSize(value: unknown): number {
 	try {
-		return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+		return structuredValueSize(value);
 	} catch {
 		return Number.POSITIVE_INFINITY;
 	}
@@ -107,47 +112,11 @@ function assertRpcSize(value: unknown): void {
 	}
 }
 
-function privateNetworkHost(hostname: string): boolean {
-	const normalized = hostname.toLowerCase();
-	if (
-		normalized === "localhost" ||
-		normalized === "::1" ||
-		normalized.endsWith(".local") ||
-		/^127\./.test(normalized) ||
-		/^10\./.test(normalized) ||
-		/^192\.168\./.test(normalized)
-	) {
-		return true;
-	}
-	const match = /^172\.(\d+)\./.exec(normalized);
-	return !!match?.[1] && Number(match[1]) >= 16 && Number(match[1]) <= 31;
-}
-
-function validatedNetworkUrl(input: unknown): URL {
-	if (typeof input !== "string") {
-		throw new Error("插件网络请求 URL 必须是字符串");
-	}
-	const url = new URL(input);
-	if (url.protocol !== "https:") {
-		throw new Error("插件网络请求只允许 HTTPS");
-	}
-	if (privateNetworkHost(url.hostname) || url.origin === location.origin) {
-		throw new Error("插件网络请求不能访问 Kalo origin、本机或私有网络");
-	}
-	return url;
-}
-
 function validatedStorageKey(value: unknown): string {
 	if (typeof value !== "string" || !STORAGE_KEY_PATTERN.test(value)) {
 		throw new Error("插件存储 key 必须是 1–100 位字母、数字、点、横线或下划线");
 	}
 	return value;
-}
-
-function permissionSet(
-	manifest: PluginManifest,
-): ReadonlySet<PluginPermission> {
-	return new Set(manifest.permissions ?? []);
 }
 
 const SANDBOX_FRAME_HTML = `<!doctype html>
@@ -183,15 +152,19 @@ addEventListener("message", function connect(event) {
 
 const SANDBOX_WORKER_SOURCE = String.raw`
 let rpcPort;
+let sendRpc;
+let startRpc;
 let plugin;
 let activeTools = new Map();
 const serviceRequests = new Map();
 const toolControllers = new Map();
 let nextServiceId = 0;
+const nativeJsonStringify = JSON.stringify.bind(JSON);
+const nativeJsonParse = JSON.parse.bind(JSON);
 
 function cloneJson(value, label) {
   try {
-    return JSON.parse(JSON.stringify(value));
+    return nativeJsonParse(nativeJsonStringify(value));
   } catch (error) {
     throw new Error(label + " must be JSON serializable: " + String(error));
   }
@@ -211,7 +184,7 @@ function callService(service, args) {
   return new Promise((resolve, reject) => {
     const id = "service_" + (++nextServiceId);
     serviceRequests.set(id, { resolve, reject });
-    rpcPort.postMessage({ kind: "service_request", id, service, args: cloneJson(args, "Service arguments") });
+    sendRpc({ kind: "service_request", id, service, args: cloneJson(args, "Service arguments") });
   });
 }
 
@@ -251,7 +224,7 @@ async function initialize(source, debugName) {
   const url = URL.createObjectURL(new Blob([source + "\n//# sourceURL=kalo-sandbox:" + suffix + "\n"], { type: "text/javascript" }));
   try {
     plugin = asPlugin(await import(url));
-    rpcPort.postMessage({ kind: "ready", descriptor: descriptor(plugin) });
+    sendRpc({ kind: "ready", descriptor: descriptor(plugin) });
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -310,6 +283,9 @@ async function handleRequest(message) {
 addEventListener("message", async (event) => {
   if (!event.data || event.data.type !== "connect" || !event.data.rpcPort) return;
   rpcPort = event.data.rpcPort;
+  sendRpc = rpcPort.postMessage.bind(rpcPort);
+  startRpc = rpcPort.start.bind(rpcPort);
+  Object.freeze(MessagePort.prototype);
   rpcPort.onmessage = async (rpcEvent) => {
     const message = rpcEvent.data;
     if (!message || typeof message !== "object") return;
@@ -324,19 +300,28 @@ addEventListener("message", async (event) => {
     if (message.kind !== "request") return;
     try {
       const value = await handleRequest(message);
-      rpcPort.postMessage({ kind: "response", id: message.id, ok: true, value });
+      sendRpc({ kind: "response", id: message.id, ok: true, value });
     } catch (error) {
-      rpcPort.postMessage({ kind: "response", id: message.id, ok: false, error: error instanceof Error ? error.message : String(error) });
+      sendRpc({ kind: "response", id: message.id, ok: false, error: error instanceof Error ? error.message : String(error) });
     }
   };
-  rpcPort.start();
+  startRpc();
   try {
     await initialize(event.data.source, event.data.debugName);
   } catch (error) {
-    rpcPort.postMessage({ kind: "response", id: "initialize", ok: false, error: error instanceof Error ? error.message : String(error) });
+    sendRpc({ kind: "response", id: "initialize", ok: false, error: error instanceof Error ? error.message : String(error) });
   }
 }, { once: true });
 `;
+
+export function isUnverifiedWebKitSandbox(userAgent: string): boolean {
+	const webKit = /AppleWebKit/i.test(userAgent);
+	const iOS =
+		/iP(?:hone|ad|od)/i.test(userAgent) ||
+		(/Macintosh/i.test(userAgent) && /Mobile/i.test(userAgent));
+	const chromium = /(?:Chrome|Chromium|Edg|OPR)\//i.test(userAgent);
+	return webKit && (iOS || !chromium);
+}
 
 export class SandboxPluginClient {
 	readonly descriptor: SandboxDescriptor;
@@ -345,16 +330,33 @@ export class SandboxPluginClient {
 	readonly #rpcPort: MessagePort;
 	readonly #controlPort: MessagePort;
 	readonly #pending = new Map<string, PendingRequest>();
+	readonly #grantedPermissions: ReadonlySet<PluginPermission>;
 	#nextRequestId = 0;
 	#disposed = false;
+
+	get disposed(): boolean {
+		return this.#disposed;
+	}
+
+	permissionsMatch(permissions: readonly PluginPermission[]): boolean {
+		const expected = new Set(permissions);
+		return (
+			expected.size === this.#grantedPermissions.size &&
+			[...expected].every((permission) =>
+				this.#grantedPermissions.has(permission),
+			)
+		);
+	}
 
 	private constructor(
 		descriptor: SandboxDescriptor,
 		iframe: HTMLIFrameElement,
 		rpcPort: MessagePort,
 		controlPort: MessagePort,
+		grantedPermissions?: readonly PluginPermission[],
 	) {
 		this.descriptor = descriptor;
+		this.#grantedPermissions = new Set(grantedPermissions ?? []);
 		this.#iframe = iframe;
 		this.#rpcPort = rpcPort;
 		this.#controlPort = controlPort;
@@ -367,7 +369,8 @@ export class SandboxPluginClient {
 			configSchema: descriptor.configSchema,
 			defaultConfig: descriptor.defaultConfig,
 			settings: descriptor.settings,
-			validateConfig: (config) => Value.Check(descriptor.configSchema, config),
+			validateConfig: (config) =>
+				safeCheckPluginConfig(descriptor.configSchema, config),
 			isConfigured: () => {
 				throw new Error(
 					"Sandbox isConfigured must be awaited through the manager",
@@ -392,9 +395,15 @@ export class SandboxPluginClient {
 	static async create(
 		source: string,
 		debugName: string,
+		grantedPermissions: readonly PluginPermission[] = [],
 	): Promise<SandboxPluginClient> {
 		if (typeof document === "undefined") {
 			throw new Error("用户插件沙箱只能在浏览器中启动");
+		}
+		if (isUnverifiedWebKitSandbox(navigator.userAgent)) {
+			throw new Error(
+				"Safari/WebKit 的插件网络隔离尚未完成真机验证，当前已安全禁用用户插件",
+			);
 		}
 		const iframe = document.createElement("iframe");
 		iframe.hidden = true;
@@ -472,23 +481,38 @@ export class SandboxPluginClient {
 			iframe.remove();
 			throw error;
 		}
-		if (
-			!isPluginManifest(descriptor.manifest) ||
-			!isRecord(descriptor.configSchema) ||
-			!isRecord(descriptor.defaultConfig) ||
-			!isPluginSettings(descriptor.settings) ||
-			!Value.Check(descriptor.configSchema, descriptor.defaultConfig) ||
-			serializedSize(descriptor) > MAX_RPC_JSON_BYTES
-		) {
+		try {
+			if (
+				!isPluginManifest(descriptor.manifest) ||
+				!isRecord(descriptor.configSchema) ||
+				!isRecord(descriptor.defaultConfig) ||
+				!isPluginSettings(descriptor.settings) ||
+				serializedSize(descriptor) > MAX_RPC_JSON_BYTES
+			) {
+				throw new Error("插件沙箱返回了无效 descriptor");
+			}
+			assertSafePluginSchema(descriptor.configSchema);
+			if (
+				!safeCheckPluginConfig(
+					descriptor.configSchema,
+					descriptor.defaultConfig,
+				)
+			) {
+				throw new Error("插件默认配置不符合安全 schema");
+			}
+		} catch (error) {
 			controlChannel.port1.postMessage({ type: "terminate" });
+			rpcChannel.port1.close();
+			controlChannel.port1.close();
 			iframe.remove();
-			throw new Error("插件沙箱返回了无效 descriptor");
+			throw error;
 		}
 		const client = new SandboxPluginClient(
 			descriptor,
 			iframe,
 			rpcChannel.port1,
 			controlChannel.port1,
+			grantedPermissions,
 		);
 		client.#rpcPort.onmessage = (event: MessageEvent<SandboxMessage>) => {
 			void client.#handleMessage(event.data);
@@ -535,10 +559,16 @@ export class SandboxPluginClient {
 		) {
 			throw new Error("插件沙箱返回了无效 runtime");
 		}
+		for (const tool of value.tools) {
+			assertSafePluginSchema((tool as Record<string, unknown>).parameters);
+		}
 		return value as unknown as SandboxRuntimeDescriptor;
 	}
 
-	createToolProxy(descriptor: SandboxToolDescriptor): AgentTool {
+	createToolProxy(
+		descriptor: SandboxToolDescriptor,
+		onError?: (error: unknown) => void,
+	): AgentTool {
 		return {
 			name: descriptor.name,
 			label: descriptor.label,
@@ -555,15 +585,22 @@ export class SandboxPluginClient {
 				};
 				signal?.addEventListener("abort", abort, { once: true });
 				try {
-					const value = await this.#request("executeTool", {
-						toolCallId,
-						name: descriptor.name,
-						params,
-					});
-					if (!isRecord(value) || !Array.isArray(value.content)) {
-						throw new Error("插件工具返回格式无效");
-					}
-					return value as unknown as Awaited<ReturnType<AgentTool["execute"]>>;
+					const value = await this.#request(
+						"executeTool",
+						{
+							toolCallId,
+							name: descriptor.name,
+							params,
+						},
+						{
+							timeoutMs: TOOL_EXECUTION_TIMEOUT_MS,
+							cancelToolCallId: toolCallId,
+						},
+					);
+					return validateSandboxToolResult(value);
+				} catch (error) {
+					onError?.(error);
+					throw error;
 				} finally {
 					signal?.removeEventListener("abort", abort);
 				}
@@ -585,17 +622,38 @@ export class SandboxPluginClient {
 		this.#pending.clear();
 	}
 
-	async #request(method: string, payload: unknown): Promise<unknown> {
+	async #request(
+		method: string,
+		payload: unknown,
+		options: { timeoutMs?: number; cancelToolCallId?: string } = {},
+	): Promise<unknown> {
 		if (this.#disposed) throw new Error("插件沙箱已关闭");
 		const safePayload = cloneRpcValue(payload);
 		const id = `request_${++this.#nextRequestId}`;
 		return new Promise((resolve, reject) => {
-			const timer = setTimeout(() => {
+			const fail = () => {
 				this.#pending.delete(id);
 				this.dispose();
 				reject(new Error(`插件沙箱调用超时：${method}`));
-			}, RPC_TIMEOUT_MS);
-			this.#pending.set(id, { resolve, reject, timer });
+			};
+			const pending: PendingRequest = {
+				resolve,
+				reject,
+				timer: setTimeout(() => {
+					if (!options.cancelToolCallId) {
+						fail();
+						return;
+					}
+					this.#rpcPort.postMessage({
+						kind: "request",
+						id: `cancel_${id}`,
+						method: "cancelTool",
+						payload: { toolCallId: options.cancelToolCallId },
+					});
+					pending.timer = setTimeout(fail, TOOL_CANCEL_GRACE_MS);
+				}, options.timeoutMs ?? RPC_TIMEOUT_MS),
+			};
+			this.#pending.set(id, pending);
 			this.#rpcPort.postMessage({
 				kind: "request",
 				id,
@@ -624,6 +682,9 @@ export class SandboxPluginClient {
 		}
 		if (message.kind !== "service_request") return;
 		try {
+			if (!Array.isArray(message.args) || !isJsonRpcValue(message.args)) {
+				throw new Error("插件 service 参数必须是 JSON 数据");
+			}
 			assertRpcSize(message.args);
 			const value = await this.#executeService(message.service, message.args);
 			assertRpcSize(value);
@@ -644,7 +705,7 @@ export class SandboxPluginClient {
 	}
 
 	async #executeService(service: string, args: unknown[]): Promise<unknown> {
-		const permissions = permissionSet(this.descriptor.manifest);
+		const permissions = this.#grantedPermissions;
 		const services = createPluginServices(this.descriptor.manifest.id);
 		if (service === "profile.get") {
 			if (!permissions.has("profile.read"))
@@ -695,7 +756,7 @@ export class SandboxPluginClient {
 		}
 		if (service === "network.fetch") {
 			if (!permissions.has("network")) throw new Error("插件未获 network 权限");
-			const url = validatedNetworkUrl(args[0]);
+			const url = validatePluginNetworkUrl(args[0], location.origin);
 			const init = isRecord(args[1]) ? args[1] : {};
 			const response = await fetch(url, {
 				method: typeof init.method === "string" ? init.method : "GET",
@@ -712,7 +773,7 @@ export class SandboxPluginClient {
 				redirect: "follow",
 				signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
 			});
-			const finalUrl = validatedNetworkUrl(response.url);
+			const finalUrl = validatePluginNetworkUrl(response.url, location.origin);
 			if (finalUrl.origin !== url.origin) {
 				throw new Error("插件网络请求不允许跨 origin 重定向");
 			}

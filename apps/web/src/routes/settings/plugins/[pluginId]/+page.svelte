@@ -217,6 +217,11 @@
 							{/if}
 						</div>
 					{/if}
+					{#if pluginState.runtimeError}
+						<p class="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-700">
+							{m.plugins_runtime_error()}: {pluginState.runtimeError}
+						</p>
+					{/if}
 					{#if pluginState.source.type !== 'bundled'}
 						<p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
 							{m.plugins_remote_detail_risk()}
