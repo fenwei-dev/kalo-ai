@@ -15,6 +15,7 @@
 		"check": "bun run --filter @kalo-ai/plugin-sdk build && bun run --filter @kalo-ai/plugin-example build && bun run --workspaces check",
 		"check:watch": "bun run --filter @kalo-ai/web check:watch",
 		"test": "bun run --filter @kalo-ai/web test",
+		"test:browser:plugin-development": "bun apps/web/tests/browser/pluginDevelopmentSmoke.ts",
 		"fmt": "biome check --write",
 		"deploy": "bun run build && wrangler deploy"
 	},

@@ -32,17 +32,17 @@
 
 ## Phase 2 — Zero-permission sandbox testing and explicit installation
 
-- [ ] Inspect a draft descriptor/runtime in a disposable zero-permission sandbox.
-- [ ] Validate manifest, safe config/tool schemas, namespaced tools, prompt bounds, and default config.
-- [ ] Execute a selected draft tool with bounded JSON arguments and strict result validation.
-- [ ] Always dispose draft test iframe/Worker clients and surface structured diagnostics.
-- [ ] Add Agent tools for sandbox inspection and tool tests.
-- [ ] Extend the draft panel with runtime metadata, test output, source revisions, and download.
-- [ ] Add an explicit review dialog showing source hash, manifest, permissions, tools, and prompt risk.
-- [ ] Install reviewed drafts through the existing local-plugin path and leave them disabled.
-- [ ] Add sandbox-test, failed-load cleanup, denied-service, install-confirmation, and version-replacement tests.
-- [ ] Validate formatting, TypeScript, Svelte, tests, production build, Wrangler dry run, and Chromium smoke coverage.
-- [ ] Commit Phase 2.
+- [x] Inspect a draft descriptor/runtime in a disposable zero-permission sandbox.
+- [x] Validate manifest, safe config/tool schemas, namespaced tools, prompt bounds, and default config.
+- [x] Execute a selected draft tool with bounded JSON arguments and strict result validation.
+- [x] Always dispose draft test iframe/Worker clients and surface structured diagnostics.
+- [x] Add Agent tools for sandbox inspection and tool tests.
+- [x] Extend the draft panel with runtime metadata, test output, source revisions, and download.
+- [x] Add an explicit review dialog showing source hash, manifest, permissions, tools, and prompt risk.
+- [x] Install reviewed drafts through the existing local-plugin path and leave them disabled.
+- [x] Add sandbox-test, failed-load cleanup, denied-service, install-confirmation, and version-replacement tests.
+- [x] Validate formatting, TypeScript, Svelte, tests, production build, Wrangler dry run, and Chromium smoke coverage.
+- [x] Commit Phase 2.
 
 ## Phase 3 — Inline plugin sharing and reviewed import
 

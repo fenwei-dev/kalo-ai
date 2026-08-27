@@ -1,6 +1,11 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { type Static, Type } from "@earendil-works/pi-ai";
-import type { PluginDraft } from "$lib/db/schema";
+import type { JsonObject, JsonValue, PluginDraft } from "$lib/db/schema";
+import { getLocale } from "$lib/paraglide/runtime";
+import {
+	inspectPluginDraftInSandbox,
+	testPluginDraftTool,
+} from "$lib/plugins/draftSandbox";
 import {
 	createPluginDraft,
 	deletePluginDraft,
@@ -40,6 +45,14 @@ const restoreParameters = Type.Object({
 	revision: Type.Integer({ minimum: 1 }),
 	expectedRevision: Type.Integer({ minimum: 1 }),
 });
+const inspectParameters = Type.Object({
+	draftId: Type.String({ minLength: 1 }),
+});
+const testParameters = Type.Object({
+	draftId: Type.String({ minLength: 1 }),
+	toolName: Type.String({ minLength: 1, maxLength: 128 }),
+	arguments: Type.Object({}, { additionalProperties: true }),
+});
 const deleteParameters = Type.Object({
 	draftId: Type.String({ minLength: 1 }),
 });
@@ -54,8 +67,37 @@ function draftResult(draft: PluginDraft, includeSource = false) {
 		revision: draft.revision,
 		diagnostics: draft.diagnostics,
 		updatedAt: draft.updatedAt,
+		inspection: draft.inspection,
+		lastTest: draft.lastTest,
 		...(includeSource ? { source: draft.source } : {}),
 	};
+}
+
+function toJsonValue(value: unknown): JsonValue | undefined {
+	if (value === null || typeof value === "string" || typeof value === "boolean")
+		return value;
+	if (typeof value === "number")
+		return Number.isFinite(value) ? value : undefined;
+	if (Array.isArray(value))
+		return value.map((item) => toJsonValue(item) ?? null);
+	if (typeof value === "object" && value !== null) {
+		const converted: JsonObject = {};
+		for (const [key, item] of Object.entries(value)) {
+			const child = toJsonValue(item);
+			if (child !== undefined) converted[key] = child;
+		}
+		return converted;
+	}
+	return undefined;
+}
+
+function toJsonObject(value: unknown): JsonObject {
+	const converted = toJsonValue(value);
+	return converted !== null &&
+		typeof converted === "object" &&
+		!Array.isArray(converted)
+		? converted
+		: {};
 }
 
 function success(data: object | string | null): {
@@ -189,6 +231,45 @@ export function createPluginDevelopmentTools(sessionId: string): AgentTool[] {
 		},
 	};
 
+	const inspectTool: AgentTool<typeof inspectParameters, ToolOutcome> = {
+		name: "inspectPluginDraft",
+		label: "Inspect plugin draft in sandbox",
+		description:
+			"Load a statically valid draft in a disposable zero-permission sandbox, validate its descriptor and runtime tools, and record manifest, permissions, tool metadata, and bounded System Prompt. This does not install the plugin.",
+		parameters: inspectParameters,
+		executionMode: "sequential",
+		execute: async (_toolCallId, params, signal) => {
+			if (signal?.aborted) throw new Error("Request cancelled");
+			const draft = await inspectPluginDraftInSandbox({
+				sessionId,
+				draftId: params.draftId,
+				locale: getLocale(),
+			});
+			return success(draftResult(draft));
+		},
+	};
+
+	const testTool: AgentTool<typeof testParameters, ToolOutcome> = {
+		name: "testPluginDraftTool",
+		label: "Test plugin draft tool",
+		description:
+			"Execute one inspected draft tool with bounded JSON arguments in a fresh zero-permission sandbox. Real profile, logs, storage, and network services are denied. Use representative synthetic arguments and report any denied permission instead of requesting real data.",
+		parameters: testParameters,
+		executionMode: "sequential",
+		execute: async (_toolCallId, params, signal) => {
+			if (signal?.aborted) throw new Error("Request cancelled");
+			const draft = await testPluginDraftTool({
+				sessionId,
+				draftId: params.draftId,
+				locale: getLocale(),
+				toolName: params.toolName,
+				arguments: toJsonObject(params.arguments),
+				signal,
+			});
+			return success(draftResult(draft));
+		},
+	};
+
 	const deleteTool: AgentTool<typeof deleteParameters, ToolOutcome> = {
 		name: "deletePluginDraft",
 		label: "Delete plugin draft",
@@ -210,6 +291,8 @@ export function createPluginDevelopmentTools(sessionId: string): AgentTool[] {
 		replaceTool,
 		validateTool,
 		restoreTool,
+		inspectTool,
+		testTool,
 		deleteTool,
 	];
 }

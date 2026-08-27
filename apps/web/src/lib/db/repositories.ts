@@ -32,6 +32,7 @@ import type {
 	PlannedWorkout,
 	PluginConfigRecord,
 	PluginDataRecord,
+	PluginDraft,
 	PluginInstallation,
 	PluginModuleRecord,
 	Session,
@@ -1471,9 +1472,41 @@ export async function importAll(value: unknown): Promise<void> {
 			throw new Error(`插件模块 ${module.pluginId} 的 hash 或大小无效`);
 		}
 	}
+	const safePluginDrafts: PluginDraft[] = [];
 	for (const draft of pluginDrafts) {
 		if ((await sha256Text(draft.source)) !== draft.sha256) {
 			throw new Error(`插件草稿 ${draft.id} 的 hash 无效`);
+		}
+		try {
+			await analyzePluginModuleSource(draft.source);
+			safePluginDrafts.push({
+				...draft,
+				status: "valid" as const,
+				diagnostics: [
+					{
+						level: "warning" as const,
+						code: "restore-reinspect",
+						message:
+							"Restored draft source must pass zero-permission sandbox inspection again.",
+					},
+				],
+				inspection: undefined,
+				lastTest: undefined,
+			});
+		} catch (error) {
+			safePluginDrafts.push({
+				...draft,
+				status: "invalid" as const,
+				diagnostics: [
+					{
+						level: "error" as const,
+						code: "static-invalid",
+						message: error instanceof Error ? error.message : String(error),
+					},
+				],
+				inspection: undefined,
+				lastTest: undefined,
+			});
 		}
 	}
 	for (const revision of pluginDraftRevisions) {
@@ -1552,7 +1585,7 @@ export async function importAll(value: unknown): Promise<void> {
 			await db.pluginData.bulkPut(pluginData);
 			await db.pluginInstallations.bulkPut(pluginInstallations);
 			await db.pluginModules.bulkPut(pluginModules);
-			await db.pluginDrafts.bulkPut(pluginDrafts);
+			await db.pluginDrafts.bulkPut(safePluginDrafts);
 			await db.pluginDraftRevisions.bulkPut(pluginDraftRevisions);
 			await db.weightEntries.bulkPut(data.weightEntries);
 			await db.foodLibrary.bulkPut(data.foodLibrary);

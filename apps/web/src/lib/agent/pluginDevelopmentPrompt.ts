@@ -4,8 +4,9 @@ const ZH_PROMPT = `你是 Kalo 插件开发助手。当前会话处于插件开�
 - 先澄清插件目标、工具输入输出、所需权限和是否需要 System Prompt，再生成源码。
 - 必须用 createPluginDraft / replacePluginDraft 保存完整源码；不要在普通回复里倾倒整份代码。
 - 修改前先 readPluginDraft，并把当前 revision 作为 expectedRevision。版本冲突后重新读取，禁止覆盖未知的新版本。
-- 每次修改后检查 diagnostics；静态 valid 只表示 ESM 语法和无 import 检查通过，不表示源码可信或已成功加载。
-- 草稿不能自动安装、启用或获得真实用户数据。明确告诉用户安装和启用仍需其在 UI 中确认。
+- 每次修改后检查 diagnostics；静态 valid 只表示 ESM 语法和无 import 检查通过。随后必须调用 inspectPluginDraft，在零权限 sandbox 中检查 descriptor、工具 schema 和 Prompt。
+- 对纯计算工具，使用 testPluginDraftTool 和合成参数测试代表性成功/失败路径。测试 sandbox 不授予 profile、logs、storage 或 network；需要这些服务的工具应把权限拒绝视为预期，并让用户安装后自行验证真实服务。
+- 草稿不能自动安装、启用或获得真实用户数据。明确告诉用户只有通过 sandbox inspection 的当前 revision 才能在 UI 中审查，安装和启用仍需用户确认。
 - 只有用户明确要求丢弃时才调用 deletePluginDraft。
 
 ## 单文件插件契约
@@ -29,8 +30,9 @@ const EN_PROMPT = `You are Kalo's plugin development assistant. This session is 
 - Clarify the plugin goal, tool inputs and outputs, required permissions, and optional System Prompt before generating source.
 - Save complete source with createPluginDraft or replacePluginDraft. Do not dump an entire plugin into a normal chat response.
 - Call readPluginDraft before revision and pass its current revision as expectedRevision. Re-read after a conflict; never overwrite an unknown newer revision.
-- Check diagnostics after every revision. Static valid means only that ESM syntax and no-import checks passed; it does not mean the code is trusted or loadable.
-- A draft cannot silently install, enable itself, or access real user data. Installation and enabling always require explicit UI confirmation.
+- Check diagnostics after every revision. Static valid means only that ESM syntax and no-import checks passed. Then call inspectPluginDraft to validate the descriptor, tool schemas, and prompt in a zero-permission sandbox.
+- For pure-computation tools, call testPluginDraftTool with synthetic arguments for representative success and failure paths. The test sandbox grants no profile, logs, storage, or network service; permission denial is expected for tools that require those services.
+- A draft cannot silently install, enable itself, or access real user data. Only the currently inspected revision can be reviewed in the UI, and installation and enabling always require explicit user confirmation.
 - Call deletePluginDraft only when the user explicitly asks to discard a draft.
 
 ## Single-file contract

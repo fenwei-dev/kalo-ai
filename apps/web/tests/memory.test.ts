@@ -271,6 +271,8 @@ export default kaloPlugin;`;
 		"replacePluginDraft",
 		"validatePluginDraft",
 		"restorePluginDraftRevision",
+		"inspectPluginDraft",
+		"testPluginDraftTool",
 		"deletePluginDraft",
 	]);
 	const listTool = tools.find((tool) => tool.name === "listPluginDrafts");
@@ -281,6 +283,28 @@ export default kaloPlugin;`;
 		expect(JSON.parse(result.content[0].text).drafts).toHaveLength(2);
 	}
 
+	await drafts.recordPluginDraftInspection({
+		sessionId: session.id,
+		draftId: created.id,
+		expectedRevision: restored.revision,
+		inspection: {
+			revision: restored.revision,
+			inspectedAt: Date.now(),
+			descriptorSha256: "0".repeat(64),
+			manifest: {
+				id: "draft_echo",
+				apiVersion: 1,
+				version: "1.0.0",
+				configVersion: 1,
+				name: { "zh-cn": "草稿", "en-us": "Draft" },
+				description: { "zh-cn": "测试", "en-us": "Test" },
+				permissions: [],
+			},
+			configured: true,
+			tools: [],
+			prompt: "",
+		},
+	});
 	const backup = await repositories.exportAll();
 	expect(backup.version).toBe(7);
 	expect(backup.pluginDrafts).toHaveLength(2);
@@ -290,7 +314,15 @@ export default kaloPlugin;`;
 	expect((await repositories.getSession(session.id))?.mode).toBe(
 		"plugin_development",
 	);
-	expect(await drafts.listPluginDrafts(session.id)).toHaveLength(2);
+	const restoredDrafts = await drafts.listPluginDrafts(session.id);
+	expect(restoredDrafts).toHaveLength(2);
+	expect(
+		restoredDrafts.find((draft) => draft.id === created.id)?.inspection,
+	).toBeUndefined();
+	expect(
+		restoredDrafts.find((draft) => draft.id === created.id)?.diagnostics[0]
+			?.code,
+	).toBe("restore-reinspect");
 });
 
 test("enabled plugin contributes tools and a bounded system prompt", async () => {

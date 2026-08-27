@@ -568,6 +568,65 @@ function isPluginDraftDiagnostic(
 	);
 }
 
+function isPluginDraftInspection(
+	value: unknown,
+): value is NonNullable<PluginDraft["inspection"]> {
+	return (
+		isRecord(value) &&
+		isFiniteNumber(value.revision) &&
+		Number.isInteger(value.revision) &&
+		value.revision >= 1 &&
+		isFiniteNumber(value.inspectedAt) &&
+		isString(value.descriptorSha256) &&
+		SHA256_PATTERN.test(value.descriptorSha256) &&
+		isPluginManifest(value.manifest) &&
+		isBoolean(value.configured) &&
+		Array.isArray(value.tools) &&
+		value.tools.length <= 32 &&
+		value.tools.every(
+			(tool) =>
+				isRecord(tool) &&
+				isString(tool.name) &&
+				isString(tool.label) &&
+				isString(tool.description) &&
+				isJsonObject(tool.parameters) &&
+				isOptional(
+					tool.executionMode,
+					(mode): mode is "parallel" | "sequential" =>
+						isOneOf(mode, ["parallel", "sequential"] as const),
+				),
+		) &&
+		isString(value.prompt) &&
+		value.prompt.length <= 4_000
+	);
+}
+
+function isPluginDraftToolTest(
+	value: unknown,
+): value is NonNullable<PluginDraft["lastTest"]> {
+	return (
+		isRecord(value) &&
+		isFiniteNumber(value.revision) &&
+		Number.isInteger(value.revision) &&
+		value.revision >= 1 &&
+		isFiniteNumber(value.testedAt) &&
+		isString(value.toolName) &&
+		isJsonObject(value.arguments) &&
+		isBoolean(value.ok) &&
+		Array.isArray(value.content) &&
+		value.content.every(
+			(block) =>
+				isRecord(block) &&
+				((block.type === "text" && isString(block.text)) ||
+					(block.type === "image" &&
+						isString(block.mimeType) &&
+						isFiniteNumber(block.bytes))),
+		) &&
+		isOptional(value.details, isJsonValue) &&
+		isOptional(value.error, isString)
+	);
+}
+
 function isPluginDraft(value: unknown): value is PluginDraft {
 	return (
 		isRecord(value) &&
@@ -590,6 +649,12 @@ function isPluginDraft(value: unknown): value is PluginDraft {
 		value.revision >= 1 &&
 		Array.isArray(value.diagnostics) &&
 		value.diagnostics.every(isPluginDraftDiagnostic) &&
+		isOptional(value.inspection, isPluginDraftInspection) &&
+		(value.inspection === undefined ||
+			value.inspection.revision === value.revision) &&
+		isOptional(value.lastTest, isPluginDraftToolTest) &&
+		(value.lastTest === undefined ||
+			value.lastTest.revision === value.revision) &&
 		isFiniteNumber(value.createdAt) &&
 		isFiniteNumber(value.updatedAt)
 	);

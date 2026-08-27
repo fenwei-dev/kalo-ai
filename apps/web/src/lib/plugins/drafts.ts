@@ -1,7 +1,9 @@
 import type {
 	PluginDraft,
 	PluginDraftDiagnostic,
+	PluginDraftInspection,
 	PluginDraftRevision,
+	PluginDraftToolTest,
 } from "$lib/db/schema";
 import { db } from "$lib/db/schema";
 import {
@@ -199,6 +201,8 @@ export async function replacePluginDraft(input: {
 			const updated: PluginDraft = {
 				...current,
 				...analyzed,
+				inspection: undefined,
+				lastTest: undefined,
 				fileName: input.fileName
 					? normalizedDraftFileName(input.fileName)
 					: current.fileName,
@@ -257,6 +261,88 @@ export async function restorePluginDraftRevision(input: {
 		draftId: input.draftId,
 		expectedRevision: input.expectedRevision,
 		source: revision.source,
+	});
+}
+
+export async function recordPluginDraftInspection(input: {
+	sessionId: string;
+	draftId: string;
+	expectedRevision: number;
+	inspection: PluginDraftInspection;
+}): Promise<PluginDraft> {
+	return db.transaction("rw", [db.sessions, db.pluginDrafts], async () => {
+		const current = await scopedDraft(input.sessionId, input.draftId);
+		if (
+			current.revision !== input.expectedRevision ||
+			input.inspection.revision !== current.revision
+		) {
+			throw new Error("草稿在 sandbox 检查期间已被修改，请重新检查");
+		}
+		const updated: PluginDraft = {
+			...current,
+			status: "valid",
+			diagnostics: [
+				{
+					level: "info",
+					code: "sandbox-valid",
+					message:
+						"Zero-permission sandbox descriptor and runtime checks passed.",
+				},
+			],
+			inspection: input.inspection,
+			lastTest: undefined,
+			updatedAt: Date.now(),
+		};
+		await db.pluginDrafts.put(updated);
+		return updated;
+	});
+}
+
+export async function recordPluginDraftInspectionError(input: {
+	sessionId: string;
+	draftId: string;
+	expectedRevision: number;
+	message: string;
+}): Promise<PluginDraft> {
+	return db.transaction("rw", [db.sessions, db.pluginDrafts], async () => {
+		const current = await scopedDraft(input.sessionId, input.draftId);
+		if (current.revision !== input.expectedRevision) return current;
+		const updated: PluginDraft = {
+			...current,
+			status: "invalid",
+			diagnostics: [
+				{ level: "error", code: "sandbox-invalid", message: input.message },
+			],
+			inspection: undefined,
+			lastTest: undefined,
+			updatedAt: Date.now(),
+		};
+		await db.pluginDrafts.put(updated);
+		return updated;
+	});
+}
+
+export async function recordPluginDraftToolTest(input: {
+	sessionId: string;
+	draftId: string;
+	expectedRevision: number;
+	test: PluginDraftToolTest;
+}): Promise<PluginDraft> {
+	return db.transaction("rw", [db.sessions, db.pluginDrafts], async () => {
+		const current = await scopedDraft(input.sessionId, input.draftId);
+		if (
+			current.revision !== input.expectedRevision ||
+			input.test.revision !== current.revision
+		) {
+			throw new Error("草稿在工具测试期间已被修改，请重新测试");
+		}
+		const updated: PluginDraft = {
+			...current,
+			lastTest: input.test,
+			updatedAt: Date.now(),
+		};
+		await db.pluginDrafts.put(updated);
+		return updated;
 	});
 }
 

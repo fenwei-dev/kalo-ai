@@ -182,6 +182,38 @@ export interface PluginDraftDiagnostic {
 }
 
 /** Model-authored source stays a draft until a user explicitly installs it. */
+export interface PluginDraftInspectionTool {
+	name: string;
+	label: string;
+	description: string;
+	parameters: JsonObject;
+	executionMode?: "parallel" | "sequential";
+}
+
+export interface PluginDraftInspection {
+	revision: number;
+	inspectedAt: number;
+	descriptorSha256: string;
+	manifest: PluginManifest;
+	configured: boolean;
+	tools: PluginDraftInspectionTool[];
+	prompt: string;
+}
+
+export interface PluginDraftToolTest {
+	revision: number;
+	testedAt: number;
+	toolName: string;
+	arguments: JsonObject;
+	ok: boolean;
+	content: (
+		| { type: "text"; text: string }
+		| { type: "image"; mimeType: string; bytes: number }
+	)[];
+	details?: JsonValue;
+	error?: string;
+}
+
 export interface PluginDraft {
 	id: string;
 	sessionId: string;
@@ -192,6 +224,8 @@ export interface PluginDraft {
 	status: PluginDraftStatus;
 	revision: number;
 	diagnostics: PluginDraftDiagnostic[];
+	inspection?: PluginDraftInspection;
+	lastTest?: PluginDraftToolTest;
 	createdAt: number;
 	updatedAt: number;
 }

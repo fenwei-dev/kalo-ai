@@ -11,7 +11,8 @@
 		"prepare": "bun run i18n:compile && svelte-kit sync",
 		"check": "bun run i18n:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "bun run i18n:compile && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "bun run i18n:compile && bun test"
+		"test": "bun run i18n:compile && bun test",
+		"test:browser:plugin-development": "bun tests/browser/pluginDevelopmentSmoke.ts"
 	},
 	"devDependencies": {
 		"@kalo-ai/plugin-example": "workspace:*",
