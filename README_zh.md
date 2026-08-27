@@ -15,7 +15,7 @@
 - **完整追踪**：饮食、运动、体重、目标、每日概览与趋势分析。
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
 - **中英双语**：支持简体中文与 English。
-- **插件系统**：经过审查的集成 package，以及固定到精确版本的 npm/JSR Kalo 插件，都可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置。
+- **插件系统**：经过审查的集成 package，以及固定到精确版本的 npm/JSR Kalo 插件，都可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置；专用对话模式还支持 Agent 创建、沙箱测试、审查和分享本地插件草稿。
 - **新加坡餐厅营养数据**：通过可审查的静态快照，为麦当劳、赛百味和肯德基提供离线 Agent 查询工具。
 
 ## Monorepo 结构
@@ -46,7 +46,9 @@ npm:@scope/package@1.2.3
 jsr:@scope/package@1.2.3
 ```
 
-卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。Registry package 会通过 esm.sh 下载一次自包含 bundle 并存入 IndexedDB，后续可离线使用；本地文件最大 2 MiB 且不得包含 import。新安装插件默认停用，可执行缓存源码会包含在完整备份中，从备份恢复后必须再次明确启用。package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
+卡卡会拒绝 tag、版本范围、未固定版本和任意 URL。Registry package 会通过 esm.sh 下载一次自包含 bundle 并存入 IndexedDB，后续可离线使用；本地文件最大 2 MiB 且不得包含 import。新安装插件默认停用，可执行缓存源码会包含在完整备份中，从备份恢复后必须再次明确启用。
+
+在空白新对话中选择“插件开发模式”，Agent 可以创建带 revision 的本地草稿，在零权限 sandbox 中检查和测试，并在停用安装前展示源码、hash、权限和 Prompt 供用户明确审查。通过检查且不超过 48 KiB 的草稿可分享为 gzip/base64url URL fragment；打开分享链接不会执行源码。流程和限制见 [`docs/plugin-development.md`](./docs/plugin-development.md)，package 导出契约和安全边界见 [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md)。
 
 ## 开发
 

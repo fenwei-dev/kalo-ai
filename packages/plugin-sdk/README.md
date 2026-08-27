@@ -51,6 +51,12 @@ export default definePlugin({
 
 Tool names must start with `${pluginId}_`, be provider-compatible, and remain globally unique. User-installed tool descriptors cross a JSON RPC boundary; `name`, `label`, `description`, `parameters`, `executionMode`, `constrainedSampling`, and `execute` are supported. Additional function-valued hooks such as a custom `prepareArguments` cannot cross the sandbox boundary and should not be used by registry or local plugins.
 
+## Agent-assisted drafts and inline sharing
+
+A new chat can enter **Plugin development** mode before its first message. The Agent can create revisioned local drafts, run static checks, inspect them in a disposable zero-permission sandbox, and test pure tools with synthetic JSON arguments. The Agent cannot install or enable a plugin; users must review the exact source, SHA-256, permissions, tools, and System Prompt before installation, which remains disabled.
+
+Inspected drafts up to 48 KiB can be shared through a versioned gzip/base64url URL fragment. Opening the link performs bounded decoding and static validation only; source runs only after an explicit sandbox-inspection action. See [`docs/plugin-development.md`](../../docs/plugin-development.md).
+
 ## Importing one local JavaScript file
 
 Kalo can import one self-contained browser ESM `.js` or `.mjs` file up to 2 MiB. The final file must contain no static imports, dynamic imports, relative imports, bare package imports, or URL imports. Bundle this SDK and every other dependency into one output before selecting the file:

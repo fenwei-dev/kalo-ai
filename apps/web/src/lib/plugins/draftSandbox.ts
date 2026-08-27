@@ -14,6 +14,7 @@ import {
 	recordPluginDraftToolTest,
 	validatePluginDraft,
 } from "./drafts";
+import { analyzePluginModuleSource } from "./moduleSource";
 import { safeCheckPluginConfig } from "./safeSchema";
 import { SandboxPluginClient } from "./sandbox";
 
@@ -83,7 +84,7 @@ function assertRuntimeTools(
 }
 
 async function inspectWithClient(
-	draft: PluginDraft,
+	draft: Pick<PluginDraft, "source" | "fileName" | "revision">,
 	locale: "zh-cn" | "en-us",
 ): Promise<{
 	client: SandboxPluginClient;
@@ -127,6 +128,24 @@ async function inspectWithClient(
 		client.dispose();
 		throw error;
 	}
+}
+
+export async function inspectPluginSourceInSandbox(input: {
+	source: string;
+	fileName: string;
+	locale: "zh-cn" | "en-us";
+}): Promise<PluginDraftInspection> {
+	await analyzePluginModuleSource(input.source);
+	const { client, inspection } = await inspectWithClient(
+		{
+			source: input.source,
+			fileName: input.fileName,
+			revision: 1,
+		},
+		input.locale,
+	);
+	client.dispose();
+	return inspection;
 }
 
 export async function inspectPluginDraftInSandbox(input: {

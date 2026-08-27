@@ -15,7 +15,7 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Complete tracking**: Food, exercise, weight, goals, daily summaries, and trend analysis.
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
 - **Bilingual**: Supports Simplified Chinese and English.
-- **Plugin system**: Reviewed bundled packages and exact-version npm/JSR Kalo plugins can add Agent tools, bounded System Prompt sections, and schema-driven settings.
+- **Plugin system**: Reviewed bundled packages and exact-version npm/JSR Kalo plugins can add Agent tools, bounded System Prompt sections, and schema-driven settings. A dedicated conversation mode lets the Agent create, sandbox-test, review, and share local plugin drafts.
 - **Singapore restaurant nutrition**: Bundled, offline Agent tools cover McDonald's, Subway, and KFC Singapore using reviewable static snapshots.
 
 ## Monorepo layout
@@ -46,7 +46,9 @@ npm:@scope/package@1.2.3
 jsr:@scope/package@1.2.3
 ```
 
-Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Registry packages are downloaded once as self-contained esm.sh bundles and stored in IndexedDB for offline use. Local files must be at most 2 MiB and contain no imports. Installed plugins start disabled, executable cached source is included in full backups, and restored plugins must be explicitly re-enabled. See [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package export contract and security boundary.
+Kalo rejects tags, ranges, unversioned references, and arbitrary URLs. Registry packages are downloaded once as self-contained esm.sh bundles and stored in IndexedDB for offline use. Local files must be at most 2 MiB and contain no imports. Installed plugins start disabled, executable cached source is included in full backups, and restored plugins must be explicitly re-enabled.
+
+In a new empty chat, choose **Plugin development** to let the Agent create revisioned local drafts, inspect and test them in a zero-permission sandbox, and present an explicit source/hash/permission review before disabled installation. Inspected drafts up to 48 KiB can be shared as gzip/base64url URL fragments; opening a share never executes source. See [`docs/plugin-development.md`](./docs/plugin-development.md) for the workflow and limits, and [`packages/plugin-sdk/README.md`](./packages/plugin-sdk/README.md) for the package contract and security boundary.
 
 ## Development
 

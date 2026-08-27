@@ -11,6 +11,7 @@
 		restorePluginDraftRevision,
 	} from "$lib/plugins/drafts";
 	import { installLocalPlugin } from "$lib/plugins/manager";
+	import { createPluginShareUrl } from "$lib/plugins/share";
 
 	let {
 		sessionId,
@@ -26,6 +27,8 @@
 	let reviewAccepted = $state(false);
 	let installing = $state(false);
 	let installedMessage = $state("");
+	let sharingDraftId = $state<string | null>(null);
+	let sharedDraftId = $state<string | null>(null);
 
 	async function load(id: string) {
 		const current = ++generation;
@@ -104,6 +107,54 @@
 		anchor.download = draft.fileName;
 		anchor.click();
 		setTimeout(() => URL.revokeObjectURL(url), 0);
+	}
+
+	function fallbackCopy(text: string): boolean {
+		const textarea = document.createElement("textarea");
+		textarea.value = text;
+		textarea.setAttribute("readonly", "");
+		textarea.style.position = "fixed";
+		textarea.style.opacity = "0";
+		document.body.appendChild(textarea);
+		textarea.select();
+		const copied = document.execCommand("copy");
+		textarea.remove();
+		return copied;
+	}
+
+	async function share(draft: PluginDraft) {
+		if (sharingDraftId || draft.inspection?.revision !== draft.revision) {
+			return;
+		}
+		sharingDraftId = draft.id;
+		sharedDraftId = null;
+		error = "";
+		try {
+			const url = await createPluginShareUrl({
+				fileName: draft.fileName,
+				source: draft.source,
+				size: draft.size,
+				sha256: draft.sha256,
+			});
+			if (navigator.share) {
+				await navigator.share({
+					title: draft.fileName,
+					text: "Kalo plugin source",
+					url,
+				});
+			} else if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(url);
+			} else if (!fallbackCopy(url)) {
+				throw new Error("Clipboard unavailable");
+			}
+			sharedDraftId = draft.id;
+		} catch (cause) {
+			if (cause instanceof DOMException && cause.name === "AbortError") return;
+			error =
+				cause instanceof Error ? cause.message : m.chat_draft_share_failed();
+		} finally {
+			sharingDraftId = null;
+		}
 	}
 
 	function openReview(draft: PluginDraft) {
@@ -260,7 +311,10 @@
 							<button type="button" onclick={() => download(draft)} class="rounded-full border border-gray-300 py-2 text-[10px] font-medium text-gray-600">
 								{m.chat_draft_download()}
 							</button>
-							<button type="button" onclick={() => openReview(draft)} disabled={draft.inspection?.revision !== draft.revision || busyDraftId !== null} class="col-span-2 rounded-full bg-violet-600 py-2 text-[10px] font-medium text-white disabled:opacity-40">
+							<button type="button" onclick={() => share(draft)} disabled={draft.inspection?.revision !== draft.revision || sharingDraftId !== null} class="rounded-full border border-violet-300 py-2 text-[10px] font-medium text-violet-700 disabled:opacity-40">
+								{sharingDraftId === draft.id ? m.chat_draft_sharing() : sharedDraftId === draft.id ? m.chat_draft_shared() : m.chat_draft_share()}
+							</button>
+							<button type="button" onclick={() => openReview(draft)} disabled={draft.inspection?.revision !== draft.revision || busyDraftId !== null} class="rounded-full bg-violet-600 py-2 text-[10px] font-medium text-white disabled:opacity-40">
 								{m.chat_draft_review()}
 							</button>
 						</div>

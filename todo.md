@@ -46,19 +46,19 @@
 
 ## Phase 3 — Inline plugin sharing and reviewed import
 
-- [ ] Add a versioned, compressed, base64url share envelope containing file name, source, size, and SHA-256.
-- [ ] Enforce a small inline-source/token limit and reject malformed, oversized, or hash-mismatched payloads.
-- [ ] Add `/plugins/import` with fragment decoding and immediate URL cleanup.
-- [ ] Never execute shared source during route load or static preview.
-- [ ] Show source, hash, diagnostics, and risk confirmation before explicit installation.
-- [ ] Add a Share action to valid drafts using Web Share or clipboard fallback.
-- [ ] Install accepted shares through the existing local-plugin path, disabled by default.
-- [ ] Add round-trip, Unicode, tamper, size-limit, no-auto-execution, and import-flow tests.
-- [ ] Document URL-size/privacy limits and the npm/JSR path for larger plugins.
-- [ ] Validate formatting, TypeScript, Svelte, tests, production build, Wrangler dry run, and browser smoke coverage.
-- [ ] Commit Phase 3.
+- [x] Add a versioned, compressed, base64url share envelope containing file name, source, size, and SHA-256.
+- [x] Enforce a small inline-source/token limit and reject malformed, oversized, or hash-mismatched payloads.
+- [x] Add `/plugins/import` with fragment decoding and immediate URL cleanup.
+- [x] Never execute shared source during route load or static preview.
+- [x] Show source, hash, diagnostics, and risk confirmation before explicit installation.
+- [x] Add a Share action to valid drafts using Web Share or clipboard fallback.
+- [x] Install accepted shares through the existing local-plugin path, disabled by default.
+- [x] Add round-trip, Unicode, tamper, size-limit, no-auto-execution, and import-flow tests.
+- [x] Document URL-size/privacy limits and the npm/JSR path for larger plugins.
+- [x] Validate formatting, TypeScript, Svelte, tests, production build, Wrangler dry run, and browser smoke coverage.
+- [x] Commit Phase 3.
 
 ## Completion
 
-- [ ] Remove temporary fixtures and verify a clean worktree.
-- [ ] Report commits, validation results, remaining platform limitations, and any deferred follow-ups.
+- [x] Remove temporary fixtures and verify a clean worktree.
+- [x] Report commits, validation results, remaining platform limitations, and any deferred follow-ups.

@@ -337,6 +337,84 @@ export default kaloPlugin;`)};
 	) {
 		throw new Error(`Reviewed install failed: ${JSON.stringify(installed)}`);
 	}
+
+	console.log("[plugin-development-smoke] opening inline share route");
+	const sharedSource = source.replaceAll("dev_browser", "shared_browser");
+	const shareToken = await evaluate<string>(`(async () => {
+  const modules = await import('/src/lib/plugins/moduleSource.ts');
+  const share = await import('/src/lib/plugins/share.ts');
+  const analyzed = await modules.analyzePluginModuleSource(${JSON.stringify(sharedSource)});
+  return share.encodePluginShare({fileName:'shared-browser.js',...analyzed});
+})()`);
+	await command("Page.navigate", {
+		url: `${origin}/plugins/import#plugin=${shareToken}`,
+	});
+	await waitFor("document.readyState === 'complete'");
+	await waitFor(
+		"document.body.innerText.includes('shared-browser.js') && document.body.innerText.includes('No plugin code has run yet')",
+	);
+	const unopened = await evaluate<{
+		iframeCount: number;
+		installed: boolean;
+		hash: string;
+	}>(`(async () => {
+  const repositories = await import('/src/lib/db/repositories.ts');
+  return {
+    iframeCount: document.querySelectorAll('iframe[sandbox]').length,
+    installed: Boolean(await repositories.getPluginInstallation('shared_browser')),
+    hash: location.hash
+  };
+})()`);
+	if (unopened.iframeCount !== 0 || unopened.installed || unopened.hash) {
+		throw new Error(
+			`Shared source executed or persisted on open: ${JSON.stringify(unopened)}`,
+		);
+	}
+	await evaluate(`(() => {
+  const button = [...document.querySelectorAll('button')].find((item) => item.textContent?.includes('Inspect in zero-permission sandbox'));
+  if (!(button instanceof HTMLButtonElement)) throw new Error('Shared inspect button missing');
+  button.click();
+  return true;
+})()`);
+	await waitFor("document.body.innerText.includes('shared_browser_echo')");
+	await waitFor("document.querySelector('input[type=checkbox]') !== null");
+	await evaluate(`(() => {
+  const checkbox = document.querySelector('input[type=checkbox]');
+  if (!(checkbox instanceof HTMLInputElement)) throw new Error('Shared review checkbox missing');
+  checkbox.click();
+  return true;
+})()`);
+	await waitFor(`(() => {
+  const button = [...document.querySelectorAll('button')].find((item) => item.textContent?.includes('Install disabled'));
+  return button instanceof HTMLButtonElement && !button.disabled;
+})()`);
+	await evaluate(`(() => {
+  const button = [...document.querySelectorAll('button')].find((item) => item.textContent?.includes('Install disabled'));
+  if (!(button instanceof HTMLButtonElement)) throw new Error('Shared install button missing');
+  button.click();
+  return true;
+})()`);
+	await waitFor(
+		"document.body.innerText.includes('Installed disabled. Review settings before enabling it.')",
+	);
+	const sharedInstalled = await evaluate<{
+		enabled?: boolean;
+		registry?: string;
+	}>(`(async () => {
+  const repositories = await import('/src/lib/db/repositories.ts');
+  return {
+    enabled: (await repositories.getPluginConfig('shared_browser'))?.enabled,
+    registry: (await repositories.getPluginInstallation('shared_browser'))?.registry
+  };
+})()`);
+	if (
+		sharedInstalled.enabled !== false ||
+		sharedInstalled.registry !== "local"
+	) {
+		throw new Error(
+			`Shared install failed: ${JSON.stringify(sharedInstalled)}`,
+		);
+	}
 	console.log(
 		JSON.stringify(
 			{
@@ -345,6 +423,8 @@ export default kaloPlugin;`)};
 				undeclaredStorageDenied: fixture.denied,
 				failedLoadCleaned: fixture.failedLoadCleaned,
 				installation: installed,
+				shareRouteDidNotAutoExecute: true,
+				sharedInstallation: sharedInstalled,
 			},
 			null,
 			2,
