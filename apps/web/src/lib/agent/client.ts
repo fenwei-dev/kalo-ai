@@ -26,6 +26,7 @@ import { buildModels } from "./provider";
 import { getKaloSystemPrompt } from "./systemPrompt";
 import { agentTools, type ToolOutcome } from "./tools";
 
+/** Per provider HTTP request; the UI separately uses a renewable turn idle timer. */
 const MODEL_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 
 function extendSystemPrompt(
@@ -45,6 +46,8 @@ export interface ToolCallView {
 }
 
 export interface TurnCallbacks {
+	/** Observable Agent progress; callers may use this to refresh idle deadlines. */
+	onActivity?: () => void;
 	onAssistantText?: (delta: string) => void;
 	onAssistantMessage?: (msg: AssistantMessage) => void;
 	/** Called after a completed assistant or tool-result message has been persisted. */
@@ -296,6 +299,9 @@ export async function runTurn(
 
 	let reportedError = "";
 	const unsubscribe = agent.subscribe(async (event) => {
+		// Any lifecycle event means the provider/Agent/tool loop made observable
+		// progress. This intentionally includes streaming and tool boundaries.
+		cb.onActivity?.();
 		switch (event.type) {
 			case "message_update":
 				if (event.assistantMessageEvent.type === "text_delta") {

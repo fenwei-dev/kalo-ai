@@ -248,7 +248,7 @@
 	"chat_copy_failed": "Could not copy to the clipboard. Check browser permissions.",
 	"chat_stop": "Stop generating",
 	"chat_request_cancelled": "Further processing was stopped. Completed records were not undone. You can continue sending messages",
-	"chat_request_timeout": "This turn exceeded 5 minutes and was stopped. Completed records were not undone. You can continue sending messages",
+	"chat_request_timeout": "No Agent, model, or tool activity was received for 5 minutes, so processing was stopped. Active progress renews this idle timer. Completed operations were not undone.",
 	"chat_image_add": "Add image",
 	"chat_image_remove": "Remove image",
 	"chat_image_processing": "Processing image",

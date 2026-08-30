@@ -25,6 +25,10 @@
 		Session,
 	} from "$lib/db/schema";
 	import * as m from "$lib/paraglide/messages";
+	import {
+		type ActivityTimeout,
+		createActivityTimeout,
+	} from "$lib/utils/activityTimeout";
 	import { shouldSubmitChatOnEnter } from "$lib/utils/chatInput";
 	import {
 		ImagePreparationError,
@@ -32,6 +36,8 @@
 		prepareImage,
 	} from "$lib/utils/image";
 	import { isScrollAtBottom } from "$lib/utils/scroll";
+
+	const TURN_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 
 	type ComposerImage = PreparedImage | Extract<ContentBlock, { type: "image" }>;
 	interface MessageMenuState {
@@ -55,7 +61,7 @@
 	let composerInput: HTMLTextAreaElement | undefined = $state();
 	let turnController = $state<AbortController | null>(null);
 	let turnSessionId: string | null = null;
-	let turnTimer: ReturnType<typeof setTimeout> | undefined;
+	let turnActivityTimeout: ActivityTimeout | undefined;
 	let turnAbortReason: "cancelled" | "timeout" | null = null;
 	let loadGeneration = 0;
 	let creatingNew = false;
@@ -72,7 +78,8 @@
 
 	onDestroy(() => {
 		destroyed = true;
-		if (turnTimer) clearTimeout(turnTimer);
+		turnActivityTimeout?.stop();
+		turnActivityTimeout = undefined;
 		if (longPressTimer) clearTimeout(longPressTimer);
 		turnAbortReason = "cancelled";
 		turnController?.abort();
@@ -325,6 +332,7 @@
 			!turnController.signal.aborted
 		) {
 			turnAbortReason = "cancelled";
+			turnActivityTimeout?.stop();
 			turnController.abort();
 		}
 		if (page.url.pathname.startsWith("/chat/")) {
@@ -393,21 +401,27 @@
 		turnController = controller;
 		turnSessionId = id;
 		turnAbortReason = null;
-		turnTimer = setTimeout(
+		turnActivityTimeout?.stop();
+		turnActivityTimeout = createActivityTimeout(
+			TURN_INACTIVITY_TIMEOUT_MS,
 			() => {
 				if (turnController !== controller) return;
 				turnAbortReason = "timeout";
 				controller.abort();
 			},
-			5 * 60 * 1000,
 		);
 		return controller;
 	}
 
+	function touchTurn(controller: AbortController) {
+		if (turnController !== controller || controller.signal.aborted) return;
+		turnActivityTimeout?.touch();
+	}
+
 	function endTurn(controller: AbortController) {
 		if (turnController !== controller) return;
-		if (turnTimer) clearTimeout(turnTimer);
-		turnTimer = undefined;
+		turnActivityTimeout?.stop();
+		turnActivityTimeout = undefined;
 		turnController = null;
 		turnSessionId = null;
 	}
@@ -415,13 +429,15 @@
 	function cancelTurn() {
 		if (!turnController || turnController.signal.aborted) return;
 		turnAbortReason = "cancelled";
+		turnActivityTimeout?.stop();
 		turnController.abort();
 	}
 
-	async function processAgent(id: string, signal: AbortSignal) {
+	async function processAgent(id: string, controller: AbortController) {
 		await runTurn(
 			id,
 			{
+				onActivity: () => touchTurn(controller),
 				onAssistantText: (delta) => {
 					if (id === sessionId) streamText += delta;
 				},
@@ -444,7 +460,7 @@
 								: message;
 				},
 			},
-			signal,
+			controller.signal,
 		);
 	}
 
@@ -469,7 +485,7 @@
 		streamText = "";
 		const controller = beginTurn(id);
 		try {
-			await processAgent(id, controller.signal);
+			await processAgent(id, controller);
 		} catch (error) {
 			if (id === sessionId) {
 				if (turnAbortReason === "timeout") errorMsg = m.chat_request_timeout();
@@ -557,7 +573,7 @@
 				await app.refreshSessions();
 			}
 
-			await processAgent(id, controller.signal);
+			await processAgent(id, controller);
 		} catch (error) {
 			if (id === sessionId) {
 				if (turnAbortReason === "timeout") errorMsg = m.chat_request_timeout();

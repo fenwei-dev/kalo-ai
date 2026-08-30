@@ -74,6 +74,8 @@ Tool tests use a fresh zero-permission sandbox and the normal bounded RPC and st
 
 Every inspection/test success or failure disposes its iframe, Worker, ports, and client. Safari and iOS WebKit remain fail-closed.
 
+A development turn has a renewable five-minute **inactivity** limit, not a five-minute wall-clock limit. Agent lifecycle progress, model stream events/messages, and tool start/results reset the idle deadline, so an active multi-step create → inspect → revise → test loop may run longer than five minutes. Each individual provider HTTP request still has its own five-minute ceiling to stop a request that never returns.
+
 ## Installation
 
 The Agent cannot install or enable a draft.
