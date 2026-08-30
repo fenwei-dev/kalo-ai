@@ -20,6 +20,10 @@ import type {
 import { getLocale } from "$lib/paraglide/runtime";
 import { loadPluginRuntime } from "$lib/plugins/manager";
 import { localMessageTimestamp } from "$lib/utils/date";
+import {
+	toVoicePlainText,
+	voiceResponseInstruction,
+} from "$lib/voice/voiceText";
 import { getPluginDevelopmentSystemPrompt } from "./pluginDevelopmentPrompt";
 import { createPluginDevelopmentTools } from "./pluginDevelopmentTools";
 import { buildModels } from "./provider";
@@ -159,25 +163,33 @@ function dbToAgentMessage(message: DBMessage): Message {
 async function persistAssistant(
 	sessionId: string,
 	message: AssistantMessage,
+	transport?: "voice",
 ): Promise<void> {
 	await addMessage({
 		sessionId,
 		role: "assistant",
-		content: message.content.map((block) =>
-			block.type === "toolCall"
-				? { ...block, arguments: toJsonObject(block.arguments) }
-				: block,
-		),
+		transport,
+		content: message.content.map((block) => {
+			if (block.type === "toolCall") {
+				return { ...block, arguments: toJsonObject(block.arguments) };
+			}
+			if (transport === "voice" && block.type === "text") {
+				return { ...block, text: toVoicePlainText(block.text) };
+			}
+			return block;
+		}),
 	});
 }
 
 async function persistToolResult(
 	sessionId: string,
 	message: ToolResultMessage,
+	transport?: "voice",
 ): Promise<void> {
 	await addMessage({
 		sessionId,
 		role: "toolResult",
+		transport,
 		content: message.content.map((block) => ({ ...block })),
 		toolCallId: message.toolCallId,
 		toolName: message.toolName,
@@ -229,6 +241,7 @@ export async function runTurn(
 	sessionId: string,
 	cb: TurnCallbacks = {},
 	signal?: AbortSignal,
+	transport?: "voice",
 ): Promise<void> {
 	let cfg: ReturnType<typeof ensureConfig>;
 	try {
@@ -271,11 +284,11 @@ export async function runTurn(
 		initialState: {
 			systemPrompt: developmentMode
 				? getPluginDevelopmentSystemPrompt(locale)
-				: extendSystemPrompt(
+				: `${extendSystemPrompt(
 						getKaloSystemPrompt(locale),
 						pluginRuntime.promptSections,
 						locale,
-					),
+					)}${transport === "voice" ? `\n\n${voiceResponseInstruction(locale)}` : ""}`,
 			model,
 			tools,
 			messages: history.map(dbToAgentMessage),
@@ -315,11 +328,11 @@ export async function runTurn(
 						reportedError = event.message.errorMessage;
 						break;
 					}
-					await persistAssistant(sessionId, event.message);
+					await persistAssistant(sessionId, event.message, transport);
 					await cb.onMessagesChanged?.();
 					cb.onAssistantMessage?.(event.message);
 				} else if (event.message.role === "toolResult") {
-					await persistToolResult(sessionId, event.message);
+					await persistToolResult(sessionId, event.message, transport);
 					await cb.onMessagesChanged?.();
 				}
 				break;

@@ -19,6 +19,7 @@ import type {
 	TrainingPlan,
 	User,
 	UserMemory,
+	VoiceConfig,
 	WeightEntry,
 } from "./schema";
 
@@ -71,6 +72,11 @@ export interface KaloBackupV7 extends Omit<KaloBackupV6, "version"> {
 	pluginDraftRevisions: PluginDraftRevision[];
 }
 
+export interface KaloBackupV8 extends Omit<KaloBackupV7, "version"> {
+	version: 8;
+	voiceConfig: VoiceConfig[];
+}
+
 export type KaloBackup =
 	| KaloBackupV1
 	| KaloBackupV2
@@ -78,8 +84,9 @@ export type KaloBackup =
 	| KaloBackupV4
 	| KaloBackupV5
 	| KaloBackupV6
-	| KaloBackupV7;
-export type ParsedKaloBackup = Omit<KaloBackupV7, "version" | "exportedAt">;
+	| KaloBackupV7
+	| KaloBackupV8;
+export type ParsedKaloBackup = Omit<KaloBackupV8, "version" | "exportedAt">;
 
 type DataRecord = Record<string, unknown>;
 type ValueGuard<T> = (value: unknown) => value is T;
@@ -193,6 +200,38 @@ function isAIConfig(value: unknown): value is AIConfig {
 		isOptional(value.baseUrl, isString) &&
 		isString(value.apiKey) &&
 		isString(value.model) &&
+		isFiniteNumber(value.updatedAt)
+	);
+}
+
+function isVoiceConfig(value: unknown): value is VoiceConfig {
+	return (
+		isRecord(value) &&
+		value.id === "voice" &&
+		value.provider === "web_speech" &&
+		isOneOf(value.lang, ["zh-CN", "en-US"] as const) &&
+		isOneOf(value.sttMode, [
+			"local_preferred",
+			"local_only",
+			"network",
+		] as const) &&
+		isOneOf(value.turnMode, ["auto_turn", "realtime"] as const) &&
+		isOptional(
+			value.speechRate,
+			(rate): rate is number =>
+				isFiniteNumber(rate) && rate >= 0.5 && rate <= 2,
+		) &&
+		isOptional(
+			value.speechPitch,
+			(pitch): pitch is number =>
+				isFiniteNumber(pitch) && pitch >= 0.5 && pitch <= 1.5,
+		) &&
+		isOptional(value.preferredVoiceURI, isString) &&
+		(value.preferredVoiceURI === undefined ||
+			(value.preferredVoiceURI.length <= 500 &&
+				!/[\r\n]/u.test(value.preferredVoiceURI))) &&
+		isOptional(value.networkSpeechAllowedAt, isFiniteNumber) &&
+		isFiniteNumber(value.createdAt) &&
 		isFiniteNumber(value.updatedAt)
 	);
 }
@@ -687,6 +726,10 @@ function isMessage(value: unknown): value is Message {
 		isString(value.sessionId) &&
 		isFiniteNumber(value.order) &&
 		isOneOf(value.role, ["user", "assistant", "toolResult"] as const) &&
+		isOptional(
+			value.transport,
+			(transport): transport is "voice" => transport === "voice",
+		) &&
 		Array.isArray(value.content) &&
 		value.content.every(isContentBlock) &&
 		isOptional(value.toolCallId, isString) &&
@@ -735,7 +778,8 @@ export function parseKaloBackup(
 		version !== 4 &&
 		version !== 5 &&
 		version !== 6 &&
-		version !== 7
+		version !== 7 &&
+		version !== 8
 	)
 		throw new Error("备份版本不受支持");
 	if (!isFiniteNumber(value.exportedAt))
@@ -743,6 +787,8 @@ export function parseKaloBackup(
 
 	const user = requireArray(value, "user", isUser);
 	const aiConfig = requireArray(value, "aiConfig", isAIConfig);
+	const voiceConfig =
+		version >= 8 ? requireArray(value, "voiceConfig", isVoiceConfig) : [];
 	const userMemory =
 		version >= 2
 			? requireArray(value, "userMemory", (item): item is UserMemory =>
@@ -777,6 +823,7 @@ export function parseKaloBackup(
 			: [];
 	if (user.length > 1) throw new Error("用户资料格式无效");
 	if (aiConfig.length > 1) throw new Error("AI 配置格式无效");
+	if (voiceConfig.length > 1) throw new Error("语音配置格式无效");
 	if (userMemory.length > 1) throw new Error("用户记忆格式无效");
 	if (
 		new Set(pluginConfigs.map((record) => record.pluginId)).size !==
@@ -951,6 +998,7 @@ export function parseKaloBackup(
 	return {
 		user,
 		aiConfig,
+		voiceConfig,
 		userMemory,
 		trainingPlans,
 		plannedWorkouts,

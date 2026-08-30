@@ -157,6 +157,49 @@ test("message revert deletion removes the selected range and resets session meta
 	expect(revertedSession?.memoryVersion).toBeUndefined();
 });
 
+test("Web Speech settings and voice-origin messages survive backup", async () => {
+	const initial = await repositories.getOrCreateVoiceConfig();
+	expect(initial).toMatchObject({
+		provider: "web_speech",
+		sttMode: "local_preferred",
+		turnMode: "auto_turn",
+		speechRate: 1,
+		speechPitch: 1,
+	});
+	const saved = await repositories.saveVoiceConfig({
+		lang: "zh-CN",
+		sttMode: "local_preferred",
+		turnMode: "realtime",
+		speechRate: 1.15,
+		speechPitch: 0.9,
+		preferredVoiceURI: "local.zh.voice",
+		networkSpeechAllowedAt: Date.now(),
+	});
+	const session = await repositories.createSession("Voice backup");
+	await repositories.addUserMessageWithMemorySync({
+		sessionId: session.id,
+		transport: "voice",
+		content: [{ type: "text", text: "语音测试" }],
+	});
+	await repositories.addMessage({
+		sessionId: session.id,
+		role: "assistant",
+		transport: "voice",
+		content: [{ type: "text", text: "收到" }],
+	});
+	const backup = await repositories.exportAll();
+	expect(backup.version).toBe(8);
+	expect(backup.voiceConfig).toEqual([saved]);
+	await repositories.clearAllData();
+	await repositories.importAll(backup);
+	expect(await repositories.getVoiceConfig()).toEqual(saved);
+	expect(
+		(await repositories.listMessages(session.id)).filter(
+			(message) => message.transport === "voice",
+		),
+	).toHaveLength(2);
+});
+
 test("new chats default to standard and permanently lock their selected mode", async () => {
 	const session = await repositories.createSession();
 	expect(session).toMatchObject({ mode: "standard" });
@@ -306,7 +349,7 @@ export default kaloPlugin;`;
 		},
 	});
 	const backup = await repositories.exportAll();
-	expect(backup.version).toBe(7);
+	expect(backup.version).toBe(8);
 	expect(backup.pluginDrafts).toHaveLength(2);
 	expect(backup.pluginDraftRevisions.length).toBeGreaterThanOrEqual(4);
 	await repositories.clearAllData();
@@ -1175,7 +1218,7 @@ test("backups include memory and BMR settings while version 1 backups remain imp
 		caloriesBurned: 180,
 	});
 	const backup = await exportAll();
-	expect(backup.version).toBe(7);
+	expect(backup.version).toBe(8);
 	expect(backup.user).toEqual([
 		expect.objectContaining({
 			bmrMethod: "katch-mcardle",

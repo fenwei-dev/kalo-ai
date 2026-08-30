@@ -9,6 +9,7 @@
 	import PluginDraftPanel from "$lib/components/chat/PluginDraftPanel.svelte";
 	import SessionDrawer from "$lib/components/chat/SessionDrawer.svelte";
 	import ToolChip from "$lib/components/chat/ToolChip.svelte";
+	import WebSpeechVoiceOverlay from "$lib/components/chat/WebSpeechVoiceOverlay.svelte";
 	import { app } from "$lib/context/appContext.svelte";
 	import {
 		addUserMessageWithMemorySync,
@@ -55,6 +56,7 @@
 	let streamText = $state("");
 	let errorMsg = $state("");
 	let drawerOpen = $state(false);
+	let voiceOpen = $state(false);
 	let selectedImage = $state<ComposerImage | null>(null);
 	let preparingImage = $state(false);
 	let imageInput: HTMLInputElement | undefined = $state();
@@ -317,6 +319,8 @@
 		)
 			return;
 		const userMessage = loaded[lastUserIndex];
+		// Voice mode runs this message through runTurn itself.
+		if (userMessage.transport === "voice") return;
 		if (attemptedUserMessages.has(userMessage.id)) return;
 		attemptedUserMessages.add(userMessage.id);
 		await runAgent(id);
@@ -705,7 +709,10 @@
 								/>
 							{/each}
 							{#if text}
-								<div class="px-3.5 py-2"><Markdown content={text} class="text-white" /></div>
+								<div class="px-3.5 py-2">
+									{#if message.transport === 'voice'}<span class="mb-1 block text-[10px] text-emerald-100">🎙️ {m.voice_user_said()}</span>{/if}
+									<Markdown content={text} class="text-white" />
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -725,6 +732,7 @@
 								onkeydown={(event) => keydownMessage(event, message)}
 								class="max-w-[85%] touch-pan-y select-none rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-sm text-gray-800 shadow-sm outline-none focus:ring-2 focus:ring-gray-300 [-webkit-touch-callout:none]"
 							>
+								{#if message.transport === 'voice'}<span class="mb-1 block text-[10px] text-emerald-600">🔊 {m.voice_kalo_said()}</span>{/if}
 								<Markdown content={text} />
 							</div>
 						</div>
@@ -786,6 +794,11 @@
 					class="hidden"
 					onchange={selectImage}
 				/>
+				{#if session?.mode === 'standard'}
+					<button type="button" onclick={() => (voiceOpen = true)} disabled={sending || preparingImage || !session} class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 disabled:opacity-40" aria-label={m.voice_open()}>
+						<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" stroke-linecap="round" /></svg>
+					</button>
+				{/if}
 				<button
 					type="button"
 					onclick={() => imageInput?.click()}
@@ -833,6 +846,9 @@
 </div>
 
 <SessionDrawer bind:open={drawerOpen} currentId={sessionId} />
+{#if session?.mode === 'standard'}
+	<WebSpeechVoiceOverlay bind:open={voiceOpen} {sessionId} onmessageschanged={() => load(sessionId)} />
+{/if}
 
 {#if messageMenu && (messageMenu.message.role === 'user' || messageMenu.message.role === 'assistant')}
 	<MessageContextMenu

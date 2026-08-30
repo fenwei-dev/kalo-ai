@@ -5,7 +5,7 @@ import {
 	sha256Text,
 } from "$lib/plugins/moduleSource";
 import { isValidBMRConfiguration } from "$lib/utils/calculations";
-import { type KaloBackupV7, parseKaloBackup } from "./backup";
+import { type KaloBackupV8, parseKaloBackup } from "./backup";
 
 export type {
 	KaloBackup,
@@ -16,6 +16,7 @@ export type {
 	KaloBackupV5,
 	KaloBackupV6,
 	KaloBackupV7,
+	KaloBackupV8,
 } from "./backup";
 
 import {
@@ -41,6 +42,9 @@ import type {
 	TrainingPlanStatus,
 	User,
 	UserMemory,
+	VoiceConfig,
+	VoiceTurnMode,
+	WebSpeechSttMode,
 	WeightEntry,
 } from "./schema";
 import { db } from "./schema";
@@ -171,6 +175,109 @@ export async function updateAIConfig(
 	};
 	await db.aiConfig.put(cfg);
 	return cfg;
+}
+
+// ---------- VoiceConfig (singleton, id='voice') ----------
+
+export async function getVoiceConfig(): Promise<VoiceConfig | undefined> {
+	return db.voiceConfig.get("voice");
+}
+
+export async function getOrCreateVoiceConfig(): Promise<VoiceConfig> {
+	const existing = await getVoiceConfig();
+	if (existing) {
+		const speechRate =
+			Number.isFinite(existing.speechRate) &&
+			existing.speechRate >= 0.5 &&
+			existing.speechRate <= 2
+				? existing.speechRate
+				: 1;
+		const speechPitch =
+			Number.isFinite(existing.speechPitch) &&
+			existing.speechPitch >= 0.5 &&
+			existing.speechPitch <= 1.5
+				? existing.speechPitch
+				: 1;
+		if (
+			speechRate !== existing.speechRate ||
+			speechPitch !== existing.speechPitch
+		) {
+			const normalized = { ...existing, speechRate, speechPitch };
+			await db.voiceConfig.put(normalized);
+			return normalized;
+		}
+		return existing;
+	}
+	const timestamp = now();
+	const config: VoiceConfig = {
+		id: "voice",
+		provider: "web_speech",
+		lang: getLocale() === "en-us" ? "en-US" : "zh-CN",
+		sttMode: "local_preferred",
+		turnMode: "auto_turn",
+		speechRate: 1,
+		speechPitch: 1,
+		createdAt: timestamp,
+		updatedAt: timestamp,
+	};
+	await db.voiceConfig.add(config);
+	return config;
+}
+
+export async function saveVoiceConfig(input: {
+	lang: VoiceConfig["lang"];
+	sttMode: WebSpeechSttMode;
+	turnMode: VoiceTurnMode;
+	speechRate: number;
+	speechPitch: number;
+	preferredVoiceURI?: string;
+	networkSpeechAllowedAt?: number;
+}): Promise<VoiceConfig> {
+	if (input.lang !== "zh-CN" && input.lang !== "en-US") {
+		throw new Error("语音语言无效");
+	}
+	if (
+		input.sttMode !== "local_preferred" &&
+		input.sttMode !== "local_only" &&
+		input.sttMode !== "network"
+	) {
+		throw new Error("STT 模式无效");
+	}
+	if (input.turnMode !== "auto_turn" && input.turnMode !== "realtime") {
+		throw new Error("语音对话方式无效");
+	}
+	if (
+		!Number.isFinite(input.speechRate) ||
+		input.speechRate < 0.5 ||
+		input.speechRate > 2
+	) {
+		throw new Error("语音速度必须在 0.5–2.0 之间");
+	}
+	if (
+		!Number.isFinite(input.speechPitch) ||
+		input.speechPitch < 0.5 ||
+		input.speechPitch > 1.5
+	) {
+		throw new Error("语音音调必须在 0.5–1.5 之间");
+	}
+	if (
+		input.preferredVoiceURI !== undefined &&
+		(input.preferredVoiceURI.length > 500 ||
+			/[\r\n]/u.test(input.preferredVoiceURI))
+	) {
+		throw new Error("TTS voiceURI 无效");
+	}
+	const existing = await getVoiceConfig();
+	const timestamp = now();
+	const config: VoiceConfig = {
+		...input,
+		id: "voice",
+		provider: "web_speech",
+		createdAt: existing?.createdAt ?? timestamp,
+		updatedAt: timestamp,
+	};
+	await db.voiceConfig.put(config);
+	return config;
 }
 
 // ---------- Plugin configuration and scoped data ----------
@@ -1287,6 +1394,7 @@ export async function addMessage(
 export async function addUserMessageWithMemorySync(data: {
 	sessionId: string;
 	content: Message["content"];
+	transport?: "voice";
 	localTimestamp?: string;
 }): Promise<Message> {
 	return db.transaction(
@@ -1309,6 +1417,7 @@ export async function addUserMessageWithMemorySync(data: {
 				sessionId: data.sessionId,
 				order: order++,
 				role: "user",
+				transport: data.transport,
 				content: data.content,
 				localTimestamp: timestamp,
 				createdAt: ts,
@@ -1410,6 +1519,7 @@ export async function clearAllData(): Promise<void> {
 		[
 			db.user,
 			db.aiConfig,
+			db.voiceConfig,
 			db.userMemory,
 			db.foodEntries,
 			db.exerciseEntries,
@@ -1430,6 +1540,7 @@ export async function clearAllData(): Promise<void> {
 			await Promise.all([
 				db.user.clear(),
 				db.aiConfig.clear(),
+				db.voiceConfig.clear(),
 				db.userMemory.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
@@ -1456,6 +1567,7 @@ export async function importAll(value: unknown): Promise<void> {
 	const {
 		user,
 		aiConfig,
+		voiceConfig,
 		userMemory,
 		trainingPlans,
 		plannedWorkouts,
@@ -1538,6 +1650,7 @@ export async function importAll(value: unknown): Promise<void> {
 		[
 			db.user,
 			db.aiConfig,
+			db.voiceConfig,
 			db.userMemory,
 			db.foodEntries,
 			db.exerciseEntries,
@@ -1558,6 +1671,7 @@ export async function importAll(value: unknown): Promise<void> {
 			await Promise.all([
 				db.user.clear(),
 				db.aiConfig.clear(),
+				db.voiceConfig.clear(),
 				db.userMemory.clear(),
 				db.foodEntries.clear(),
 				db.exerciseEntries.clear(),
@@ -1576,6 +1690,7 @@ export async function importAll(value: unknown): Promise<void> {
 			]);
 			await db.user.bulkPut(user);
 			await db.aiConfig.bulkPut(aiConfig);
+			await db.voiceConfig.bulkPut(voiceConfig);
 			await db.userMemory.bulkPut(userMemory);
 			await db.foodEntries.bulkPut(data.foodEntries);
 			await db.exerciseEntries.bulkPut(data.exerciseEntries);
@@ -1596,10 +1711,11 @@ export async function importAll(value: unknown): Promise<void> {
 }
 
 /** 导出全部数据为可序列化对象 */
-export async function exportAll(): Promise<KaloBackupV7> {
+export async function exportAll(): Promise<KaloBackupV8> {
 	const [
 		user,
 		aiConfig,
+		voiceConfig,
 		userMemory,
 		foodEntries,
 		exerciseEntries,
@@ -1618,6 +1734,7 @@ export async function exportAll(): Promise<KaloBackupV7> {
 	] = await Promise.all([
 		db.user.toArray(),
 		db.aiConfig.toArray(),
+		db.voiceConfig.toArray(),
 		db.userMemory.toArray(),
 		db.foodEntries.toArray(),
 		db.exerciseEntries.toArray(),
@@ -1635,10 +1752,11 @@ export async function exportAll(): Promise<KaloBackupV7> {
 		db.messages.toArray(),
 	]);
 	return {
-		version: 7,
+		version: 8,
 		exportedAt: now(),
 		user,
 		aiConfig,
+		voiceConfig,
 		userMemory,
 		foodEntries,
 		exerciseEntries,

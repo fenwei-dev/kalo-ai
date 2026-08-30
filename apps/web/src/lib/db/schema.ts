@@ -70,6 +70,23 @@ export interface AIConfig {
 	updatedAt: number;
 }
 
+export type WebSpeechSttMode = "local_preferred" | "local_only" | "network";
+export type VoiceTurnMode = "auto_turn" | "realtime";
+
+export interface VoiceConfig {
+	id: "voice";
+	provider: "web_speech";
+	lang: "zh-CN" | "en-US";
+	sttMode: WebSpeechSttMode;
+	turnMode: VoiceTurnMode;
+	speechRate: number;
+	speechPitch: number;
+	preferredVoiceURI?: string;
+	networkSpeechAllowedAt?: number;
+	createdAt: number;
+	updatedAt: number;
+}
+
 /** 单例：Agent 跨会话使用的自由格式 Markdown 用户记忆。 */
 export interface UserMemory {
 	id: "user-memory";
@@ -322,6 +339,8 @@ export interface Message {
 	sessionId: string;
 	order: number; // 会话内自增序号，用于排序
 	role: MessageRole;
+	/** Absent means normal text/image input. */
+	transport?: "voice";
 	content: ContentBlock[];
 	toolCallId?: string; // role='toolResult' 时关联的 toolCall id
 	toolName?: string;
@@ -338,6 +357,7 @@ export interface Message {
 class KaloDB extends Dexie {
 	user!: Table<User, string>;
 	aiConfig!: Table<AIConfig, string>;
+	voiceConfig!: Table<VoiceConfig, string>;
 	userMemory!: Table<UserMemory, string>;
 	foodEntries!: Table<FoodEntry, string>;
 	exerciseEntries!: Table<ExerciseEntry, string>;
@@ -515,6 +535,28 @@ class KaloDB extends Dexie {
 						},
 					);
 			});
+		this.version(9).stores({
+			user: "id",
+			aiConfig: "id",
+			voiceConfig: "id",
+			userMemory: "id",
+			foodEntries: "id, date, [date+time], source",
+			exerciseEntries: "id, date, source, plannedWorkoutId",
+			trainingPlans: "id, status, startDate, updatedAt",
+			plannedWorkouts:
+				"id, planId, date, status, exerciseEntryId, [planId+date]",
+			pluginConfigs: "pluginId, enabled",
+			pluginData: "[pluginId+key], pluginId",
+			pluginInstallations:
+				"pluginId, registry, packageName, installedAt, updatedAt",
+			pluginModules: "pluginId, updatedAt",
+			pluginDrafts: "id, sessionId, updatedAt",
+			pluginDraftRevisions: "[draftId+revision], draftId, createdAt",
+			weightEntries: "id, date",
+			foodLibrary: "id, name, category, lastUsedAt",
+			sessions: "id, mode, updatedAt, lastMessageAt",
+			messages: "id, sessionId, [sessionId+order], order",
+		});
 	}
 }
 

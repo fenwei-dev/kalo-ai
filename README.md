@@ -14,6 +14,7 @@ Express what you need in natural language, and Kalo uses tools to help query, lo
 - **Bring your own model**: Supports OpenAI Completions, OpenAI Responses, and Anthropic Messages protocols.
 - **Complete tracking**: Food, exercise, weight, goals, daily summaries, and trend analysis.
 - **Installable PWA**: Statically deployable, with offline access to the application shell and local data.
+- **Web Speech voice mode**: Uses the same Kalo Agent and tools, prefers on-device STT and local TTS voices, and permits browser-vendor network speech only after explicit consent.
 - **Bilingual**: Supports Simplified Chinese and English.
 - **Plugin system**: Reviewed bundled packages and exact-version npm/JSR Kalo plugins can add Agent tools, bounded System Prompt sections, and schema-driven settings. A dedicated conversation mode lets the Agent create, sandbox-test, review, and share local plugin drafts.
 - **Singapore restaurant nutrition**: Bundled, offline Agent tools cover McDonald's, Subway, and KFC Singapore using reviewable static snapshots.
@@ -85,6 +86,8 @@ bun run deploy
 ## Privacy and disclaimer
 
 The app has no application backend. Health data and the API key stay in the current browser, while AI requests are sent directly to the user-configured service. The API key is stored in plain text in IndexedDB and is included in full backup exports.
+
+Web Speech voice keeps raw audio out of Kalo storage. On-device STT keeps audio local; explicitly enabled network SpeechRecognition may send audio directly to the browser/OS vendor. The resulting transcript is sent as text to the configured model provider, and local TTS is preferred. See [`docs/web-speech-voice.md`](./docs/web-speech-voice.md).
 
 User-installed registry and local plugins execute in an opaque-origin iframe Worker sandbox with a deny-by-default CSP. Direct DOM, IndexedDB, browser-storage, and network access are blocked; declared host services are permission-checked and plugin storage is scoped. The sandbox does not make tool semantics or System Prompt text trustworthy, so install only exact code you have independently reviewed and trust. User-installed plugins remain fail-closed on Safari and iOS WebKit after real-device validation; see [`docs/webkit-plugin-sandbox-validation.md`](./docs/webkit-plugin-sandbox-validation.md). Cached executable source is included in full backups.
 

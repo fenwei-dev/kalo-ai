@@ -35,6 +35,11 @@
 				<p class="text-sm leading-relaxed text-gray-600">{m.help_plugins_body()}</p>
 			</Block>
 
+			<BlockTitle>{m.help_voice_title()}</BlockTitle>
+			<Block inset strong>
+				<p class="text-sm leading-relaxed text-emerald-700">{m.help_voice_body()}</p>
+			</Block>
+
 			<BlockTitle>{m.help_images_title()}</BlockTitle>
 			<Block inset strong>
 				<p class="text-sm leading-relaxed text-amber-700">{m.help_images_body()}</p>

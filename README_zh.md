@@ -14,6 +14,7 @@
 - **BYO Model**：支持 OpenAI Completions、OpenAI Responses 与 Anthropic Messages 协议。
 - **完整追踪**：饮食、运动、体重、目标、每日概览与趋势分析。
 - **可安装 PWA**：静态部署，支持离线打开应用壳和本地数据。
+- **Web Speech 语音模式**：继续使用同一 Kalo Agent 与工具，优先端侧 STT 和本地 TTS voice；只有明确授权后才使用浏览器厂商网络语音。
 - **中英双语**：支持简体中文与 English。
 - **插件系统**：经过审查的集成 package，以及固定到精确版本的 npm/JSR Kalo 插件，都可以增加 Agent 工具、受长度限制的 System Prompt 片段和 schema-driven 设置；专用对话模式还支持 Agent 创建、沙箱测试、审查和分享本地插件草稿。
 - **新加坡餐厅营养数据**：通过可审查的静态快照，为麦当劳、赛百味和肯德基提供离线 Agent 查询工具。
@@ -85,6 +86,8 @@ bun run deploy
 ## 隐私与免责声明
 
 App 没有业务后端。健康数据及 API Key 仅保存在当前浏览器；AI 请求直接发送到用户配置的服务。API Key 在 IndexedDB 中明文保存，完整备份也会包含密钥。
+
+Web Speech 语音不会把原始音频保存到 Kalo。端侧 STT 会让音频留在本地；明确启用网络 SpeechRecognition 后，音频可能直达浏览器/系统厂商。转写文本会发送给配置的模型 Provider，TTS 则优先使用本地 voice。详见 [`docs/web-speech-voice.md`](./docs/web-speech-voice.md)。
 
 用户安装的 registry 与本地插件会在采用默认拒绝 CSP 的 opaque-origin iframe Worker 沙箱中执行，无法直接访问 DOM、IndexedDB、浏览器存储或网络；声明的 host services 会强制检查权限，插件存储按 ID 隔离。沙箱不能保证工具语义或 System Prompt 文本可信，因此请只安装你已独立审查并信任的精确代码。Safari 与 iOS WebKit 已完成真机验证，但仍对用户插件 fail-close；详见 [`docs/webkit-plugin-sandbox-validation.md`](./docs/webkit-plugin-sandbox-validation.md)。缓存的可执行源码会包含在完整备份中。
 
