@@ -137,11 +137,8 @@
 				sha256: draft.sha256,
 			});
 			if (navigator.share) {
-				await navigator.share({
-					title: draft.fileName,
-					text: "Kalo plugin source",
-					url,
-				});
+				// Pass only the URL so native “Copy” actions do not prepend share text.
+				await navigator.share({ url });
 			} else if (navigator.clipboard?.writeText) {
 				await navigator.clipboard.writeText(url);
 			} else if (!fallbackCopy(url)) {
