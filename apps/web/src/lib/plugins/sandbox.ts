@@ -112,6 +112,78 @@ function assertRpcSize(value: unknown): void {
 	}
 }
 
+function assertRuntimeString(value: unknown, path: string): void {
+	if (typeof value !== "string" || value.trim().length === 0) {
+		throw new Error(`${path} must be a non-empty string`);
+	}
+}
+
+function assertConstrainedSampling(value: unknown, path: string): void {
+	if (value === undefined || value === false) return;
+	if (!isRecord(value) || typeof value.type !== "string") {
+		throw new Error(`${path} must be false or a supported object`);
+	}
+	if (value.type === "json_schema") {
+		if (value.strict !== "prefer" && value.strict !== "require") {
+			throw new Error(`${path}.strict must be prefer or require`);
+		}
+		return;
+	}
+	if (value.type === "grammar") {
+		if (!isRecord(value.variants)) {
+			throw new Error(`${path}.variants must be an object`);
+		}
+		for (const [name, grammar] of Object.entries(value.variants)) {
+			if (
+				(name !== "openai_lark" && name !== "openai_regex") ||
+				typeof grammar !== "string"
+			) {
+				throw new Error(`${path}.variants contains an invalid grammar`);
+			}
+		}
+		return;
+	}
+	throw new Error(`${path}.type must be json_schema or grammar`);
+}
+
+/** Validate the untrusted runtime envelope with field-specific diagnostics. */
+export function assertValidSandboxRuntimeDescriptor(value: unknown): void {
+	if (!isRecord(value)) throw new Error("runtime must be an object");
+	if (!Array.isArray(value.tools)) {
+		throw new Error("runtime.tools must be an array");
+	}
+	if (typeof value.prompt !== "string") {
+		throw new Error("runtime.prompt must be a string");
+	}
+	for (const [index, tool] of value.tools.entries()) {
+		const path = `runtime.tools[${index}]`;
+		if (!isRecord(tool)) throw new Error(`${path} must be an object`);
+		assertRuntimeString(tool.name, `${path}.name`);
+		assertRuntimeString(tool.label, `${path}.label`);
+		assertRuntimeString(tool.description, `${path}.description`);
+		if (!isRecord(tool.parameters)) {
+			throw new Error(`${path}.parameters must be a JSON Schema object`);
+		}
+		if (
+			tool.executionMode !== undefined &&
+			tool.executionMode !== "parallel" &&
+			tool.executionMode !== "sequential"
+		) {
+			throw new Error(`${path}.executionMode must be parallel or sequential`);
+		}
+		assertConstrainedSampling(
+			tool.constrainedSampling,
+			`${path}.constrainedSampling`,
+		);
+		try {
+			assertSafePluginSchema(tool.parameters);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			throw new Error(`${path}.parameters is not a safe schema: ${message}`);
+		}
+	}
+}
+
 function validatedStorageKey(value: unknown): string {
 	if (typeof value !== "string" || !STORAGE_KEY_PATTERN.test(value)) {
 		throw new Error("插件存储 key 必须是 1–100 位字母、数字、点、横线或下划线");
@@ -280,6 +352,57 @@ function cloneJson(value, label) {
   }
 }
 
+function requireToolString(value, path) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(path + " must be a non-empty string");
+  }
+}
+
+function validateToolConstrainedSampling(value, path) {
+  if (value === undefined || value === false) return;
+  if (!value || typeof value !== "object" || Array.isArray(value) || typeof value.type !== "string") {
+    throw new Error(path + " must be false or a supported object");
+  }
+  if (value.type === "json_schema") {
+    if (value.strict !== "prefer" && value.strict !== "require") {
+      throw new Error(path + ".strict must be prefer or require");
+    }
+    return;
+  }
+  if (value.type === "grammar") {
+    if (!value.variants || typeof value.variants !== "object" || Array.isArray(value.variants)) {
+      throw new Error(path + ".variants must be an object");
+    }
+    for (const [name, grammar] of Object.entries(value.variants)) {
+      if ((name !== "openai_lark" && name !== "openai_regex") || typeof grammar !== "string") {
+        throw new Error(path + ".variants contains an invalid grammar");
+      }
+    }
+    return;
+  }
+  throw new Error(path + ".type must be json_schema or grammar");
+}
+
+function validateRuntimeTool(tool, index) {
+  const path = "createTools()[" + index + "]";
+  if (!tool || typeof tool !== "object" || Array.isArray(tool)) {
+    throw new Error(path + " must be an object");
+  }
+  requireToolString(tool.name, path + ".name");
+  requireToolString(tool.label, path + ".label");
+  requireToolString(tool.description, path + ".description");
+  if (!tool.parameters || typeof tool.parameters !== "object" || Array.isArray(tool.parameters)) {
+    throw new Error(path + ".parameters must be a JSON Schema object");
+  }
+  if (tool.executionMode !== undefined && tool.executionMode !== "parallel" && tool.executionMode !== "sequential") {
+    throw new Error(path + ".executionMode must be parallel or sequential");
+  }
+  validateToolConstrainedSampling(tool.constrainedSampling, path + ".constrainedSampling");
+  if (typeof tool.execute !== "function") {
+    throw new Error(path + ".execute must be a function");
+  }
+}
+
 function asPlugin(module) {
   if (!module || typeof module !== "object") throw new Error("Invalid ESM plugin module");
   const candidate = module.kaloPlugin ?? module.default;
@@ -355,10 +478,8 @@ async function handleRequest(message) {
     const tools = await plugin.createTools(context);
     if (!Array.isArray(tools)) throw new Error("createTools must return an array");
     activeTools = new Map();
-    const toolDescriptors = tools.map((tool) => {
-      if (!tool || typeof tool !== "object" || typeof tool.name !== "string" || typeof tool.execute !== "function") {
-        throw new Error("Invalid plugin tool");
-      }
+    const toolDescriptors = tools.map((tool, index) => {
+      validateRuntimeTool(tool, index);
       activeTools.set(tool.name, tool);
       return cloneJson({
         name: tool.name,
@@ -652,28 +773,8 @@ export class SandboxPluginClient {
 		locale: "zh-cn" | "en-us",
 	): Promise<SandboxRuntimeDescriptor> {
 		const value = await this.#request("runtime", { config, locale });
-		if (
-			!isRecord(value) ||
-			!Array.isArray(value.tools) ||
-			typeof value.prompt !== "string" ||
-			!value.tools.every(
-				(tool) =>
-					isRecord(tool) &&
-					typeof tool.name === "string" &&
-					typeof tool.label === "string" &&
-					typeof tool.description === "string" &&
-					isRecord(tool.parameters) &&
-					(tool.executionMode === undefined ||
-						tool.executionMode === "parallel" ||
-						tool.executionMode === "sequential"),
-			)
-		) {
-			throw new Error("插件沙箱返回了无效 runtime");
-		}
-		for (const tool of value.tools) {
-			assertSafePluginSchema((tool as Record<string, unknown>).parameters);
-		}
-		return value as unknown as SandboxRuntimeDescriptor;
+		assertValidSandboxRuntimeDescriptor(value);
+		return value as SandboxRuntimeDescriptor;
 	}
 
 	createToolProxy(

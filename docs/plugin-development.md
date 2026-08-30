@@ -48,6 +48,28 @@ Sandbox inspection is a separate step. It starts an opaque-origin iframe Worker 
 - safe tool parameter schemas
 - a System Prompt no longer than 4,000 characters
 
+Every runtime tool must provide all required descriptor fields:
+
+```js
+{
+  name: "example_echo",
+  label: "Echo text",
+  description: "Echo one bounded input string.",
+  parameters: {
+    type: "object",
+    properties: { text: { type: "string", maxLength: 500 } },
+    required: ["text"],
+    additionalProperties: false
+  },
+  executionMode: "parallel", // optional; parallel or sequential only
+  async execute(toolCallId, params, signal) {
+    // Return bounded content plus required JSON details.
+  }
+}
+```
+
+`label` is a required plain string and is separate from the model-facing `description`. A no-argument tool still requires an object schema with empty `properties` and `required` arrays. Runtime failures identify the exact field, for example `createTools()[0].label must be a non-empty string`, instead of returning a generic invalid-runtime error.
+
 Tool tests use a fresh zero-permission sandbox and the normal bounded RPC and strict result validator. `profile.read`, `logs.read`, `storage`, and `network` are denied even if the draft manifest declares them. A tool that requires those services can be fully exercised only after reviewed installation and explicit enabling.
 
 Every inspection/test success or failure disposes its iframe, Worker, ports, and client. Safari and iOS WebKit remain fail-closed.

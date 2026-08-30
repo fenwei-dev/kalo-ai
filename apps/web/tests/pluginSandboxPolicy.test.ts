@@ -12,7 +12,10 @@ import {
 	assertSafePluginSchema,
 	safeCheckPluginConfig,
 } from "../src/lib/plugins/safeSchema";
-import { isUnverifiedWebKitSandbox } from "../src/lib/plugins/sandbox";
+import {
+	assertValidSandboxRuntimeDescriptor,
+	isUnverifiedWebKitSandbox,
+} from "../src/lib/plugins/sandbox";
 import { validateSandboxToolResult } from "../src/lib/plugins/toolResult";
 
 test("safe plugin schemas accept the supported TypeBox subset", () => {
@@ -123,6 +126,54 @@ test("unverified Safari and iOS WebKit sandboxes fail closed", () => {
 			"Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36",
 		),
 	).toBe(false);
+});
+
+test("sandbox runtime diagnostics identify the exact invalid tool field", () => {
+	const valid = {
+		tools: [
+			{
+				name: "example_echo",
+				label: "Echo",
+				description: "Echo one string.",
+				parameters: {
+					type: "object",
+					properties: {},
+					required: [],
+					additionalProperties: false,
+				},
+				executionMode: "parallel",
+			},
+		],
+		prompt: "",
+	};
+	expect(() => assertValidSandboxRuntimeDescriptor(valid)).not.toThrow();
+
+	for (const [field, expected] of [
+		["label", "runtime.tools[0].label must be a non-empty string"],
+		["description", "runtime.tools[0].description must be a non-empty string"],
+		["parameters", "runtime.tools[0].parameters must be a JSON Schema object"],
+	] as const) {
+		const invalid = structuredClone(valid);
+		delete invalid.tools[0][field];
+		expect(() => assertValidSandboxRuntimeDescriptor(invalid)).toThrow(
+			expected,
+		);
+	}
+	const invalidMode = structuredClone(valid);
+	invalidMode.tools[0].executionMode = "serial";
+	expect(() => assertValidSandboxRuntimeDescriptor(invalidMode)).toThrow(
+		"runtime.tools[0].executionMode must be parallel or sequential",
+	);
+	const unsafeSchema = structuredClone(valid);
+	unsafeSchema.tools[0].parameters = {
+		type: "object",
+		properties: { value: { type: "string", pattern: "[" } },
+		required: [],
+		additionalProperties: false,
+	};
+	expect(() => assertValidSandboxRuntimeDescriptor(unsafeSchema)).toThrow(
+		"runtime.tools[0].parameters is not a safe schema",
+	);
 });
 
 test("sandbox tool results are reconstructed from strict text/image blocks", () => {

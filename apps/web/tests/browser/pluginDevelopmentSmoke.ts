@@ -218,6 +218,7 @@ export default kaloPlugin;`;
 		testText: string;
 		denied: boolean;
 		failedLoadCleaned: boolean;
+		preciseRuntimeError: boolean;
 	}>(`(async () => {
   const repositories = await import('/src/lib/db/repositories.ts');
   const drafts = await import('/src/lib/plugins/drafts.ts');
@@ -258,15 +259,46 @@ export const kaloPlugin = plugin;
 export default kaloPlugin;`)};
   const unsafe = await drafts.createPluginDraft({sessionId:session.id,fileName:'unsafe.js',source:unsafeSource});
   try { await sandbox.inspectPluginDraftInSandbox({sessionId:session.id,draftId:unsafe.id,locale:'en-us'}); } catch {}
-  const failedLoadCleaned = document.querySelectorAll('iframe[sandbox]').length === 0 && (await drafts.getPluginDraft(session.id, unsafe.id)).status === 'invalid';
+  const missingLabelSource = ${JSON.stringify(`const plugin = {
+  manifest: {
+    id: "missing_label",
+    apiVersion: 1,
+    version: "1.0.0",
+    configVersion: 1,
+    name: { "zh-cn": "缺少 Label", "en-us": "Missing label" },
+    description: { "zh-cn": "测试", "en-us": "Test" },
+    permissions: []
+  },
+  configSchema: { type: "object", properties: {}, required: [], additionalProperties: false },
+  defaultConfig: {},
+  createTools() {
+    return [{
+      name: "missing_label_echo",
+      description: "Missing the required label field.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+      async execute() { return { content: [{ type: "text", text: "x" }], details: {} }; }
+    }];
+  }
+};
+export const kaloPlugin = plugin;
+export default kaloPlugin;`)};
+  const missingLabel = await drafts.createPluginDraft({sessionId:session.id,fileName:'missing-label.js',source:missingLabelSource});
+  let preciseRuntimeError = false;
+  try {
+    await sandbox.inspectPluginDraftInSandbox({sessionId:session.id,draftId:missingLabel.id,locale:'en-us'});
+  } catch (error) {
+    preciseRuntimeError = error instanceof Error && error.message.includes('createTools()[0].label must be a non-empty string');
+  }
+  const failedLoadCleaned = document.querySelectorAll('iframe[sandbox]').length === 0 && (await drafts.getPluginDraft(session.id, unsafe.id)).status === 'invalid' && (await drafts.getPluginDraft(session.id, missingLabel.id)).status === 'invalid';
   await context.app.reload();
-  return {sessionId:session.id,draftId:draft.id,testText:tested.lastTest?.content?.[0]?.text ?? '',denied,failedLoadCleaned};
+  return {sessionId:session.id,draftId:draft.id,testText:tested.lastTest?.content?.[0]?.text ?? '',denied,failedLoadCleaned,preciseRuntimeError};
 })()`);
 	console.log("[plugin-development-smoke] draft sandbox RPC complete");
 	if (
 		fixture.testText !== "draft:hello" ||
 		!fixture.denied ||
-		!fixture.failedLoadCleaned
+		!fixture.failedLoadCleaned ||
+		!fixture.preciseRuntimeError
 	) {
 		throw new Error(`Draft sandbox checks failed: ${JSON.stringify(fixture)}`);
 	}
@@ -422,6 +454,7 @@ export default kaloPlugin;`)};
 				draftToolResult: fixture.testText,
 				undeclaredStorageDenied: fixture.denied,
 				failedLoadCleaned: fixture.failedLoadCleaned,
+				preciseRuntimeError: fixture.preciseRuntimeError,
 				installation: installed,
 				shareRouteDidNotAutoExecute: true,
 				sharedInstallation: sharedInstalled,
