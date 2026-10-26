@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"sourceUrl": "https://subwayisfresh.com.sg/menu/",
-	"retrievedAt": "2026-08-23T15:02:12.291Z",
+	"retrievedAt": "2026-10-26T09:15:13.704Z",
 	"products": [
 		{
 			"id": "8825",
@@ -9,18 +9,18 @@
 			"description": "Roasted chicken thighs, all juicy and tender. Coupled with some cauliflower rice, avocado, mixed greens, lettuce and more to sort your veggie fix. And oh, to top it off, some caramelised onions and caesar sauce.",
 			"url": "https://subwayisfresh.com.sg/menu_item/avo-caesar-chicken-energy-bowl/",
 			"category": "energy-bowls",
-			"servingSizeG": 409,
+			"servingSizeG": 396,
 			"nutrition": {
-				"energyKcal": 380,
-				"proteinG": 20,
-				"totalFatG": 23.8,
-				"saturatedFatG": 4.8,
+				"energyKcal": 398,
+				"proteinG": 16.4,
+				"totalFatG": 27,
+				"saturatedFatG": 5.1,
 				"transFatG": 0.1,
 				"cholesterolMg": 0,
-				"carbohydratesG": 24.8,
+				"carbohydratesG": 26,
 				"dietaryFibreG": 7.2,
-				"sugarG": 14.1,
-				"sodiumMg": 1086
+				"sugarG": 15,
+				"sodiumMg": 1215
 			}
 		},
 		{
@@ -64,23 +64,43 @@
 			}
 		},
 		{
+			"id": "8778",
+			"name": "Beef Brisket",
+			"description": null,
+			"url": "https://subwayisfresh.com.sg/menu_item/beef-brisket/",
+			"category": "sandwich",
+			"servingSizeG": 260,
+			"nutrition": {
+				"energyKcal": 457,
+				"proteinG": 28.7,
+				"totalFatG": 19.6,
+				"saturatedFatG": 6.7,
+				"transFatG": 0.2,
+				"cholesterolMg": 0,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 3.8,
+				"sugarG": 7.7,
+				"sodiumMg": 948
+			}
+		},
+		{
 			"id": "9510",
 			"name": "Beef Brisket Energy Bowl",
 			"description": "Sink your teeth into tender, smoky BBQ beef brisket in our signature Sweet Onion Sauce, perfectly paired with crisp fresh greens and sweet corn. Served over cauliflower rice and topped with caramelised onions and sliced mushrooms, every bite bursts with bold, smoky flavour to power your day. Mmm, a BBQ lover’s dream come true.",
 			"url": "https://subwayisfresh.com.sg/menu_item/beef-brisket-energy-bowl/",
 			"category": "energy-bowls",
-			"servingSizeG": 368,
+			"servingSizeG": 395,
 			"nutrition": {
-				"energyKcal": 390,
-				"proteinG": 23.8,
-				"totalFatG": 26.9,
-				"saturatedFatG": 4.4,
-				"transFatG": 0.4,
-				"cholesterolMg": 97,
-				"carbohydratesG": 17.6,
-				"dietaryFibreG": 4.4,
-				"sugarG": 10.6,
-				"sodiumMg": 1043
+				"energyKcal": 306,
+				"proteinG": 20.4,
+				"totalFatG": 11.4,
+				"saturatedFatG": 3.1,
+				"transFatG": 0.1,
+				"cholesterolMg": 0,
+				"carbohydratesG": 31.7,
+				"dietaryFibreG": 5.5,
+				"sugarG": 21.2,
+				"sodiumMg": 831
 			}
 		},
 		{
@@ -96,6 +116,7 @@
 				"totalFatG": 10.9,
 				"saturatedFatG": 4.5,
 				"transFatG": 0,
+				"cholesterolMg": 0,
 				"carbohydratesG": 19.7,
 				"dietaryFibreG": 0,
 				"sugarG": 11,
@@ -123,23 +144,43 @@
 			}
 		},
 		{
-			"id": "2391",
-			"name": "Chicken Bacon, Egg & Cheese Flatbread",
-			"description": "Wake your taste buds up with our freshly toasted breakfast subs or flatbread made just the way you like them. With our new SUBWAY® breakfast menu, you won’t want to start the day any other way.",
-			"url": "https://subwayisfresh.com.sg/menu_item/chicken-bacon-egg-cheese-flatbread/",
+			"id": "11582",
+			"name": "Chicken Avo",
+			"description": "Love avocadoes for breakfast? Meet our Chicken Avo Wrap, freshly made with a tender chicken patty that’s cooked to perfection, creamy avocado, melty cheese, and crisp vegetables, all wrapped in a warm wrap.",
+			"url": "https://subwayisfresh.com.sg/menu_item/chicken-avo-breakfast/",
 			"category": "breakfast",
-			"servingSizeG": 248,
+			"servingSizeG": 245,
 			"nutrition": {
-				"energyKcal": 370,
-				"proteinG": 19.6,
-				"totalFatG": 12.1,
-				"saturatedFatG": 3.8,
+				"energyKcal": 401,
+				"proteinG": 24.5,
+				"totalFatG": 17.2,
+				"saturatedFatG": 6.3,
 				"transFatG": 0.1,
-				"cholesterolMg": 9,
-				"carbohydratesG": 44.4,
-				"dietaryFibreG": 3,
-				"sugarG": 4.6,
-				"sodiumMg": 819
+				"cholesterolMg": 52,
+				"carbohydratesG": 36.6,
+				"dietaryFibreG": 7.7,
+				"sugarG": 13,
+				"sodiumMg": 1037
+			}
+		},
+		{
+			"id": "8759",
+			"name": "Chicken Bacon Ranch",
+			"description": null,
+			"url": "https://subwayisfresh.com.sg/menu_item/chicken-bacon-ranch-3/",
+			"category": "sandwich",
+			"servingSizeG": 282,
+			"nutrition": {
+				"energyKcal": 395,
+				"proteinG": 30.1,
+				"totalFatG": 11.7,
+				"saturatedFatG": 4.1,
+				"transFatG": 0.1,
+				"cholesterolMg": 0,
+				"carbohydratesG": 42,
+				"dietaryFibreG": 3.1,
+				"sugarG": 8.5,
+				"sodiumMg": 1153
 			}
 		},
 		{
@@ -148,58 +189,38 @@
 			"description": "With succulent slices of Chicken ham, you can’t beat this favorite. Especially as it’s got under 6 grams of fat.",
 			"url": "https://subwayisfresh.com.sg/menu_item/chicken-ham/",
 			"category": "sandwich",
-			"servingSizeG": 214,
+			"servingSizeG": 249,
 			"nutrition": {
-				"energyKcal": 272,
-				"proteinG": 18.9,
-				"totalFatG": 4.6,
-				"saturatedFatG": 1.7,
-				"transFatG": 0,
-				"cholesterolMg": 15,
+				"energyKcal": 335,
+				"proteinG": 21.8,
+				"totalFatG": 8.2,
+				"saturatedFatG": 4.2,
+				"transFatG": 0.1,
+				"cholesterolMg": 20,
+				"carbohydratesG": 43.9,
+				"dietaryFibreG": 3.9,
+				"sugarG": 9.4,
+				"sodiumMg": 1096
+			}
+		},
+		{
+			"id": "11596",
+			"name": "Chicken Ham & Cheese",
+			"description": "Love a light yet savoury breakfast? Wake up to our Chicken Ham & Cheese Wrap. Layered with tasty chicken ham slices, melty cheese, and fresh vegetables in a warm wrap with our signature sauces, it’s everything you want in a satisfying breakfast.",
+			"url": "https://subwayisfresh.com.sg/menu_item/chicken-ham-cheese-breakfast/",
+			"category": "breakfast",
+			"servingSizeG": 234,
+			"nutrition": {
+				"energyKcal": 314,
+				"proteinG": 17.9,
+				"totalFatG": 11.3,
+				"saturatedFatG": 5.9,
+				"transFatG": 0.1,
+				"cholesterolMg": 20,
 				"carbohydratesG": 33.4,
-				"dietaryFibreG": 4.5,
-				"sugarG": 4.8,
-				"sodiumMg": 749
-			}
-		},
-		{
-			"id": "1238",
-			"name": "Chicken Ham, Egg & Cheese Flatbread",
-			"description": "Wake your taste buds up with our freshly toasted breakfast subs or flatbread made just the way you like them. With our new SUBWAY® breakfast menu, you won’t want to start the day any other way.",
-			"url": "https://subwayisfresh.com.sg/menu_item/chicken-ham-egg-cheese-flatbread/",
-			"category": "breakfast",
-			"servingSizeG": 269,
-			"nutrition": {
-				"energyKcal": 401,
-				"proteinG": 22.5,
-				"totalFatG": 14.2,
-				"saturatedFatG": 5.2,
-				"transFatG": 0.1,
-				"cholesterolMg": 8,
-				"carbohydratesG": 45.2,
-				"dietaryFibreG": 2.5,
-				"sugarG": 4.8,
-				"sodiumMg": 1054
-			}
-		},
-		{
-			"id": "2400",
-			"name": "Chicken Sausage, Egg & Cheese",
-			"description": "Wake your taste buds up with our freshly toasted breakfast subs or flatbread made just the way you like them. With our new SUBWAY® breakfast menu, you won’t want to start the day any other way.",
-			"url": "https://subwayisfresh.com.sg/menu_item/chicken-sausage-egg-cheese/",
-			"category": "breakfast",
-			"servingSizeG": 329,
-			"nutrition": {
-				"energyKcal": 537,
-				"proteinG": 35,
-				"totalFatG": 22.4,
-				"saturatedFatG": 4.7,
-				"transFatG": 0.1,
-				"cholesterolMg": 0.3,
-				"carbohydratesG": 51.1,
-				"dietaryFibreG": 2.4,
-				"sugarG": 4.6,
-				"sodiumMg": 1717
+				"dietaryFibreG": 5.5,
+				"sugarG": 11.3,
+				"sodiumMg": 1268
 			}
 		},
 		{
@@ -208,18 +229,18 @@
 			"description": "An Asian classic, is made with tender chicken pieces dressed lightly with teriyaki sauce, served hot and topped with your choice of fresh vegetables and condiments on freshly baked bread.",
 			"url": "https://subwayisfresh.com.sg/menu_item/chicken-teriyaki-new/",
 			"category": "sandwich",
-			"servingSizeG": 247,
+			"servingSizeG": 278,
 			"nutrition": {
-				"energyKcal": 320,
-				"proteinG": 27.2,
-				"totalFatG": 4.1,
-				"saturatedFatG": 0.9,
-				"transFatG": 0,
+				"energyKcal": 389,
+				"proteinG": 29.7,
+				"totalFatG": 7.4,
+				"saturatedFatG": 3.2,
+				"transFatG": 0.1,
 				"cholesterolMg": 0,
-				"carbohydratesG": 38.2,
-				"dietaryFibreG": 4.4,
-				"sugarG": 10.2,
-				"sodiumMg": 789
+				"carbohydratesG": 50.2,
+				"dietaryFibreG": 4.3,
+				"sugarG": 14.6,
+				"sodiumMg": 1162
 			}
 		},
 		{
@@ -230,16 +251,16 @@
 			"category": "sides",
 			"servingSizeG": 45,
 			"nutrition": {
-				"energyKcal": 217,
-				"proteinG": 2.4,
-				"totalFatG": 10.4,
-				"saturatedFatG": 6.5,
-				"transFatG": 0,
+				"energyKcal": 228,
+				"proteinG": 2.1,
+				"totalFatG": 10.8,
+				"saturatedFatG": 5.6,
+				"transFatG": 0.1,
 				"cholesterolMg": 14,
-				"carbohydratesG": 28.5,
-				"dietaryFibreG": 0.9,
-				"sugarG": 17.5,
-				"sodiumMg": 161
+				"carbohydratesG": 31.4,
+				"dietaryFibreG": 1.2,
+				"sugarG": 19.3,
+				"sodiumMg": 165
 			}
 		},
 		{
@@ -248,18 +269,18 @@
 			"description": "Cold Cut Trio is a SUBWAY® tradition. Experience sliced turkey bologna, turkey ham and turkey salami with your choice of fresh vegetables and condiments served on freshly baked bread.",
 			"url": "https://subwayisfresh.com.sg/menu_item/cold-cut-trio/",
 			"category": "sandwich",
-			"servingSizeG": 214,
+			"servingSizeG": 259,
 			"nutrition": {
-				"energyKcal": 272,
-				"proteinG": 19.8,
-				"totalFatG": 4,
-				"saturatedFatG": 1.4,
-				"transFatG": 0,
-				"cholesterolMg": 32,
-				"carbohydratesG": 33.7,
-				"dietaryFibreG": 5,
-				"sugarG": 4.6,
-				"sodiumMg": 812
+				"energyKcal": 421,
+				"proteinG": 23.3,
+				"totalFatG": 19.1,
+				"saturatedFatG": 5.4,
+				"transFatG": 0.5,
+				"cholesterolMg": 16,
+				"carbohydratesG": 39.3,
+				"dietaryFibreG": 3.7,
+				"sugarG": 5.5,
+				"sodiumMg": 1239
 			}
 		},
 		{
@@ -270,36 +291,16 @@
 			"category": "sides",
 			"servingSizeG": 45,
 			"nutrition": {
-				"energyKcal": 213,
-				"proteinG": 2.5,
-				"totalFatG": 9.9,
-				"saturatedFatG": 6.8,
-				"transFatG": 0,
+				"energyKcal": 212,
+				"proteinG": 2,
+				"totalFatG": 9.5,
+				"saturatedFatG": 5.4,
+				"transFatG": 0.2,
 				"cholesterolMg": 15,
-				"carbohydratesG": 28.4,
-				"dietaryFibreG": 1.2,
-				"sugarG": 18.5,
-				"sodiumMg": 160
-			}
-		},
-		{
-			"id": "2395",
-			"name": "Egg & Cheese Flatbread",
-			"description": "A classic for a reason. Our Egg and Cheese is simply delicious. Enjoy a fluffy egg omelet with melted cheese fresh toasted on freshly baked bread. It’s unbeatable.",
-			"url": "https://subwayisfresh.com.sg/menu_item/egg-cheese-flatbread/",
-			"category": "breakfast",
-			"servingSizeG": 239,
-			"nutrition": {
-				"energyKcal": 369,
-				"proteinG": 18.2,
-				"totalFatG": 13,
-				"saturatedFatG": 4.7,
-				"transFatG": 0.1,
-				"cholesterolMg": 0.3,
-				"carbohydratesG": 44,
-				"dietaryFibreG": 2.4,
-				"sugarG": 4.6,
-				"sodiumMg": 818
+				"carbohydratesG": 30,
+				"dietaryFibreG": 1.1,
+				"sugarG": 19.9,
+				"sodiumMg": 165
 			}
 		},
 		{
@@ -308,18 +309,18 @@
 			"description": "A simple recipe anyone will love with a thick spread of chopped up boiled egg mixed with creamy rich mayonnaise.",
 			"url": "https://subwayisfresh.com.sg/menu_item/egg-mayo/",
 			"category": "sandwich",
-			"servingSizeG": 228,
+			"servingSizeG": 249,
 			"nutrition": {
-				"energyKcal": 354,
-				"proteinG": 14,
-				"totalFatG": 16.9,
-				"saturatedFatG": 3.4,
-				"transFatG": 0.3,
-				"cholesterolMg": 110,
-				"carbohydratesG": 31.2,
-				"dietaryFibreG": 4.6,
-				"sugarG": 4.3,
-				"sodiumMg": 469
+				"energyKcal": 424,
+				"proteinG": 25.7,
+				"totalFatG": 20.9,
+				"saturatedFatG": 5.8,
+				"transFatG": 0.5,
+				"cholesterolMg": 194,
+				"carbohydratesG": 39.4,
+				"dietaryFibreG": 3.7,
+				"sugarG": 5.2,
+				"sodiumMg": 709
 			}
 		},
 		{
@@ -328,18 +329,18 @@
 			"description": "Fala-fuel up with our new vegetarian option! Crispy golden-brown falafel, on top of fresh red onions, lettuce, tomatoes, sweet corn and cucumber slices — nestled in a bread of your choice.",
 			"url": "https://subwayisfresh.com.sg/menu_item/falafel/",
 			"category": "sandwich",
-			"servingSizeG": 229,
+			"servingSizeG": 241,
 			"nutrition": {
-				"energyKcal": 391,
-				"proteinG": 15.4,
-				"totalFatG": 12.3,
-				"saturatedFatG": 5.1,
+				"energyKcal": 441,
+				"proteinG": 15.7,
+				"totalFatG": 17.1,
+				"saturatedFatG": 6,
 				"transFatG": 0.1,
 				"cholesterolMg": 0,
-				"carbohydratesG": 49.7,
-				"dietaryFibreG": 7.1,
-				"sugarG": 8.2,
-				"sodiumMg": 732
+				"carbohydratesG": 57.1,
+				"dietaryFibreG": 6.1,
+				"sugarG": 10.2,
+				"sodiumMg": 922
 			}
 		},
 		{
@@ -348,18 +349,18 @@
 			"description": "Fala-fuel up with some falafel, made to perfection! With some cauliflower rice, avocado, green peppers, cucumbers, ranch sauce and more added to the mix, you’ll be happy you went healthier.",
 			"url": "https://subwayisfresh.com.sg/menu_item/falafelenergy-bowl/",
 			"category": "energy-bowls",
-			"servingSizeG": 397,
+			"servingSizeG": 403,
 			"nutrition": {
-				"energyKcal": 401,
-				"proteinG": 10,
-				"totalFatG": 24.9,
-				"saturatedFatG": 7.6,
+				"energyKcal": 423,
+				"proteinG": 10.2,
+				"totalFatG": 27.2,
+				"saturatedFatG": 7.1,
 				"transFatG": 0.1,
-				"cholesterolMg": 5,
-				"carbohydratesG": 38.3,
-				"dietaryFibreG": 9.7,
-				"sugarG": 12.3,
-				"sodiumMg": 1005
+				"cholesterolMg": 0,
+				"carbohydratesG": 37.6,
+				"dietaryFibreG": 8.9,
+				"sugarG": 12.9,
+				"sodiumMg": 1126
 			}
 		},
 		{
@@ -408,18 +409,38 @@
 			"description": "An old world favourite sandwich that is made up of beef salami, beef pepperoni and chicken ham. Some say B.M.T.™ stands for biggest, meatiest, tastiest.",
 			"url": "https://subwayisfresh.com.sg/menu_item/italian-b-m-t/",
 			"category": "sandwich",
-			"servingSizeG": 220,
+			"servingSizeG": 255,
 			"nutrition": {
-				"energyKcal": 330,
-				"proteinG": 20.4,
-				"totalFatG": 10.5,
-				"saturatedFatG": 4.4,
-				"transFatG": 0,
-				"cholesterolMg": 14,
-				"carbohydratesG": 33.4,
-				"dietaryFibreG": 4.5,
-				"sugarG": 4.6,
-				"sodiumMg": 892
+				"energyKcal": 436,
+				"proteinG": 23.5,
+				"totalFatG": 20.4,
+				"saturatedFatG": 7.9,
+				"transFatG": 0.3,
+				"cholesterolMg": 18,
+				"carbohydratesG": 40.3,
+				"dietaryFibreG": 3.8,
+				"sugarG": 6.1,
+				"sodiumMg": 1272
+			}
+		},
+		{
+			"id": "11600",
+			"name": "Loaded Breakfast",
+			"description": "Loaded. Hearty. Seriously savoury. Indulge in our Loaded Breakfast Wrap. Packed with rotisserie chicken, an egg patty, sliced mushrooms, melty cheese, fresh vegetables, all wrapped in a warm wrap with your choice of sauce. It’s the ultimate breakfast to kickstart your mornings.",
+			"url": "https://subwayisfresh.com.sg/menu_item/loaded-breakfast-breakfast/",
+			"category": "breakfast",
+			"servingSizeG": 295,
+			"nutrition": {
+				"energyKcal": 646,
+				"proteinG": 28.1,
+				"totalFatG": 15.2,
+				"saturatedFatG": 5.8,
+				"transFatG": 0.1,
+				"cholesterolMg": 183,
+				"carbohydratesG": 38.5,
+				"dietaryFibreG": 5.3,
+				"sugarG": 11.3,
+				"sodiumMg": 1380
 			}
 		},
 		{
@@ -448,18 +469,38 @@
 			"description": "As delicious as our sandwiches are, they are even better when paired with the perfect side and drink. Our sides run from salty to sweet and from fit to indulgent. With such a variety of drinks to choose from, there’s truly something for every taste.",
 			"url": "https://subwayisfresh.com.sg/menu_item/macaroni-cheese/",
 			"category": "sides",
-			"servingSizeG": 150,
+			"servingSizeG": 100,
 			"nutrition": {
-				"energyKcal": 363,
-				"proteinG": 11.5,
-				"totalFatG": 22.7,
-				"saturatedFatG": 12.8,
+				"energyKcal": 105.6,
+				"proteinG": 1.8,
+				"totalFatG": 5.7,
+				"saturatedFatG": 2.9,
 				"transFatG": 0,
-				"cholesterolMg": 8,
-				"carbohydratesG": 28.4,
-				"dietaryFibreG": 1.2,
-				"sugarG": 3.9,
-				"sodiumMg": 654
+				"cholesterolMg": 0,
+				"carbohydratesG": 12.2,
+				"dietaryFibreG": 0.4,
+				"sugarG": 0.6,
+				"sodiumMg": 397
+			}
+		},
+		{
+			"id": "11594",
+			"name": "Mushroom & Omelette",
+			"description": "Rise and dine on rich, savoury mushroom goodness. Our Mushroom & Omelette Wrap is freshly made with an egg patty, juicy sliced mushrooms, melty cheese, and crisp vegetables, all wrapped up for a wholesome, energising start to your morning.",
+			"url": "https://subwayisfresh.com.sg/menu_item/mushroom-omelette-breakfast/",
+			"category": "breakfast",
+			"servingSizeG": 224,
+			"nutrition": {
+				"energyKcal": 558,
+				"proteinG": 14.1,
+				"totalFatG": 12.1,
+				"saturatedFatG": 5.4,
+				"transFatG": 0.1,
+				"cholesterolMg": 183,
+				"carbohydratesG": 37.6,
+				"dietaryFibreG": 5.3,
+				"sugarG": 10.9,
+				"sodiumMg": 951
 			}
 		},
 		{
@@ -483,23 +524,63 @@
 			}
 		},
 		{
+			"id": "11598",
+			"name": "Omelette & Cheese",
+			"description": "Start your day with our Omelette & Cheese Wrap. Packed with an egg patty, melty cheese, and fresh vegetables in a warm wrap, it’s the breakfast classic you’ll keep coming back for.",
+			"url": "https://subwayisfresh.com.sg/menu_item/omelette-cheese-breakfast/",
+			"category": "breakfast",
+			"servingSizeG": 187,
+			"nutrition": {
+				"energyKcal": 552,
+				"proteinG": 13.2,
+				"totalFatG": 11.9,
+				"saturatedFatG": 5.4,
+				"transFatG": 0.1,
+				"cholesterolMg": 183,
+				"carbohydratesG": 37.5,
+				"dietaryFibreG": 5.3,
+				"sugarG": 10.8,
+				"sodiumMg": 833
+			}
+		},
+		{
+			"id": "2831",
+			"name": "Raspberry Cheesecake Cookie",
+			"description": null,
+			"url": "https://subwayisfresh.com.sg/menu_item/raspberry-cheesecake-cookie-2/",
+			"category": "sides",
+			"servingSizeG": 45,
+			"nutrition": {
+				"energyKcal": 204,
+				"proteinG": 2,
+				"totalFatG": 8.8,
+				"saturatedFatG": 5,
+				"transFatG": 0.1,
+				"cholesterolMg": 12,
+				"carbohydratesG": 29.5,
+				"dietaryFibreG": 0.5,
+				"sugarG": 15.8,
+				"sodiumMg": 176
+			}
+		},
+		{
 			"id": "1507",
 			"name": "Roasted Chicken Breast",
 			"description": "Feel peckish for chicken? Then try our Oven Roasted Chicken Breast. A tender, boneless chicken breast patty roasted to perfection, with your choice of fresh vegetables and condiments is served on freshly baked bread. Just like mom used to make.",
 			"url": "https://subwayisfresh.com.sg/menu_item/roasted-chicken-breast/",
 			"category": "sandwich",
-			"servingSizeG": 225,
+			"servingSizeG": 246,
 			"nutrition": {
-				"energyKcal": 286,
-				"proteinG": 24.8,
-				"totalFatG": 3.7,
-				"saturatedFatG": 0.9,
-				"transFatG": 0,
+				"energyKcal": 330,
+				"proteinG": 28,
+				"totalFatG": 6.9,
+				"saturatedFatG": 3.3,
+				"transFatG": 0.1,
 				"cholesterolMg": 0,
-				"carbohydratesG": 33.2,
-				"dietaryFibreG": 4.4,
-				"sugarG": 5.5,
-				"sodiumMg": 615
+				"carbohydratesG": 38.8,
+				"dietaryFibreG": 3,
+				"sugarG": 6.8,
+				"sodiumMg": 844
 			}
 		},
 		{
@@ -508,18 +589,18 @@
 			"description": null,
 			"url": "https://subwayisfresh.com.sg/menu_item/roasted-chicken-thigh/",
 			"category": "sandwich",
-			"servingSizeG": 241,
+			"servingSizeG": 264,
 			"nutrition": {
-				"energyKcal": 316,
-				"proteinG": 21.9,
-				"totalFatG": 8.1,
-				"saturatedFatG": 2.4,
-				"transFatG": 0,
+				"energyKcal": 406,
+				"proteinG": 24.5,
+				"totalFatG": 15.9,
+				"saturatedFatG": 5.4,
+				"transFatG": 0.2,
 				"cholesterolMg": 0,
-				"carbohydratesG": 33.8,
-				"dietaryFibreG": 4.6,
-				"sugarG": 6,
-				"sodiumMg": 667
+				"carbohydratesG": 41.6,
+				"dietaryFibreG": 3.7,
+				"sugarG": 8.3,
+				"sodiumMg": 1061
 			}
 		},
 		{
@@ -528,18 +609,18 @@
 			"description": "It’s rich. It’s succulent. It’s the star of the bowl: our rotisserie chicken, nestled on cauliflower rice with crisp greens, juicy tomatoes, crunchy cucumbers and tangy pickles. A dollop of egg mayo and caramelised onions adds a layer of soft, creamy delight, while smoky Chipotle Southwest sauce turns up the flavour. Go on, savour every bite…",
 			"url": "https://subwayisfresh.com.sg/menu_item/rotisserie-chicken-energy-bowl/",
 			"category": "energy-bowls",
-			"servingSizeG": 395,
+			"servingSizeG": 368,
 			"nutrition": {
-				"energyKcal": 306,
-				"proteinG": 20.4,
-				"totalFatG": 11.4,
-				"saturatedFatG": 3.1,
-				"transFatG": 0.1,
-				"cholesterolMg": 0,
-				"carbohydratesG": 31.7,
-				"dietaryFibreG": 5.5,
-				"sugarG": 21.2,
-				"sodiumMg": 831
+				"energyKcal": 390,
+				"proteinG": 23.8,
+				"totalFatG": 26.9,
+				"saturatedFatG": 4.4,
+				"transFatG": 0.4,
+				"cholesterolMg": 97,
+				"carbohydratesG": 17.6,
+				"dietaryFibreG": 4.4,
+				"sugarG": 10.6,
+				"sodiumMg": 1043
 			}
 		},
 		{
@@ -588,18 +669,18 @@
 			"description": "Imagine freshly baked bread stuffed with tender sliced turkey, chicken ham, crispy chicken bacon, melted cheese, and your choice of tasty vegetables and condiments. Now, stop imaging and get your mouth over to your nearest SUBWAY® Restaurant.",
 			"url": "https://subwayisfresh.com.sg/menu_item/subway-melt/",
 			"category": "sandwich",
-			"servingSizeG": 241,
+			"servingSizeG": 255,
 			"nutrition": {
-				"energyKcal": 326,
-				"proteinG": 24,
-				"totalFatG": 7.4,
-				"saturatedFatG": 3.6,
+				"energyKcal": 384,
+				"proteinG": 23.1,
+				"totalFatG": 8.3,
+				"saturatedFatG": 3.9,
 				"transFatG": 0,
-				"cholesterolMg": 25,
-				"carbohydratesG": 34.8,
-				"dietaryFibreG": 5.1,
-				"sugarG": 5.2,
-				"sodiumMg": 1087
+				"cholesterolMg": 20,
+				"carbohydratesG": 41.2,
+				"dietaryFibreG": 4.2,
+				"sugarG": 6.6,
+				"sodiumMg": 1244
 			}
 		},
 		{
@@ -623,23 +704,43 @@
 			}
 		},
 		{
+			"id": "1487",
+			"name": "Tuna",
+			"description": "You’ll love every bite of our classic tuna sandwich. 100% delicious.",
+			"url": "https://subwayisfresh.com.sg/menu_item/tuna/",
+			"category": "sandwich",
+			"servingSizeG": 249,
+			"nutrition": {
+				"energyKcal": 497,
+				"proteinG": 24.8,
+				"totalFatG": 28.1,
+				"saturatedFatG": 6.2,
+				"transFatG": 0.8,
+				"cholesterolMg": 34,
+				"carbohydratesG": 37,
+				"dietaryFibreG": 3.7,
+				"sugarG": 5.2,
+				"sodiumMg": 877
+			}
+		},
+		{
 			"id": "1479",
 			"name": "Veggie Delite™",
 			"description": "A delightfully crunchy fresh combination of garden fresh lettuce, tomatoes, green peppers, onions, olives and pickles and your choice of condiments served on freshly baked bread. It’s like a salad sandwich.",
 			"url": "https://subwayisfresh.com.sg/menu_item/veggie-delite/",
 			"category": "sandwich",
-			"servingSizeG": 154,
+			"servingSizeG": 228,
 			"nutrition": {
-				"energyKcal": 207,
-				"proteinG": 10.2,
-				"totalFatG": 2.2,
-				"saturatedFatG": 0.7,
+				"energyKcal": 263,
+				"proteinG": 11.7,
+				"totalFatG": 3.7,
+				"saturatedFatG": 1.1,
 				"transFatG": 0,
 				"cholesterolMg": 0,
-				"carbohydratesG": 31.1,
-				"dietaryFibreG": 4.4,
-				"sugarG": 4.3,
-				"sodiumMg": 278
+				"carbohydratesG": 46.4,
+				"dietaryFibreG": 5.1,
+				"sugarG": 11.8,
+				"sodiumMg": 623
 			}
 		},
 		{
@@ -650,16 +751,16 @@
 			"category": "sides",
 			"servingSizeG": 45,
 			"nutrition": {
-				"energyKcal": 218,
-				"proteinG": 2.6,
-				"totalFatG": 11,
-				"saturatedFatG": 6.3,
-				"transFatG": 0,
+				"energyKcal": 245,
+				"proteinG": 2.1,
+				"totalFatG": 11.5,
+				"saturatedFatG": 5.7,
+				"transFatG": 0.2,
 				"cholesterolMg": 18,
-				"carbohydratesG": 27.2,
-				"dietaryFibreG": 0.8,
-				"sugarG": 17.3,
-				"sodiumMg": 196
+				"carbohydratesG": 30.7,
+				"dietaryFibreG": 0.7,
+				"sugarG": 18.9,
+				"sodiumMg": 178
 			}
 		}
 	]
