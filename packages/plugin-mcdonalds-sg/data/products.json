@@ -1,14 +1,17 @@
 {
 	"schemaVersion": 2,
 	"sourceUrl": "https://www.mcdonalds.com.sg/full-menu",
-	"retrievedAt": "2026-08-23T13:07:56.228Z",
+	"retrievedAt": "2026-10-26T08:51:03.753Z",
 	"products": [
 		{
 			"id": "66",
 			"name": "Apple Pie",
 			"description": "A crisp bubbly crust encasing a luscious apple filling. Best eaten warm.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/apple-pie",
-			"categories": ["desserts", "sides"],
+			"categories": [
+				"desserts",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 231,
 				"proteinG": 1,
@@ -42,7 +45,9 @@
 			"name": "Big Breakfast®",
 			"description": "Our satisfying Big Breakfast® is perfect for any morning. Wake up to a breakfast meal with fluffy scrambled eggs, savoury chicken sausage, toasted wholegrain muffins and a golden hash brown.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/big-breakfast",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 496,
 				"proteinG": 27,
@@ -59,7 +64,9 @@
 			"name": "Big Mac®",
 			"description": "Two 100% beef patties, cheese, lettuce, onion and pickles. And the sauce. That unbeatable, tasty Big Mac® sauce. You know you want to.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/big-mac",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 558,
 				"proteinG": 28,
@@ -76,7 +83,9 @@
 			"name": "Breakfast Deluxe",
 			"description": "Kickstart your morning with a load of goodness. Scrambled eggs, toasted wholegrain muffins, savoury chicken sausage – and Hotcakes. It’s maximum satisfaction.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-deluxe",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 805,
 				"proteinG": 31,
@@ -93,7 +102,10 @@
 			"name": "Breakfast Family Meal",
 			"description": "Delight the family with the hearty Breakfast Deluxe Meal, Sausage McMuffin® with Egg Meal and Hotcakes Happy Meal®!",
 			"url": "https://www.mcdonalds.com.sg/breakfast-family-meal",
-			"categories": ["breakfast", "for-the-family"],
+			"categories": [
+				"breakfast",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 1974,
 				"proteinG": 69,
@@ -110,7 +122,9 @@
 			"name": "Breakfast Wrap Chicken Ham",
 			"description": "Fluffy, scrambled eggs tucked between a slice of cheese and delicious chicken ham, topped with a crispy, golden hash brown. All perfectly wrapped up in a wholegrain tortilla.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-wrap-chicken-ham",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 430,
 				"proteinG": 17,
@@ -127,7 +141,9 @@
 			"name": "Breakfast Wrap Chicken Sausage",
 			"description": "Fluffy, scrambled eggs sandwiched between a slice of cheese and a chicken sausage patty, topped with a crispy, golden hash brown, finished with tomato ketchup and wrapped in a hearty wholegrain tortilla.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/breakfast-wrap-chicken-sausage",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 472,
 				"proteinG": 22,
@@ -144,7 +160,9 @@
 			"name": "Buttermilk Chicken McWrap®",
 			"description": "Juicy whole-muscle chicken thigh in perfectly crispy buttermilk batter laid over refreshing lettuce and purple cabbage, wrapped snugly with a soft wholegrain tortilla.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-chicken-mcwrap",
-			"categories": ["salads-and-wraps"],
+			"categories": [
+				"salads-and-wraps"
+			],
 			"nutrition": {
 				"energyKcal": 689.7,
 				"proteinG": 24.2,
@@ -161,7 +179,9 @@
 			"name": "Buttermilk Chicken Salad",
 			"description": "A juicy, crispy buttermilk-battered chicken thigh nestled atop a bed of refreshing lettuce and purple cabbage.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-chicken-salad",
-			"categories": ["salads-and-wraps"],
+			"categories": [
+				"salads-and-wraps"
+			],
 			"nutrition": {
 				"energyKcal": 384,
 				"proteinG": 18.4,
@@ -178,7 +198,10 @@
 			"name": "Buttermilk Crispy Chicken",
 			"description": "Crispy whole-muscle chicken thigh flavoured with buttermilk packed in a glazed burger bun. Served with white cheddar cheese, whole leaf lettuce, black pepper mayo; and topped with pineapple rings and crisp purple cabbage slaw. In short, perfection in every bite!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/buttermilk-crispy-chicken",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 739,
 				"proteinG": 26,
@@ -195,7 +218,9 @@
 			"name": "Caramel Frappé",
 			"description": "Caramel with a hint of coffee, refreshingly blended with ice and topped with caramel drizzle.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/caramel-frappe-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 424,
 				"proteinG": 9,
@@ -212,7 +237,9 @@
 			"name": "Cheeseburger",
 			"description": "Sometimes you just want to reach for a classic. A classic 100% beef patty, and cheese; with onions, pickles, mustard and a dollop of tomato ketchup, in a soft bun. Delicious.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/cheeseburger",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 303,
 				"proteinG": 16,
@@ -229,7 +256,10 @@
 			"name": "Cheeseburger Happy Meal®",
 			"description": "A classic McDonald’s Hamburger with warm, melting cheese on a beef patty. It’s an enjoyment in every bite for the little ones!",
 			"url": "https://www.mcdonalds.com.sg/cheeseburger-happy-meal",
-			"categories": ["burgers", "for-the-family"],
+			"categories": [
+				"burgers",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 386,
 				"proteinG": 25,
@@ -246,7 +276,9 @@
 			"name": "Cheeseburger Meal with Corn and Ice Mountain",
 			"description": "Cheeseburger + Corn + Ice Mountain Drinking Water",
 			"url": "https://www.mcdonalds.com.sg/food-menu/cheeseburger-delight-500-meal-with-drinking-water",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 396,
 				"proteinG": 21,
@@ -263,7 +295,10 @@
 			"name": "Chicken McCrispy® Mix (6pc)",
 			"description": "The best of both flavours, in one box! Crunch down into juicy, crispy Chicken McCrispy® however you prefer! Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispymix6pc",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 2028,
 				"proteinG": 120,
@@ -280,7 +315,10 @@
 			"name": "Chicken McCrispy® Mix (6pc) Bundle",
 			"description": "Can’t pick a favourite? Have them both with this juicy, crispy mix of two flavours along with 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispymix6pcbundle",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 2796,
 				"proteinG": 130,
@@ -297,7 +335,9 @@
 			"name": "Chicken McCrispy® Signature (2pc)",
 			"description": "This is it, your new favourite awaits with bites of juicy chicken coated in non-spicy, extra crispy batter. Chicken McCrispy® Signature (2pc) comes with 1 thigh and 1 drumstick Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature",
-			"categories": ["chicken"],
+			"categories": [
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 590,
 				"proteinG": 39,
@@ -314,7 +354,10 @@
 			"name": "Chicken McCrispy® Signature (6pc)",
 			"description": "Can’t get enough or sharing the goodness? Have more *crunch* to go around with 6 pieces of Chicken McCrispy® Signature. Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature6pc",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 1908,
 				"proteinG": 122,
@@ -331,7 +374,10 @@
 			"name": "Chicken McCrispy® Signature (6pc) Bundle",
 			"description": "Indulge in our Chicken McCrispy® Spicy (6pc) Value Bundle, perfect for sharing unforgettable moments. Includes Chicken McCrispy® Spicy (6pc), 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispysignature6pcbundle",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 2676,
 				"proteinG": 131,
@@ -348,7 +394,9 @@
 			"name": "Chicken McCrispy® Spicy (2pc)",
 			"description": "Dive into the delightful crunch and satisfying crispiness of the Chicken McCrispy® Spicy, along with tender, juicy chunks of chicken you love. Now, wouldn’t that be nice? Chicken McCrispy® (2pc) comes with 1 thigh and 1 drumstick. Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy",
-			"categories": ["chicken"],
+			"categories": [
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 689,
 				"proteinG": 39,
@@ -365,7 +413,10 @@
 			"name": "Chicken McCrispy® Spicy (6pc)",
 			"description": "Love the crispy crunch? Perfect for sharing with friends and family. Be prepared, though — everyone will want the crispy crumbs at the bottom of the box! Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy6pc",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 2148,
 				"proteinG": 118,
@@ -382,7 +433,10 @@
 			"name": "Chicken McCrispy® Spicy (6pc) Bundle",
 			"description": "Share this Chicken McCrispy® Signature (6pc) Value Bundle with your friends and family! Chicken McCrispy® Signature (6pc) comes with 4 thigh and 2 drumstick. Your meal also comes with 2 French Fries (M) and 2 Coke Zero (S). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chickenmccrispyspicy6pcbundle",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 2916,
 				"proteinG": 128,
@@ -399,7 +453,11 @@
 			"name": "Chicken McNuggets® (20pc)",
 			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-20pc",
-			"categories": ["chicken", "sharing", "sides"],
+			"categories": [
+				"chicken",
+				"sharing",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 910,
 				"proteinG": 46,
@@ -416,7 +474,10 @@
 			"name": "Chicken McNuggets® (4pc) Happy Meal®",
 			"description": "Everything's better when it's bite-sized. Our tender, juicy Chicken McNuggets® are made with 100% white meat chicken and no artificial colour, flavouring or preservative.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-4pc-happy-meal",
-			"categories": ["chicken", "for-the-family"],
+			"categories": [
+				"chicken",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 204,
 				"proteinG": 10,
@@ -433,7 +494,10 @@
 			"name": "Chicken McNuggets® (6pc)",
 			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-6pc",
-			"categories": ["chicken", "sides"],
+			"categories": [
+				"chicken",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 273,
 				"proteinG": 14,
@@ -450,7 +514,10 @@
 			"name": "Chicken McNuggets® (9pc)",
 			"description": "A boxful of bite-sized treats, beautifully battered – good as a quick snack or as part of a hearty meal. Available in 6, 9 or 20-piece servings, our Chicken McNuggets® are a childhood favourite that you won’t outgrow.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-mcnuggets-9pc",
-			"categories": ["chicken", "sides"],
+			"categories": [
+				"chicken",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 409,
 				"proteinG": 21,
@@ -467,7 +534,9 @@
 			"name": "Chicken Muffin",
 			"description": "Craving a chicken protein in the morning? Then you’ll enjoy the Chicken Muffin.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-muffin",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 407,
 				"proteinG": 16,
@@ -484,7 +553,9 @@
 			"name": "Chicken Muffin Meal",
 			"description": "Wholegrain Chicken Muffin + Corn (Jr) + McCafe® Premium Roast Coffee",
 			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-chicken-muffin-delight-500-meal",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 482,
 				"proteinG": 22,
@@ -501,7 +572,9 @@
 			"name": "Chicken Muffin with Egg",
 			"description": "Enjoy even more protein in this Chicken Muffin with an added egg.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chicken-muffin-with-egg",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 481,
 				"proteinG": 23,
@@ -518,7 +591,9 @@
 			"name": "ChocoCone®",
 			"description": "Chocolate lovers, rejoice! The ultimate indulgence has arrived. Our classic Vanilla Cone in a smooth, rich chocolate coating for a heavenly treat.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/chococone",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 281,
 				"proteinG": 3,
@@ -535,7 +610,9 @@
 			"name": "Coca-Cola® Original Taste Less Sugar (Large)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-large",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 221,
 				"proteinG": 0,
@@ -552,7 +629,9 @@
 			"name": "Coca-Cola® Original Taste Less Sugar (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 152,
 				"proteinG": 0,
@@ -569,7 +648,9 @@
 			"name": "Coca-Cola® Original Taste Less Sugar (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 109,
 				"proteinG": 0,
@@ -586,7 +667,9 @@
 			"name": "Coca-Cola® Zero Sugar (Large)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-large",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -603,7 +686,9 @@
 			"name": "Coca-Cola® Zero Sugar (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -620,7 +705,9 @@
 			"name": "Coca-Cola® Zero Sugar (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/coca-cola-zero-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -637,7 +724,9 @@
 			"name": "Corn",
 			"description": "Veg up with crunchy corn kernels and enjoy a yummy serving of antioxidants! Served warm with an optional pat of butter, it’s comfort food that’s oh-so-wholesome.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/corn-cup-45oz",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 100,
 				"proteinG": 4,
@@ -654,7 +743,9 @@
 			"name": "Corn (Jr)",
 			"description": "Veg up with crunchy corn kernels and enjoy a yummy serving of antioxidants! Served warm with an optional pat of butter, it’s comfort food that’s oh-so-wholesome.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/corn-cup-3oz",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 66,
 				"proteinG": 2,
@@ -688,7 +779,9 @@
 			"name": "Double Cheeseburger",
 			"description": "Love our Cheeseburger? Double it! Think two 100% beef patties with cheese, onions, pickles, mustard and a dollop of tomato ketchup, all in a perfectly soft bun.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-cheeseburger",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 443,
 				"proteinG": 27,
@@ -705,7 +798,9 @@
 			"name": "Double Chocolate Frappe",
 			"description": "Sip up a choc-ful of velvety goodness with our Double Chocolate Frappé. The perfect drink for chocoholics out there!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-choc-frappe-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 393,
 				"proteinG": 6,
@@ -722,7 +817,10 @@
 			"name": "Double Filet-O-Fish®",
 			"description": "Not one but two pieces of fish filets smothered with tangy tartar sauce and topped with melty cheese between soft, steamed buns.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-filet-o-fish",
-			"categories": ["breakfast", "burgers"],
+			"categories": [
+				"breakfast",
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 466,
 				"proteinG": 24,
@@ -735,11 +833,33 @@
 			}
 		},
 		{
-			"id": "853",
+			"id": "901",
+			"name": "Double McChicken®",
+			"description": "Crispy coated chicken with lettuce and mayo in a soft, sesame seed bun. A true classic.",
+			"url": "https://www.mcdonalds.com.sg/double-mcchicken",
+			"categories": [
+				"burgers"
+			],
+			"nutrition": {
+				"energyKcal": 601,
+				"proteinG": 26,
+				"totalFatG": 29,
+				"saturatedFatG": 6,
+				"cholesterolMg": 87,
+				"carbohydratesG": 61,
+				"dietaryFibreG": 3,
+				"sodiumMg": 1343
+			}
+		},
+		{
+			"id": "905",
 			"name": "Double McCrispy®",
 			"description": "Double the CRUNCH with two new crispy batter coated over juicy, whole-muscle thigh patty. Topped with umami-packed smoky sauce and fluffy potato buns!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/doublemccrispy",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 1004,
 				"proteinG": 41.2,
@@ -748,7 +868,7 @@
 				"cholesterolMg": 117.3,
 				"carbohydratesG": 61,
 				"dietaryFibreG": 3.5,
-				"sodiumMg": 1021.6
+				"sodiumMg": 1022.6
 			}
 		},
 		{
@@ -756,7 +876,10 @@
 			"name": "Double McSpicy®",
 			"description": "Feel the heat. We double the spiciness with two thick juicy cutlets of whole muscle chicken thigh on a bed of crisp lettuce between toasted sesame seed buns – double the shiok!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-mcspicy",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 833,
 				"proteinG": 38,
@@ -773,7 +896,10 @@
 			"name": "Double McSpicy® with Cheese",
 			"description": "Turn up the heat and double the flavour. Two crispy chicken thighs, oozing with melty cheese, fiery spice, and crunchy lettuce, all snugly nestled between warm sesame buns.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-mcspicy-with-cheese",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 883,
 				"proteinG": 41,
@@ -790,7 +916,9 @@
 			"name": "Double Quarter Pounder® with Cheese",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-quarter-pounder",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 717,
 				"proteinG": 50,
@@ -807,7 +935,9 @@
 			"name": "Double Sausage McMuffin®",
 			"description": "Two juicy sausage patties with melted cheese, nestled between warm, toasted wholegrain muffins — simple, but irresistible.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-sausage-mcmuffin",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 327,
 				"proteinG": 23,
@@ -824,7 +954,9 @@
 			"name": "Double Sausage McMuffin® with Egg",
 			"description": "Take your morning to a whole new level with two savoury sausage patties, a round egg, and melted cheese all enveloped in a soft, toasted wholegrain muffin. Here’s more of what you love.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/double-sausage-mcmuffin-with-egg",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 406,
 				"proteinG": 30,
@@ -837,11 +969,32 @@
 			}
 		},
 		{
+			"id": "903",
+			"name": "Double Smoky Beef Burger",
+			"description": "What’s not to love? A classic favourite beef burger, elevated with a smoky mayo sauce. 100% beef patty, cheese, lettuce, and onions, in a soft bun. That’s a real treat.",
+			"url": "https://www.mcdonalds.com.sg/double-smoky-beef-burger",
+			"categories": [
+				"burgers"
+			],
+			"nutrition": {
+				"energyKcal": 519,
+				"proteinG": 29,
+				"totalFatG": 30,
+				"saturatedFatG": 13,
+				"cholesterolMg": 81,
+				"carbohydratesG": 33,
+				"dietaryFibreG": 2,
+				"sodiumMg": 1113
+			}
+		},
+		{
 			"id": "69",
 			"name": "Egg McMuffin®",
 			"description": "Fresh round egg with chicken ham and melted cheese in a toasted wholegrain muffin. It’s cracking good stuff.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/egg-mcmuffin",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 289,
 				"proteinG": 18,
@@ -858,7 +1011,9 @@
 			"name": "Egg McMuffin® Meal",
 			"description": "Wholegrain Egg McMuffin® + Corn (Jr) + McCafe® Premium Roast Coffee",
 			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-egg-mcmuffin-delight-500-meal",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 366,
 				"proteinG": 23,
@@ -875,7 +1030,10 @@
 			"name": "Family Meal (Cheeseburger)",
 			"description": "Delight the family with a McSpicy® Meal, Filet-O-Fish® Meal and a Cheeseburger Happy Meal®!",
 			"url": "https://www.mcdonalds.com.sg/rod-fm-chb",
-			"categories": ["burgers", "for-the-family"],
+			"categories": [
+				"burgers",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -892,7 +1050,11 @@
 			"name": "Family Meal (McNuggets®)",
 			"description": "Delight the family with a McSpicy® Meal, Filet-O-Fish® Meal and a 4pc Chicken McNuggets® Happy Meal®!",
 			"url": "https://www.mcdonalds.com.sg/rod-fm-nug",
-			"categories": ["burgers", "chicken", "for-the-family"],
+			"categories": [
+				"burgers",
+				"chicken",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -909,7 +1071,10 @@
 			"name": "Filet-O-Fish®",
 			"description": "Dive into our Filet-O-Fish®! This popular fish sandwich uses sustainably sourced fish. Topped with melty cheese and creamy McDonald’s tartar sauce between soft, steamed buns.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish",
-			"categories": ["breakfast", "burgers"],
+			"categories": [
+				"breakfast",
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 332,
 				"proteinG": 15,
@@ -926,7 +1091,9 @@
 			"name": "Filet-O-Fish® Meal with Corn and Ice Mountain",
 			"description": "Filet-O-Fish® + Corn + Ice Mountain Drinking Water",
 			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish-meal-with-drinking-water",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 421,
 				"proteinG": 16,
@@ -943,7 +1110,9 @@
 			"name": "Filet-O-Fish® Meal with Garden Side Salad and Ice Mountain",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/filet-o-fish-meal-with-garden-side-salad-and-ice-mountain",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 351,
 				"proteinG": 16,
@@ -960,7 +1129,9 @@
 			"name": "French Fries (Large)",
 			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-large",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 512,
 				"proteinG": 6,
@@ -977,7 +1148,9 @@
 			"name": "French Fries (Medium)",
 			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-medium",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 384,
 				"proteinG": 5,
@@ -994,7 +1167,9 @@
 			"name": "French Fries (Small)",
 			"description": "Our World Famous Fries® are made with premium Russet Burbank potatoes. These epic fries are crispy and golden on the outside and fluffy on the inside. In Singapore, we cook our fries in Canola blend oil with no trans-fat. Our fries do not contain any wheat, gluten nor beef extract.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/french-fries-small",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 315,
 				"proteinG": 4,
@@ -1011,7 +1186,9 @@
 			"name": "Garden Side Salad",
 			"description": "A delightful combination of crisp lettuce, purple cabbage and sweet corn kernels.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/garden-side-salad",
-			"categories": ["salads-and-wraps"],
+			"categories": [
+				"salads-and-wraps"
+			],
 			"nutrition": {
 				"energyKcal": 17,
 				"proteinG": 1,
@@ -1028,7 +1205,9 @@
 			"name": "Hamburger",
 			"description": "100% beef patty with onions, pickles, mustard and a dollop of tomato ketchup, all in a soft bun. A classic, every time.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hamburger",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 253,
 				"proteinG": 14,
@@ -1045,7 +1224,9 @@
 			"name": "Hamburger Meal with Garden Side Salad and Ice Mountain",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/hamburger-meal-with-garden-side-salad-and-ice-mountain",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 273,
 				"proteinG": 16,
@@ -1062,7 +1243,10 @@
 			"name": "Happy Sharing Box® A",
 			"description": "Chicken McNuggets® (12pc) + McWings® (8pc) More of your favourites in one box for any occasion. Share the joy of Chicken McNuggets® and McWings® with the whole party!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/happy-sharing-box-a",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 1730,
 				"proteinG": 101,
@@ -1079,7 +1263,10 @@
 			"name": "Happy Sharing Box® B",
 			"description": "Chicken McNuggets® (6pc) + McWings® (4pc) Perfect for small groups and tiny cravings. Cosy up with your favourite Chicken McNuggets® and McWings®!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/happy-sharing-box-b",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 865,
 				"proteinG": 50,
@@ -1096,7 +1283,10 @@
 			"name": "Happy Sharing Combo",
 			"description": "It’s time to Chicken and Chill with your friends! Enjoy more of your favourites for less. Happy Sharing Combo (3 to 4 pax) includes Chicken McCrispy® Mix (6pc), 8pc McWings®, and 20pc Chicken McNuggets®. Chicken McCrispy® Mix (6pc) comes with 2 thighs, 1 drumstick (Spicy), and 2 thighs, 1 drumstick (Signature). Available after breakfast hours and while stocks last. Chicken McCrispy® is not available at McDonald’s Shell Tampines, McDonald’s Shell Hougang, McDonald’s Shell Havelock, McDonald’s Clementi Avenue 3, McDonald’s Parklane and McDonald’s Tampines Kiosk",
 			"url": "https://www.mcdonalds.com.sg/food-menu/happysharingcombo",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 3108,
 				"proteinG": 155,
@@ -1113,7 +1303,10 @@
 			"name": "Happy Sharing Snacks",
 			"description": "Dip, crunch and share for a great time. Happy Sharing Snacks include 8pc McWings®, 20pc Chicken McNuggets®, 3 French Fries (M), and 3 Apple Pies.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/happysharingsnacks",
-			"categories": ["chicken", "sharing"],
+			"categories": [
+				"chicken",
+				"sharing"
+			],
 			"nutrition": {
 				"energyKcal": 3961,
 				"proteinG": 135,
@@ -1130,7 +1323,9 @@
 			"name": "Hash Brown",
 			"description": "Perfectly crispy and toasty on the outside, and fluffy in the inside, our Hash Browns are great on its own or as part of a breakfast meal.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hashbrown",
-			"categories": ["sides"],
+			"categories": [
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 149,
 				"proteinG": 1,
@@ -1164,7 +1359,9 @@
 			"name": "Hot Fudge Sundae",
 			"description": "A decadent combination that brings delight in every bite. With rich chocolate fudge glazed onto a creamy soft-serve, our Hot Fudge Sundae is a luxurious treat.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hot-fudge-sundae",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 314,
 				"proteinG": 6,
@@ -1181,7 +1378,9 @@
 			"name": "Hot MILO®",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/hot-milo",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 192,
 				"proteinG": 5,
@@ -1198,7 +1397,9 @@
 			"name": "Hot Tea",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/hot-tea",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 4,
 				"proteinG": 1,
@@ -1232,7 +1433,9 @@
 			"name": "Hotcakes",
 			"description": "Fluffy Hotcakes are made all the more heavenly when smothered with syrup and butter. Pure bliss!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 557,
 				"proteinG": 9,
@@ -1249,7 +1452,10 @@
 			"name": "Hotcakes (2pc) Happy Meal®",
 			"description": "Nothing beats fluffy Hotcakes for a kid’s breakfast. Made from wheat flour, our Hotcakes pack enough protein and energy to charge up the little ones for the morning.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes-2pc-happy-meal",
-			"categories": ["breakfast", "for-the-family"],
+			"categories": [
+				"breakfast",
+				"for-the-family"
+			],
 			"nutrition": {
 				"energyKcal": 430,
 				"proteinG": 6,
@@ -1266,7 +1472,9 @@
 			"name": "Hotcakes with Sausage",
 			"description": "Jump-start the day with this classic sweet-and-savoury combo. Fluffy Hotcakes drizzled with syrup and served alongside a delicious chicken sausage.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/hotcakes-with-sausage",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 619,
 				"proteinG": 16,
@@ -1283,7 +1491,9 @@
 			"name": "Ice Mountain Drinking Water",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/drinking-water",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 0,
 				"proteinG": 0,
@@ -1300,7 +1510,9 @@
 			"name": "Iced Lemon Tea (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/iced-lemon-tea-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 91,
 				"proteinG": 0,
@@ -1317,7 +1529,9 @@
 			"name": "Iced Lemon Tea (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/iced-lemon-tea-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 66,
 				"proteinG": 0,
@@ -1334,7 +1548,9 @@
 			"name": "Iced MILO® (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/iced-milo-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 322,
 				"proteinG": 10,
@@ -1351,7 +1567,9 @@
 			"name": "Iced MILO® (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/iced-milo-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 227,
 				"proteinG": 7,
@@ -1368,7 +1586,9 @@
 			"name": "Jasmine Green Tea (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/jasmine-green-tea-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 86,
 				"proteinG": 0,
@@ -1385,7 +1605,9 @@
 			"name": "Jasmine Green Tea (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/jasmine-green-tea-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 62,
 				"proteinG": 0,
@@ -1402,7 +1624,9 @@
 			"name": "Kiyo Grape Juice",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/kiyo-grape-juice",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 100,
 				"proteinG": 0,
@@ -1419,7 +1643,9 @@
 			"name": "Low-Fat Hi-Calcium Milk",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/magnolia-lo-fat-hi-calcium-milk",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 96,
 				"proteinG": 7,
@@ -1436,7 +1662,9 @@
 			"name": "McCafé Iced Latte",
 			"description": "The perfect combination of espresso and milk swilled over ice.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-iced-latte",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 77,
 				"proteinG": 6,
@@ -1453,7 +1681,9 @@
 			"name": "McCafé® Americano",
 			"description": "Start your mornings with a bold Americano, simply made with hot water poured over our espresso made with aromatic 100% Arabica Beans.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-americano",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 1,
 				"proteinG": 0,
@@ -1470,7 +1700,9 @@
 			"name": "McCafé® Cappuccino",
 			"description": "A refreshingly warm shot of espresso topped with milk that is steamed to a thick, perfect froth. A classic favourite.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-cappuccino",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 74,
 				"proteinG": 5,
@@ -1487,7 +1719,9 @@
 			"name": "McCafé® Iced Americano",
 			"description": "Bold and refreshing. Our Iced Americano combines rich espresso over ice, perfect for coffee lovers.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-iced-americano",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 1,
 				"proteinG": 0,
@@ -1504,7 +1738,9 @@
 			"name": "McCafé® Latte",
 			"description": "Velvety steamed milk gently poured into a lovingly brewed shot of dusky, aromatic arabica beans.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-latte",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 97,
 				"proteinG": 10,
@@ -1521,7 +1757,9 @@
 			"name": "McCafé® Premium Roast Coffee",
 			"description": "Made with 100% Arabica beans and freshly brewed every 30 minutes.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccafe-premium-roast-coffee",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 4,
 				"proteinG": 0,
@@ -1538,7 +1776,10 @@
 			"name": "McChicken®",
 			"description": "Crispy coated chicken with lettuce and mayo in a soft, sesame seed bun. A true classic.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 391,
 				"proteinG": 15,
@@ -1555,7 +1796,9 @@
 			"name": "McChicken® Meal with Corn and Ice Mountain",
 			"description": "McChicken® + Corn + Ice Mountain Drinking Water",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-delight-500-meal-with-drinking-water",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 483,
 				"proteinG": 19,
@@ -1572,7 +1815,9 @@
 			"name": "McChicken® Meal with Garden Side Salad and Ice Mountain",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-meal-with-garden-side-salad-and-ice-mountain",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 410,
 				"proteinG": 16,
@@ -1589,7 +1834,10 @@
 			"name": "McChicken® with Cheese",
 			"description": "A crispy, tender chicken patty paired with creamy mayo and fresh lettuce. Add a melt of cheese to elevate this classic into something truly special.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcchicken-with-cheese",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 441,
 				"proteinG": 18,
@@ -1602,11 +1850,14 @@
 			}
 		},
 		{
-			"id": "852",
+			"id": "904",
 			"name": "McCrispy®",
 			"description": "We’re bringing the CRUNCH with a new crispy batter coated over juicy, whole-muscle thigh patty. Topped with umami-packed smoky sauce and fluffy potato buns!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mccrispy",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 638,
 				"proteinG": 24,
@@ -1623,7 +1874,10 @@
 			"name": "McSpicy®",
 			"description": "If you’re big on hot chilli spice, this is the sandwich for you. A thick, juicy cutlet of chicken thigh sits fiery hot on a bed of crunchy lettuce between toasted sesame seed buns – shiok!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcspicy",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 541,
 				"proteinG": 23,
@@ -1640,7 +1894,10 @@
 			"name": "McSpicy® with Cheese",
 			"description": "A fiery, crispy chicken thigh cutlet topped with melty cheese and crunchy lettuce — all wrapped in a sesame seed bun. It’s the perfect combination of heat and cheesy goodness.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcspicy-with-cheese",
-			"categories": ["burgers", "chicken"],
+			"categories": [
+				"burgers",
+				"chicken"
+			],
 			"nutrition": {
 				"energyKcal": 591,
 				"proteinG": 26,
@@ -1657,7 +1914,10 @@
 			"name": "McWings® (2pc)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/mcwings-2pc",
-			"categories": ["chicken", "sides"],
+			"categories": [
+				"chicken",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 302,
 				"proteinG": 17,
@@ -1674,7 +1934,10 @@
 			"name": "McWings® (4pc)",
 			"description": "If chicken’s your thing, our McWings® will send you right over the edge. Coated with a light batter, we guarantee you’ll be impressed.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcwings-4pc",
-			"categories": ["chicken", "sides"],
+			"categories": [
+				"chicken",
+				"sides"
+			],
 			"nutrition": {
 				"energyKcal": 603,
 				"proteinG": 35,
@@ -1691,7 +1954,9 @@
 			"name": "Mocha Frappé",
 			"description": "The perfect mix of dark chocolate and espresso, blended with ice to smooth perfection.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mocha-frappe-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 445,
 				"proteinG": 9,
@@ -1708,7 +1973,9 @@
 			"name": "Oatside Chocolate Flavoured Oatmilk",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/oatside-chocolate-flavoured-oatmilk",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 164,
 				"proteinG": 2.6,
@@ -1725,7 +1992,9 @@
 			"name": "Oatside Original Flavoured Oatmilk",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/oatside-original-flavoured-oatmilk",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 130,
 				"proteinG": 1.2,
@@ -1742,7 +2011,9 @@
 			"name": "OREO® McFlurry®",
 			"description": "The original celebrity pairing. Crunchy OREO® bits meets creamy vanilla soft-serve in a combination that’s hard to resist. May contain traces of nuts.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/mcflurry-oreo",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 368,
 				"proteinG": 7,
@@ -1759,7 +2030,9 @@
 			"name": "Quarter Pounder® with Cheese",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/quarter-pounder",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 507,
 				"proteinG": 32,
@@ -1793,7 +2066,9 @@
 			"name": "Sausage McMuffin®",
 			"description": "Simple and delicious. Just a savoury chicken sausage with a slice of melted cheese between toasted wholegrain muffins.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/sausage-mcmuffin",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 258,
 				"proteinG": 16,
@@ -1810,7 +2085,9 @@
 			"name": "Sausage McMuffin® Meal",
 			"description": "Wholegrain Sausage McMuffin® + Corn (Jr) + McCafe® Premium Roast Coffee",
 			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-sausage-mcmuffin-delight-500-meal",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 355,
 				"proteinG": 21,
@@ -1827,7 +2104,9 @@
 			"name": "Sausage McMuffin® with Egg",
 			"description": "Basically, an elevated Sausage McMuffin® with the additional egg.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/sausage-mcmuffin-with-egg",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 337,
 				"proteinG": 23,
@@ -1844,7 +2123,9 @@
 			"name": "Sausage McMuffin® with Egg Meal",
 			"description": "Wholegrain Sausage McMuffin® with Egg + Corn (Jr) + McCafe® Premium Roast Coffee",
 			"url": "https://www.mcdonalds.com.sg/food-menu/wholegrain-sausage-mcmuffin-with-egg-delight-500-meal",
-			"categories": ["eat-light-under-500-calories"],
+			"categories": [
+				"eat-light-under-500-calories"
+			],
 			"nutrition": {
 				"energyKcal": 434,
 				"proteinG": 28,
@@ -1861,7 +2142,9 @@
 			"name": "Scrambled Egg Burger with Chicken",
 			"description": "Need a little morning pick-me-up? Get the breakfast you deserve with creamy scrambled eggs and crispy chicken patty – a flawless pairing for a fluffy morning.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/scrambled-egg-burger-with-chicken",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 556,
 				"proteinG": 30,
@@ -1878,7 +2161,9 @@
 			"name": "Scrambled Egg Burger with Sausage",
 			"description": "Start your day on a high note with light, fluffy scrambled eggs paired with chicken sausage patty, glazed buns and yummy mayonnaise. Egg-cellent!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/scrambled-egg-burger-with-sausage",
-			"categories": ["breakfast"],
+			"categories": [
+				"breakfast"
+			],
 			"nutrition": {
 				"energyKcal": 492,
 				"proteinG": 30,
@@ -1891,11 +2176,32 @@
 			}
 		},
 		{
+			"id": "902",
+			"name": "Smoky Beef Burger",
+			"description": "What’s not to love? A classic favourite beef burger, elevated with a smoky mayo sauce. 100% beef patty, cheese, lettuce, and onions, in a soft bun. That’s a real treat.",
+			"url": "https://www.mcdonalds.com.sg/smoky-beef-burger",
+			"categories": [
+				"burgers"
+			],
+			"nutrition": {
+				"energyKcal": 378,
+				"proteinG": 17,
+				"totalFatG": 20,
+				"saturatedFatG": 8,
+				"cholesterolMg": 41,
+				"carbohydratesG": 32,
+				"dietaryFibreG": 2,
+				"sodiumMg": 817
+			}
+		},
+		{
 			"id": "829",
 			"name": "Spicy Chicken McWrap®",
 			"description": "Savour the heat with a crispy, spicy chicken thigh, with crunchy lettuce and purple cabbage, all cozily wrapped in a soft wholegrain tortilla.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/spicy-chicken-mcwrap",
-			"categories": ["salads-and-wraps"],
+			"categories": [
+				"salads-and-wraps"
+			],
 			"nutrition": {
 				"energyKcal": 545.2,
 				"proteinG": 22.4,
@@ -1912,7 +2218,9 @@
 			"name": "Sprite® (Large)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-large",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 163,
 				"proteinG": 0,
@@ -1929,7 +2237,9 @@
 			"name": "Sprite® (Medium)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-medium",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 112,
 				"proteinG": 0,
@@ -1946,7 +2256,9 @@
 			"name": "Sprite® (Small)",
 			"description": null,
 			"url": "https://www.mcdonalds.com.sg/food-menu/sprite-small",
-			"categories": ["beverages"],
+			"categories": [
+				"beverages"
+			],
 			"nutrition": {
 				"energyKcal": 80,
 				"proteinG": 0,
@@ -1963,7 +2275,9 @@
 			"name": "Strawberry Bliss Sundae",
 			"description": "Savour a truly delightful treat with flowy layers of fruity strawberry sauce topped on creamy strawberry soft serve. Each spoonful delivers a blissful burst of sweetness.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-bliss-sundae",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 264,
 				"proteinG": 5,
@@ -1980,7 +2294,9 @@
 			"name": "Strawberry ChocoCone®",
 			"description": "Savour the delightfully creamy strawberry soft serve that brings you a burst of fruitiness. Enjoy it topped with luscious chocolate that turns into a crunchy cover.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-chococone",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 283,
 				"proteinG": 3,
@@ -1997,7 +2313,9 @@
 			"name": "Strawberry Cone",
 			"description": "Savour the delightfully creamy strawberry soft serve that brings you a burst of fruitiness.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-cone",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 134,
 				"proteinG": 3,
@@ -2014,7 +2332,9 @@
 			"name": "Strawberry Hot Fudge Sundae",
 			"description": "Savour a truly delightful treat with flowy layers of indulgent hot fudge sauce topped on creamy strawberry soft serve. Each spoonful delivers a blissful burst of sweetness.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-hot-fudge-sundae",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 316,
 				"proteinG": 6,
@@ -2031,7 +2351,9 @@
 			"name": "Strawberry OREO® McFlurry®",
 			"description": "Indulge in a creamy strawberry soft serve blended with crunchy OREO® cookie pieces; a delightful contrast of flavours and textures, making every bite a moment to cherish.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-oreo-mcflurry",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 343,
 				"proteinG": 6,
@@ -2048,7 +2370,9 @@
 			"name": "Strawberry Sundae",
 			"description": "It’s refreshing, it’s fruity, it’s juicy strawberry. Cool, creamy soft-serve paired with a lovely strawberry sauce for a fruity burst of flavour.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/strawberry-sundae",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 261,
 				"proteinG": 5,
@@ -2065,7 +2389,9 @@
 			"name": "Triple Cheeseburger",
 			"description": "Take your love for the Double Cheeseburger to a new level — now with THREE layers of juicy beef patties and even meltier cheese! Topped with savoury onions and refreshing pickles, all sandwiched between our new softer, glazed buns!",
 			"url": "https://www.mcdonalds.com.sg/food-menu/triple-cheeseburger",
-			"categories": ["burgers"],
+			"categories": [
+				"burgers"
+			],
 			"nutrition": {
 				"energyKcal": 580,
 				"proteinG": 38,
@@ -2082,7 +2408,9 @@
 			"name": "Vanilla Cone",
 			"description": "The most famed of all our desserts, and a timeless treat for everyone. Our signature soft-serve is served on a crisp cone.",
 			"url": "https://www.mcdonalds.com.sg/food-menu/vanilla-cone",
-			"categories": ["desserts"],
+			"categories": [
+				"desserts"
+			],
 			"nutrition": {
 				"energyKcal": 133,
 				"proteinG": 3,
