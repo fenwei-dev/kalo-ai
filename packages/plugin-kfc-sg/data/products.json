@@ -1,13 +1,17 @@
 {
 	"schemaVersion": 1,
 	"sourceUrl": "https://www.kfc.com.sg/nutritionandallergen",
-	"retrievedAt": "2026-08-23T15:16:42.142Z",
+	"retrievedAt": "2026-11-23T13:35:47.178Z",
 	"products": [
 		{
 			"id": "1-5l-coca-cola-less-sugar",
 			"name": "1.5L Coca-Cola Less Sugar",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaOriginalTasteLessSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaOriginalTasteLessSugar"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -24,8 +28,12 @@
 		{
 			"id": "1-5l-coca-cola-zero-sugar",
 			"name": "1.5L Coca-Cola Zero Sugar",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaZeroSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaZeroSugar"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -42,8 +50,12 @@
 		{
 			"id": "7-up-med",
 			"name": "7 Up (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinks7Up"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinks7Up"
+			],
 			"servingSize": 470,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -59,8 +71,12 @@
 		{
 			"id": "7-up-reg",
 			"name": "7 Up (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinks7Up"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinks7Up"
+			],
 			"servingSize": 330,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -76,9 +92,13 @@
 		{
 			"id": "american-twister",
 			"name": "American Twister",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMAmericanTwister"],
-			"servingSize": 203,
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMAmericanTwister"
+			],
+			"servingSize": 236,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -88,22 +108,28 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 457,
-				"proteinG": 16.9,
-				"carbohydratesG": 42.6,
-				"totalFatG": 24,
-				"saturatedFatG": 8.6,
-				"sodiumMg": 833
+				"energyKcal": 533,
+				"proteinG": 20.4,
+				"carbohydratesG": 66.1,
+				"totalFatG": 30.7,
+				"saturatedFatG": 11.2,
+				"sodiumMg": 867
 			}
 		},
 		{
 			"id": "apple-juice-100g",
 			"name": "Apple Juice",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionAppleJuice"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionAppleJuice"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
-			"allergens": ["Sulphites"],
+			"allergens": [
+				"Sulphites"
+			],
 			"nutrition": {
 				"energyKcal": 20,
 				"proteinG": 0.1,
@@ -118,11 +144,17 @@
 		{
 			"id": "apple-juice-200g",
 			"name": "Apple Juice",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionAppleJuice"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionAppleJuice"
+			],
 			"servingSize": 200,
 			"servingUnit": "g",
-			"allergens": ["Sulphites"],
+			"allergens": [
+				"Sulphites"
+			],
 			"nutrition": {
 				"energyKcal": 40,
 				"proteinG": 0.2,
@@ -137,11 +169,20 @@
 		{
 			"id": "bbq-pockett",
 			"name": "BBQ Pockett",
-			"categories": ["wraps"],
-			"sourceGroups": ["NutritionPockettBandito"],
+			"categories": [
+				"wraps"
+			],
+			"sourceGroups": [
+				"NutritionPockettBandito"
+			],
 			"servingSize": 213,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 505,
 				"proteinG": 24.5,
@@ -154,8 +195,12 @@
 		{
 			"id": "bbq-tender-burger",
 			"name": "BBQ Tender Burger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionBBQTenderBurger"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionBBQTenderBurger"
+			],
 			"servingSize": 209,
 			"servingUnit": "g",
 			"allergens": [
@@ -177,8 +222,12 @@
 		{
 			"id": "black-coffee",
 			"name": "Black Coffee",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionBlackCoffee"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionBlackCoffee"
+			],
 			"servingSize": 203,
 			"servingUnit": "g",
 			"allergens": [],
@@ -196,8 +245,12 @@
 		{
 			"id": "brekkie-burger",
 			"name": "Brekkie Burger",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMBrekkie"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMBrekkie"
+			],
 			"servingSize": 165,
 			"servingUnit": "g",
 			"allergens": [
@@ -219,11 +272,17 @@
 		{
 			"id": "cappuccino",
 			"name": "Cappuccino",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCappuccino"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCappuccino"
+			],
 			"servingSize": 201,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 51,
 				"proteinG": 0.8,
@@ -238,11 +297,19 @@
 		{
 			"id": "cheese-fries",
 			"name": "Cheese Fries",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertCheeseFries"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertCheeseFries"
+			],
 			"servingSize": 204,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 462,
 				"proteinG": 6.4,
@@ -255,8 +322,12 @@
 		{
 			"id": "cheesy-tenders-twister",
 			"name": "Cheesy Tenders Twister",
-			"categories": ["wraps"],
-			"sourceGroups": ["NutritionCheesyTendersTwister"],
+			"categories": [
+				"wraps"
+			],
+			"sourceGroups": [
+				"NutritionCheesyTendersTwister"
+			],
 			"servingSize": 215,
 			"servingUnit": "g",
 			"allergens": [
@@ -278,11 +349,19 @@
 		{
 			"id": "cheezy-onion-sauce-25g",
 			"name": "Cheezy Onion Sauce (25g)",
-			"categories": ["sauces"],
-			"sourceGroups": ["NutritionCheezyOnionSauce"],
+			"categories": [
+				"sauces"
+			],
+			"sourceGroups": [
+				"NutritionCheezyOnionSauce"
+			],
 			"servingSize": 25,
 			"servingUnit": "g",
-			"allergens": ["Eggs", "Milk", "Soy"],
+			"allergens": [
+				"Eggs",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 104,
 				"proteinG": 0.4,
@@ -295,11 +374,18 @@
 		{
 			"id": "chicken-bacon-1pc",
 			"name": "Chicken Bacon (1pc)",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionChickenBacon"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionChickenBacon"
+			],
 			"servingSize": 11,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 32,
 				"proteinG": 2.6,
@@ -310,10 +396,41 @@
 			}
 		},
 		{
+			"id": "chicken-ham-and-egg-twister",
+			"name": "Chicken Ham & Egg Twister",
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMCHETwister"
+			],
+			"servingSize": 236,
+			"servingUnit": "g",
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk",
+				"Soy",
+				"Wheat"
+			],
+			"nutrition": {
+				"energyKcal": 508,
+				"proteinG": 25.2,
+				"carbohydratesG": 55.1,
+				"totalFatG": 30.5,
+				"saturatedFatG": 11.8,
+				"sodiumMg": 896
+			}
+		},
+		{
 			"id": "chicken-macaroni-soup-14-oz",
 			"name": "Chicken Macaroni Soup (14 oz)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionChickenMacaroniSoup"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionChickenMacaroniSoup"
+			],
 			"servingSize": 421,
 			"servingUnit": "g",
 			"allergens": [
@@ -335,8 +452,12 @@
 		{
 			"id": "coca-cola-less-sugar",
 			"name": "Coca-Cola Less Sugar",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaOriginalTasteLessSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaOriginalTasteLessSugar"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -354,8 +475,12 @@
 		{
 			"id": "coca-cola-less-sugar-med",
 			"name": "Coca-Cola Less Sugar (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaOriginalTasteLessSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaOriginalTasteLessSugar"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -373,8 +498,12 @@
 		{
 			"id": "coca-cola-less-sugar-reg",
 			"name": "Coca-Cola Less Sugar (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaOriginalTasteLessSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaOriginalTasteLessSugar"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -392,8 +521,12 @@
 		{
 			"id": "coca-cola-zero-sugar",
 			"name": "Coca-Cola Zero Sugar",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaZeroSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaZeroSugar"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -410,8 +543,12 @@
 		{
 			"id": "coca-cola-zero-sugar-med",
 			"name": "Coca-Cola Zero Sugar (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaZeroSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaZeroSugar"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -429,8 +566,12 @@
 		{
 			"id": "coca-cola-zero-sugar-reg",
 			"name": "Coca-Cola Zero Sugar (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCocaColaZeroSugar"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCocaColaZeroSugar"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -448,11 +589,17 @@
 		{
 			"id": "coffee-with-creamer",
 			"name": "Coffee with Creamer",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionCoffeewithCreamer"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionCoffeewithCreamer"
+			],
 			"servingSize": 199,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 38,
 				"proteinG": 0.8,
@@ -467,11 +614,18 @@
 		{
 			"id": "coleslaw-med",
 			"name": "Coleslaw (med)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertColeslaw"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertColeslaw"
+			],
 			"servingSize": 160,
 			"servingUnit": "g",
-			"allergens": ["Eggs", "Soy"],
+			"allergens": [
+				"Eggs",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 197,
 				"proteinG": 2,
@@ -484,14 +638,21 @@
 		{
 			"id": "coleslaw-reg",
 			"name": "Coleslaw (reg)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertColeslaw"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertColeslaw"
+			],
 			"servingSize": 80,
 			"servingUnit": "g",
-			"allergens": ["Eggs", "Soy"],
+			"allergens": [
+				"Eggs",
+				"Soy"
+			],
 			"nutrition": {
-				"energyKcal": 98,
-				"proteinG": 1,
+				"energyKcal": 92,
+				"proteinG": 0.8,
 				"carbohydratesG": 8,
 				"totalFatG": 7,
 				"saturatedFatG": 1,
@@ -501,8 +662,12 @@
 		{
 			"id": "corn-cup-reg",
 			"name": "Corn Cup (reg)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionCornCup"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionCornCup"
+			],
 			"servingSize": 65,
 			"servingUnit": "g",
 			"allergens": [],
@@ -518,8 +683,12 @@
 		{
 			"id": "curry-rice-bowl",
 			"name": "Curry Rice Bowl",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionBowlsCurryRice"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionBowlsCurryRice"
+			],
 			"servingSize": 294,
 			"servingUnit": "g",
 			"allergens": [
@@ -542,8 +711,12 @@
 		{
 			"id": "dasani-drinking-water",
 			"name": "Dasani Drinking Water",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDasaniDrinkingWater"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDasaniDrinkingWater"
+			],
 			"servingSize": 600,
 			"servingUnit": "g",
 			"allergens": [],
@@ -561,8 +734,12 @@
 		{
 			"id": "etc-burger",
 			"name": "ETC Burger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionETCBurger"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionETCBurger"
+			],
 			"servingSize": 278,
 			"servingUnit": "g",
 			"allergens": [
@@ -584,8 +761,12 @@
 		{
 			"id": "etc-stacker",
 			"name": "ETC Stacker",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionETCStacker"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionETCStacker"
+			],
 			"servingSize": 450,
 			"servingUnit": "g",
 			"allergens": [
@@ -607,11 +788,20 @@
 		{
 			"id": "famous-bowl",
 			"name": "Famous Bowl",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionBowls"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionBowls"
+			],
 			"servingSize": 538,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 386,
 				"proteinG": 15.3,
@@ -624,8 +814,12 @@
 		{
 			"id": "fanta-grape",
 			"name": "Fanta Grape",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionFantaGrape"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionFantaGrape"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -642,8 +836,12 @@
 		{
 			"id": "fanta-grape-med",
 			"name": "Fanta Grape (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionFantaGrape"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionFantaGrape"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -660,8 +858,12 @@
 		{
 			"id": "fanta-grape-reg",
 			"name": "Fanta Grape (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionFantaGrape"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionFantaGrape"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -678,8 +880,12 @@
 		{
 			"id": "french-fries-med",
 			"name": "French Fries (med)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertFrenchFries"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertFrenchFries"
+			],
 			"servingSize": 125,
 			"servingUnit": "g",
 			"allergens": [],
@@ -695,8 +901,12 @@
 		{
 			"id": "french-fries-reg",
 			"name": "French Fries (reg)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertFrenchFries"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertFrenchFries"
+			],
 			"servingSize": 95,
 			"servingUnit": "g",
 			"allergens": [],
@@ -712,11 +922,18 @@
 		{
 			"id": "fried-youtiao-4pcs",
 			"name": "Fried Youtiao (4pcs)",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionFriedYoutiao"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionFriedYoutiao"
+			],
 			"servingSize": 48,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 180,
 				"proteinG": 5.3,
@@ -729,8 +946,12 @@
 		{
 			"id": "fuze-tea-ice-lemon-tea",
 			"name": "Fuze Tea Ice Lemon Tea",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHeavenEarthIcedLemonTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHeavenEarthIcedLemonTea"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -747,8 +968,12 @@
 		{
 			"id": "fuze-tea-ice-lemon-tea-med",
 			"name": "Fuze Tea Ice Lemon Tea (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHeavenEarthIcedLemonTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHeavenEarthIcedLemonTea"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -765,8 +990,12 @@
 		{
 			"id": "fuze-tea-ice-lemon-tea-reg",
 			"name": "Fuze Tea Ice Lemon Tea (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHeavenEarthIcedLemonTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHeavenEarthIcedLemonTea"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -783,8 +1012,12 @@
 		{
 			"id": "hash-brown-1pc",
 			"name": "Hash Brown (1pc)",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMHashbrown"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMHashbrown"
+			],
 			"servingSize": 43.9,
 			"servingUnit": "g",
 			"allergens": [],
@@ -800,9 +1033,13 @@
 		{
 			"id": "hearty-or-platter",
 			"name": "Hearty OR Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionHeartyORPlatter"],
-			"servingSize": 329,
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionHeartyORPlatter"
+			],
+			"servingSize": 280,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -812,22 +1049,28 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 735,
-				"proteinG": 41.2,
-				"carbohydratesG": 54.5,
-				"totalFatG": 39,
-				"saturatedFatG": 14.4,
-				"sodiumMg": 1629
+				"energyKcal": 609,
+				"proteinG": 38.5,
+				"carbohydratesG": 41.8,
+				"totalFatG": 31.8,
+				"saturatedFatG": 11.6,
+				"sodiumMg": 1492
 			}
 		},
 		{
 			"id": "hot-and-crispy-chicken-bites-20pcs",
 			"name": "Hot & Crispy Chicken Bites (20pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionHotCrispyChickenBites"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionHotCrispyChickenBites"
+			],
 			"servingSize": 380,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 897,
 				"proteinG": 66.5,
@@ -840,11 +1083,17 @@
 		{
 			"id": "hot-and-crispy-chicken-bites-6pcs",
 			"name": "Hot & Crispy Chicken Bites (6pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionHotCrispyChickenBites"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionHotCrispyChickenBites"
+			],
 			"servingSize": 114,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 269,
 				"proteinG": 20,
@@ -857,11 +1106,17 @@
 		{
 			"id": "hot-and-crispy-chicken-bites-9pcs",
 			"name": "Hot & Crispy Chicken Bites (9pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionHotCrispyChickenBites"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionHotCrispyChickenBites"
+			],
 			"servingSize": 171,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 404,
 				"proteinG": 29.9,
@@ -874,11 +1129,17 @@
 		{
 			"id": "hot-and-crispy-chicken-drumstick",
 			"name": "Hot & Crispy Chicken Drumstick",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenHotCrispy"
+			],
 			"servingSize": 77,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 213,
 				"proteinG": 15.5,
@@ -891,11 +1152,17 @@
 		{
 			"id": "hot-and-crispy-chicken-keel",
 			"name": "Hot & Crispy Chicken Keel",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenHotCrispy"
+			],
 			"servingSize": 147,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 411,
 				"proteinG": 29.7,
@@ -908,11 +1175,17 @@
 		{
 			"id": "hot-and-crispy-chicken-rib",
 			"name": "Hot & Crispy Chicken Rib",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenHotCrispy"
+			],
 			"servingSize": 184,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 513,
 				"proteinG": 37.2,
@@ -925,11 +1198,17 @@
 		{
 			"id": "hot-and-crispy-chicken-thigh",
 			"name": "Hot & Crispy Chicken Thigh",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenHotCrispy"
+			],
 			"servingSize": 146,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 407,
 				"proteinG": 29.5,
@@ -942,11 +1221,17 @@
 		{
 			"id": "hot-and-crispy-chicken-wing",
 			"name": "Hot & Crispy Chicken Wing",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenHotCrispy"
+			],
 			"servingSize": 81,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten"],
+			"allergens": [
+				"Cereals containing gluten"
+			],
 			"nutrition": {
 				"energyKcal": 225,
 				"proteinG": 16.3,
@@ -959,11 +1244,18 @@
 		{
 			"id": "hot-milo-hcs",
 			"name": "Hot Milo [HCS]",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHotMilo"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHotMilo"
+			],
 			"servingSize": 204,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 97,
 				"proteinG": 2.4,
@@ -978,8 +1270,12 @@
 		{
 			"id": "hot-tea",
 			"name": "Hot Tea",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHotTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHotTea"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -995,11 +1291,17 @@
 		{
 			"id": "hot-tea-with-milk",
 			"name": "Hot Tea with Milk",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionHotTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionHotTea"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 9,
 				"proteinG": 0.3,
@@ -1014,11 +1316,18 @@
 		{
 			"id": "iced-milo-med-420ml",
 			"name": "Iced Milo (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksIcedMilo"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksIcedMilo"
+			],
 			"servingSize": 420,
 			"servingUnit": "ml",
-			"allergens": ["Milk", "Soy"],
+			"allergens": [
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 254,
 				"proteinG": 7,
@@ -1031,11 +1340,19 @@
 		{
 			"id": "iced-milo-med-510g",
 			"name": "Iced Milo (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionIcedMilo"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionIcedMilo"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 329,
 				"proteinG": 10.2,
@@ -1051,11 +1368,18 @@
 		{
 			"id": "iced-milo-reg-310ml",
 			"name": "Iced Milo (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksIcedMilo"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksIcedMilo"
+			],
 			"servingSize": 310,
 			"servingUnit": "ml",
-			"allergens": ["Milk", "Soy"],
+			"allergens": [
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 188,
 				"proteinG": 5,
@@ -1068,11 +1392,19 @@
 		{
 			"id": "iced-milo-reg-350g",
 			"name": "Iced Milo (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionIcedMilo"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionIcedMilo"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 226,
 				"proteinG": 7,
@@ -1088,11 +1420,20 @@
 		{
 			"id": "kfc-froyo-natural-cone",
 			"name": "KFC Froyo - Natural Cone",
-			"categories": ["desserts"],
-			"sourceGroups": ["NutritionDessertKFCFroyo"],
+			"categories": [
+				"desserts"
+			],
+			"sourceGroups": [
+				"NutritionDessertKFCFroyo"
+			],
 			"servingSize": 95,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 107,
 				"proteinG": 0.7,
@@ -1105,11 +1446,18 @@
 		{
 			"id": "kfc-froyo-natural-cup",
 			"name": "KFC Froyo - Natural Cup",
-			"categories": ["desserts"],
-			"sourceGroups": ["NutritionDessertKFCFroyo"],
+			"categories": [
+				"desserts"
+			],
+			"sourceGroups": [
+				"NutritionDessertKFCFroyo"
+			],
 			"servingSize": 120,
 			"servingUnit": "g",
-			"allergens": ["Milk", "Soy"],
+			"allergens": [
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 118,
 				"proteinG": 0.5,
@@ -1122,11 +1470,17 @@
 		{
 			"id": "latte",
 			"name": "Latte",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionLatte"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionLatte"
+			],
 			"servingSize": 203,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 61,
 				"proteinG": 0.8,
@@ -1141,8 +1495,12 @@
 		{
 			"id": "lil-chicken-macaroni-soup",
 			"name": "Lil’ Chicken Macaroni Soup",
-			"categories": ["kids"],
-			"sourceGroups": ["NutritionLilChickenMacaroniSoup"],
+			"categories": [
+				"kids"
+			],
+			"sourceGroups": [
+				"NutritionLilChickenMacaroniSoup"
+			],
 			"servingSize": 280,
 			"servingUnit": "g",
 			"allergens": [
@@ -1164,8 +1522,12 @@
 		{
 			"id": "lil-tender-twister",
 			"name": "Lil’ Tender Twister",
-			"categories": ["kids"],
-			"sourceGroups": ["NutritionLilTenderTwister"],
+			"categories": [
+				"kids"
+			],
+			"sourceGroups": [
+				"NutritionLilTenderTwister"
+			],
 			"servingSize": 108,
 			"servingUnit": "g",
 			"allergens": [
@@ -1187,8 +1549,12 @@
 		{
 			"id": "lipton-iced-lemon-tea-med",
 			"name": "Lipton Iced Lemon Tea (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksLiptonIcedLemonTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksLiptonIcedLemonTea"
+			],
 			"servingSize": 446,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1204,8 +1570,12 @@
 		{
 			"id": "lipton-iced-lemon-tea-reg",
 			"name": "Lipton Iced Lemon Tea (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksLiptonIcedLemonTea"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksLiptonIcedLemonTea"
+			],
 			"servingSize": 303,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1221,11 +1591,18 @@
 		{
 			"id": "mac-n-cheese-med",
 			"name": "Mac N Cheese (med)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionSideMacNCheese"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionSideMacNCheese"
+			],
 			"servingSize": 135,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 132,
 				"proteinG": 3.9,
@@ -1238,11 +1615,18 @@
 		{
 			"id": "mac-n-cheese-bowl",
 			"name": "Mac N Cheese Bowl",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionMacNCheeseBowl"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionMacNCheeseBowl"
+			],
 			"servingSize": 306,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 606,
 				"proteinG": 23,
@@ -1255,11 +1639,17 @@
 		{
 			"id": "magnolia-fresh-milk",
 			"name": "Magnolia Fresh Milk",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksFreshMilk"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksFreshMilk"
+			],
 			"servingSize": 200,
 			"servingUnit": "ml",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 132,
 				"proteinG": 6,
@@ -1272,11 +1662,17 @@
 		{
 			"id": "magnolia-low-fat-high-calcium-fresh-milk-100g",
 			"name": "Magnolia Low Fat High Calcium Fresh Milk",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMagnoliaLoFatHiCalMilk"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMagnoliaLoFatHiCalMilk"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 48,
 				"proteinG": 3.7,
@@ -1290,11 +1686,17 @@
 		{
 			"id": "magnolia-low-fat-high-calcium-fresh-milk-200g",
 			"name": "Magnolia Low Fat High Calcium Fresh Milk",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMagnoliaLoFatHiCalMilk"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMagnoliaLoFatHiCalMilk"
+			],
 			"servingSize": 200,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 96,
 				"proteinG": 7.4,
@@ -1308,11 +1710,19 @@
 		{
 			"id": "mala-mania-sauce-25g",
 			"name": "Mala Mania Sauce (25g)",
-			"categories": ["sauces"],
-			"sourceGroups": ["NutritionMalaManiaSauce"],
+			"categories": [
+				"sauces"
+			],
+			"sourceGroups": [
+				"NutritionMalaManiaSauce"
+			],
 			"servingSize": 25,
 			"servingUnit": "g",
-			"allergens": ["Eggs", "Soy", "Wheat"],
+			"allergens": [
+				"Eggs",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 97,
 				"proteinG": 0.4,
@@ -1325,8 +1735,12 @@
 		{
 			"id": "mineral-water-100g",
 			"name": "Mineral Water",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMineralWater"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMineralWater"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -1344,8 +1758,12 @@
 		{
 			"id": "mineral-water-600ml",
 			"name": "Mineral Water",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksMineralWater"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksMineralWater"
+			],
 			"servingSize": 600,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1361,8 +1779,12 @@
 		{
 			"id": "mini-eggy-twister",
 			"name": "Mini Eggy Twister",
-			"categories": ["kids"],
-			"sourceGroups": ["NutritionMiniEggyTwister"],
+			"categories": [
+				"kids"
+			],
+			"sourceGroups": [
+				"NutritionMiniEggyTwister"
+			],
 			"servingSize": 130,
 			"servingUnit": "g",
 			"allergens": [
@@ -1384,8 +1806,12 @@
 		{
 			"id": "mini-tender-twister",
 			"name": "Mini Tender Twister",
-			"categories": ["kids"],
-			"sourceGroups": ["NutritionMiniTenderTwister"],
+			"categories": [
+				"kids"
+			],
+			"sourceGroups": [
+				"NutritionMiniTenderTwister"
+			],
 			"servingSize": 131,
 			"servingUnit": "g",
 			"allergens": [
@@ -1407,8 +1833,12 @@
 		{
 			"id": "minute-maid-orange-med",
 			"name": "Minute Maid Orange (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMinuteMaidOrangeFruitDrink"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMinuteMaidOrangeFruitDrink"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -1426,8 +1856,12 @@
 		{
 			"id": "minute-maid-orange-reg",
 			"name": "Minute Maid Orange (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMinuteMaidOrangeFruitDrink"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMinuteMaidOrangeFruitDrink"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -1445,11 +1879,18 @@
 		{
 			"id": "mocha",
 			"name": "Mocha",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionMocha"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionMocha"
+			],
 			"servingSize": 206,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 101,
 				"proteinG": 2.7,
@@ -1464,8 +1905,12 @@
 		{
 			"id": "mountain-dew-med",
 			"name": "Mountain Dew (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksMountainDew"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksMountainDew"
+			],
 			"servingSize": 470,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1481,8 +1926,12 @@
 		{
 			"id": "mountain-dew-reg",
 			"name": "Mountain Dew (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksMountainDew"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksMountainDew"
+			],
 			"servingSize": 330,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1498,8 +1947,12 @@
 		{
 			"id": "mug-root-beer-med",
 			"name": "Mug Root Beer (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksMugRootBeer"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksMugRootBeer"
+			],
 			"servingSize": 470,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1515,8 +1968,12 @@
 		{
 			"id": "mug-root-beer-reg",
 			"name": "Mug Root Beer (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksMugRootBeer"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksMugRootBeer"
+			],
 			"servingSize": 330,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1532,8 +1989,12 @@
 		{
 			"id": "mushroom-o-r-twister",
 			"name": "Mushroom O.R. Twister",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionMushroomTwister"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionMushroomTwister"
+			],
 			"servingSize": 198,
 			"servingUnit": "g",
 			"allergens": [
@@ -1555,11 +2016,18 @@
 		{
 			"id": "nuggets-20-pcs",
 			"name": "Nuggets (20 pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionDessertNuggets"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionDessertNuggets"
+			],
 			"servingSize": 328,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 796,
 				"proteinG": 48,
@@ -1572,11 +2040,18 @@
 		{
 			"id": "nuggets-6-pcs",
 			"name": "Nuggets (6 pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionDessertNuggets"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionDessertNuggets"
+			],
 			"servingSize": 98,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 239,
 				"proteinG": 14,
@@ -1589,8 +2064,12 @@
 		{
 			"id": "original-recipe-burger",
 			"name": "Original Recipe Burger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionOCBurger"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionOCBurger"
+			],
 			"servingSize": 195,
 			"servingUnit": "g",
 			"allergens": [
@@ -1612,11 +2091,19 @@
 		{
 			"id": "original-recipe-chicken-drumstick",
 			"name": "Original Recipe Chicken Drumstick",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenOriginal"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenOriginal"
+			],
 			"servingSize": 67,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 168,
 				"proteinG": 14.1,
@@ -1629,11 +2116,19 @@
 		{
 			"id": "original-recipe-chicken-keel",
 			"name": "Original Recipe Chicken Keel",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenOriginal"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenOriginal"
+			],
 			"servingSize": 143,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 359,
 				"proteinG": 30,
@@ -1646,11 +2141,19 @@
 		{
 			"id": "original-recipe-chicken-rib",
 			"name": "Original Recipe Chicken Rib",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenOriginal"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenOriginal"
+			],
 			"servingSize": 156,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 390,
 				"proteinG": 32.7,
@@ -1663,11 +2166,19 @@
 		{
 			"id": "original-recipe-chicken-thigh",
 			"name": "Original Recipe Chicken Thigh",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenOriginal"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenOriginal"
+			],
 			"servingSize": 123,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 309,
 				"proteinG": 25.8,
@@ -1680,11 +2191,19 @@
 		{
 			"id": "original-recipe-chicken-wing",
 			"name": "Original Recipe Chicken Wing",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionChickenOriginal"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionChickenOriginal"
+			],
 			"servingSize": 74,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 186,
 				"proteinG": 15.6,
@@ -1697,8 +2216,12 @@
 		{
 			"id": "original-recipe-platter",
 			"name": "Original Recipe Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMOriginalRecipePlatter"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMOriginalRecipePlatter"
+			],
 			"servingSize": 290,
 			"servingUnit": "g",
 			"allergens": [
@@ -1721,8 +2244,12 @@
 		{
 			"id": "original-recipe-porridge",
 			"name": "Original Recipe Porridge",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMOriginalRecipePorridge"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMOriginalRecipePorridge"
+			],
 			"servingSize": 561,
 			"servingUnit": "g",
 			"allergens": [
@@ -1744,8 +2271,12 @@
 		{
 			"id": "original-recipe-rice-bowl",
 			"name": "Original Recipe Rice Bowl",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionBowlsOriginalReceipe"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionBowlsOriginalReceipe"
+			],
 			"servingSize": 270,
 			"servingUnit": "g",
 			"allergens": [
@@ -1768,9 +2299,13 @@
 		{
 			"id": "original-recipe-riser-and-egg-burger",
 			"name": "Original Recipe Riser & Egg Burger",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionOriginalRecipeRiserEggBurger"],
-			"servingSize": 217,
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionOriginalRecipeRiserEggBurger"
+			],
+			"servingSize": 194,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -1780,20 +2315,24 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 523,
-				"proteinG": 28.9,
-				"carbohydratesG": 43.5,
-				"totalFatG": 25.8,
-				"saturatedFatG": 10.3,
-				"sodiumMg": 1318
+				"energyKcal": 478,
+				"proteinG": 25.3,
+				"carbohydratesG": 41.1,
+				"totalFatG": 23.5,
+				"saturatedFatG": 9.4,
+				"sodiumMg": 1194
 			}
 		},
 		{
 			"id": "original-recipe-riser-burger",
 			"name": "Original Recipe Riser Burger",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionOriginalRecipeRiserBurger"],
-			"servingSize": 149,
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionOriginalRecipeRiserBurger"
+			],
+			"servingSize": 144,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -1803,19 +2342,23 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 402,
-				"proteinG": 20.8,
-				"carbohydratesG": 42.7,
-				"totalFatG": 16.4,
-				"saturatedFatG": 6.9,
-				"sodiumMg": 1242
+				"energyKcal": 380,
+				"proteinG": 19.5,
+				"carbohydratesG": 40.6,
+				"totalFatG": 15.5,
+				"saturatedFatG": 6.4,
+				"sodiumMg": 1139
 			}
 		},
 		{
 			"id": "original-recipe-stacker",
 			"name": "Original Recipe Stacker",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionOCStacker"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionOCStacker"
+			],
 			"servingSize": 313,
 			"servingUnit": "g",
 			"allergens": [
@@ -1837,11 +2380,19 @@
 		{
 			"id": "original-recipe-tenders-3pcs",
 			"name": "Original Recipe Tenders (3pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionDessertHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionDessertHotCrispy"
+			],
 			"servingSize": 162,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 353,
 				"proteinG": 36.1,
@@ -1854,11 +2405,19 @@
 		{
 			"id": "original-recipe-tenders-5pcs",
 			"name": "Original Recipe Tenders (5pcs)",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionDessertHotCrispy"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionDessertHotCrispy"
+			],
 			"servingSize": 270,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 589,
 				"proteinG": 60.2,
@@ -1871,9 +2430,13 @@
 		{
 			"id": "original-recipe-twister",
 			"name": "Original Recipe Twister",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMORTwister"],
-			"servingSize": 232,
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMORTwister"
+			],
+			"servingSize": 265,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -1883,19 +2446,23 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 513,
-				"proteinG": 27.5,
-				"carbohydratesG": 40.6,
-				"totalFatG": 26.3,
-				"saturatedFatG": 10.5,
-				"sodiumMg": 1150
+				"energyKcal": 590,
+				"proteinG": 31.1,
+				"carbohydratesG": 64.1,
+				"totalFatG": 33.1,
+				"saturatedFatG": 13.1,
+				"sodiumMg": 1184
 			}
 		},
 		{
 			"id": "pancakes-deluxe-platter",
 			"name": "Pancakes Deluxe Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMPancakeDeluxe"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMPancakeDeluxe"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [
@@ -1918,8 +2485,12 @@
 		{
 			"id": "pancakes-platter",
 			"name": "Pancakes Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMPancakePlatterDeluxe"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMPancakePlatterDeluxe"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [
@@ -1942,8 +2513,12 @@
 		{
 			"id": "pepsi-black-med",
 			"name": "Pepsi Black (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksPepsiBlack"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksPepsiBlack"
+			],
 			"servingSize": 470,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1959,8 +2534,12 @@
 		{
 			"id": "pepsi-black-reg",
 			"name": "Pepsi Black (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksPepsiBlack"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksPepsiBlack"
+			],
 			"servingSize": 330,
 			"servingUnit": "ml",
 			"allergens": [],
@@ -1976,8 +2555,12 @@
 		{
 			"id": "pokka-kiyo-kyoho-grape",
 			"name": "Pokka Kiyo Kyoho Grape",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionPokkaKiyoKyohoGrapeJuiceDrink"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionPokkaKiyoKyohoGrapeJuiceDrink"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [],
@@ -1995,8 +2578,12 @@
 		{
 			"id": "popcorn-chicken",
 			"name": "Popcorn Chicken",
-			"categories": ["chicken"],
-			"sourceGroups": ["NutritionDessertPopcornChicken"],
+			"categories": [
+				"chicken"
+			],
+			"sourceGroups": [
+				"NutritionDessertPopcornChicken"
+			],
 			"servingSize": 150,
 			"servingUnit": "g",
 			"allergens": [
@@ -2019,11 +2606,20 @@
 		{
 			"id": "portugese-egg-tart-1pc",
 			"name": "Portugese Egg Tart (1pc)",
-			"categories": ["desserts"],
-			"sourceGroups": ["NutritionDessertPortugueseEggTart"],
+			"categories": [
+				"desserts"
+			],
+			"sourceGroups": [
+				"NutritionDessertPortugueseEggTart"
+			],
 			"servingSize": 61,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 208,
 				"proteinG": 2.8,
@@ -2036,8 +2632,12 @@
 		{
 			"id": "red-bull-energy-drink-per-can",
 			"name": "Red Bull Energy Drink (per can)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionRedBullEnergyDrink"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionRedBullEnergyDrink"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [],
@@ -2053,8 +2653,12 @@
 		{
 			"id": "red-bull-sugar-free-per-can",
 			"name": "Red Bull Sugar Free (per can)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionRedBullSugarFree"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionRedBullSugarFree"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [],
@@ -2070,8 +2674,12 @@
 		{
 			"id": "riser",
 			"name": "Riser",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMRiser"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMRiser"
+			],
 			"servingSize": 143,
 			"servingUnit": "g",
 			"allergens": [
@@ -2094,8 +2702,12 @@
 		{
 			"id": "riser-with-egg",
 			"name": "Riser with Egg",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionAMRiser"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionAMRiser"
+			],
 			"servingSize": 250,
 			"servingUnit": "g",
 			"allergens": [
@@ -2118,11 +2730,21 @@
 		{
 			"id": "salad-bowl-with-caesar-dressing",
 			"name": "Salad Bowl with Caesar Dressing",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionSaladBowlCaesarDressing"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionSaladBowlCaesarDressing"
+			],
 			"servingSize": 246,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Fish", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Fish",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 364,
 				"proteinG": 18.9,
@@ -2133,13 +2755,21 @@
 			}
 		},
 		{
-			"id": "salad-cup-with-black-vinegar-and-onion-dressing-108g-saladcupblackvinegaroniondressing",
+			"id": "salad-cup-with-black-vinegar-and-onion-dressing-108g",
 			"name": "Salad Cup with Black Vinegar & Onion Dressing",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionSaladCupBlackVinegarOnionDressing"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionSaladCupBlackVinegarOnionDressing"
+			],
 			"servingSize": 108,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 77,
 				"proteinG": 1.6,
@@ -2150,30 +2780,21 @@
 			}
 		},
 		{
-			"id": "salad-cup-with-black-vinegar-and-onion-dressing-108g-saladcupcaesardressing",
-			"name": "Salad Cup with Black Vinegar & Onion Dressing",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionSaladCupCaesarDressing"],
-			"servingSize": 108,
-			"servingUnit": "g",
-			"allergens": ["Eggs", "Fish", "Milk", "Soy"],
-			"nutrition": {
-				"energyKcal": 148,
-				"proteinG": 1.9,
-				"carbohydratesG": 7.1,
-				"totalFatG": 12.5,
-				"saturatedFatG": 0.1,
-				"sodiumMg": 334
-			}
-		},
-		{
 			"id": "salad-cup-with-black-vinegar-and-onion-dressing-246g",
 			"name": "Salad Cup with Black Vinegar & Onion Dressing",
-			"categories": ["bowls"],
-			"sourceGroups": ["NutritionSaladBowlBlackVinegarOnionDressing"],
+			"categories": [
+				"bowls"
+			],
+			"sourceGroups": [
+				"NutritionSaladBowlBlackVinegarOnionDressing"
+			],
 			"servingSize": 246,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 309,
 				"proteinG": 18.7,
@@ -2184,13 +2805,47 @@
 			}
 		},
 		{
+			"id": "salad-cup-with-caesar-dressing",
+			"name": "Salad Cup with Caesar Dressing",
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionSaladCupCaesarDressing"
+			],
+			"servingSize": 108,
+			"servingUnit": "g",
+			"allergens": [
+				"Eggs",
+				"Fish",
+				"Milk",
+				"Soy"
+			],
+			"nutrition": {
+				"energyKcal": 148,
+				"proteinG": 1.9,
+				"carbohydratesG": 7.1,
+				"totalFatG": 12.5,
+				"saturatedFatG": 0.1,
+				"sodiumMg": 334
+			}
+		},
+		{
 			"id": "shhh-secret-grill-sauce-25g",
 			"name": "Shhh Secret Grill Sauce (25g)",
-			"categories": ["sauces"],
-			"sourceGroups": ["NutritionSecretGrillSauce"],
+			"categories": [
+				"sauces"
+			],
+			"sourceGroups": [
+				"NutritionSecretGrillSauce"
+			],
 			"servingSize": 25,
 			"servingUnit": "g",
-			"allergens": ["Eggs", "Milk", "Soy"],
+			"allergens": [
+				"Eggs",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 41,
 				"proteinG": 0.4,
@@ -2203,11 +2858,17 @@
 		{
 			"id": "sjora-mango-peach-100g",
 			"name": "Sjora Mango Peach",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSjoraMangoPeach"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSjoraMangoPeach"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 20,
 				"proteinG": 0.3,
@@ -2222,11 +2883,17 @@
 		{
 			"id": "sjora-mango-peach-300ml",
 			"name": "SJORA Mango Peach",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksSJORA"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksSJORA"
+			],
 			"servingSize": 300,
 			"servingUnit": "ml",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 113,
 				"proteinG": 0.9,
@@ -2239,11 +2906,17 @@
 		{
 			"id": "sjora-mango-peach-med-510g",
 			"name": "Sjora Mango Peach (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSjoraMangoPeach"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSjoraMangoPeach"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 104,
 				"proteinG": 1.4,
@@ -2258,11 +2931,17 @@
 		{
 			"id": "sjora-mango-peach-med-410ml",
 			"name": "SJORA Mango Peach (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionDrinksSJORA"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionDrinksSJORA"
+			],
 			"servingSize": 410,
 			"servingUnit": "ml",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 154,
 				"proteinG": 1,
@@ -2275,11 +2954,17 @@
 		{
 			"id": "sjora-mango-peach-reg",
 			"name": "Sjora Mango Peach (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSjoraMangoPeach"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSjoraMangoPeach"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
-			"allergens": ["Milk"],
+			"allergens": [
+				"Milk"
+			],
 			"nutrition": {
 				"energyKcal": 71,
 				"proteinG": 0.9,
@@ -2294,8 +2979,12 @@
 		{
 			"id": "smokey-hot-zinger-burger",
 			"name": "Smokey Hot Zinger Burger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionSmokeyHotZingerBurger"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionSmokeyHotZingerBurger"
+			],
 			"servingSize": 217,
 			"servingUnit": "g",
 			"allergens": [
@@ -2317,8 +3006,12 @@
 		{
 			"id": "sprite",
 			"name": "Sprite",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSprite"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSprite"
+			],
 			"servingSize": 100,
 			"servingUnit": "g",
 			"allergens": [],
@@ -2335,8 +3028,12 @@
 		{
 			"id": "sprite-med",
 			"name": "Sprite (med)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSprite"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSprite"
+			],
 			"servingSize": 510,
 			"servingUnit": "g",
 			"allergens": [],
@@ -2353,8 +3050,12 @@
 		{
 			"id": "sprite-reg",
 			"name": "Sprite (reg)",
-			"categories": ["beverages"],
-			"sourceGroups": ["NutritionSprite"],
+			"categories": [
+				"beverages"
+			],
+			"sourceGroups": [
+				"NutritionSprite"
+			],
 			"servingSize": 350,
 			"servingUnit": "g",
 			"allergens": [],
@@ -2371,9 +3072,13 @@
 		{
 			"id": "the-ultimate-smokey-zinger",
 			"name": "The Ultimate Smokey Zinger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionUltimateSmokeyZinger"],
-			"servingSize": 237,
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionUltimateSmokeyZinger"
+			],
+			"servingSize": 223,
 			"servingUnit": "g",
 			"allergens": [
 				"Cereals containing gluten",
@@ -2383,19 +3088,23 @@
 				"Wheat"
 			],
 			"nutrition": {
-				"energyKcal": 603,
-				"proteinG": 33.6,
-				"carbohydratesG": 46.4,
-				"totalFatG": 31.4,
-				"saturatedFatG": 10.7,
-				"sodiumMg": 1848
+				"energyKcal": 588,
+				"proteinG": 30.2,
+				"carbohydratesG": 43.8,
+				"totalFatG": 32.4,
+				"saturatedFatG": 11,
+				"sodiumMg": 1850
 			}
 		},
 		{
 			"id": "waffle-and-chicken-platter",
 			"name": "Waffle & Chicken Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionWaffleChickenPlatter"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionWaffleChickenPlatter"
+			],
 			"servingSize": 378,
 			"servingUnit": "g",
 			"allergens": [
@@ -2417,8 +3126,12 @@
 		{
 			"id": "waffle-and-saute-mushroom-platter",
 			"name": "Waffle & Saute Mushroom Platter",
-			"categories": ["breakfast"],
-			"sourceGroups": ["NutritionWaffleSauteMushroomPlatter"],
+			"categories": [
+				"breakfast"
+			],
+			"sourceGroups": [
+				"NutritionWaffleSauteMushroomPlatter"
+			],
 			"servingSize": 265,
 			"servingUnit": "g",
 			"allergens": [
@@ -2440,11 +3153,19 @@
 		{
 			"id": "whipped-potato-med",
 			"name": "Whipped Potato (med)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertPotato"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertPotato"
+			],
 			"servingSize": 190,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 102,
 				"proteinG": 4,
@@ -2457,14 +3178,22 @@
 		{
 			"id": "whipped-potato-reg",
 			"name": "Whipped Potato (reg)",
-			"categories": ["sides"],
-			"sourceGroups": ["NutritionDessertPotato"],
+			"categories": [
+				"sides"
+			],
+			"sourceGroups": [
+				"NutritionDessertPotato"
+			],
 			"servingSize": 95,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Milk", "Soy"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
-				"energyKcal": 51,
-				"proteinG": 2,
+				"energyKcal": 48,
+				"proteinG": 1.4,
 				"carbohydratesG": 10,
 				"totalFatG": 0,
 				"saturatedFatG": 0,
@@ -2474,11 +3203,21 @@
 		{
 			"id": "white-curry-syiok-sauce-25g",
 			"name": "White Curry Syiok! Sauce (25g)",
-			"categories": ["sauces"],
-			"sourceGroups": ["NutritionWhiteCurrySauce"],
+			"categories": [
+				"sauces"
+			],
+			"sourceGroups": [
+				"NutritionWhiteCurrySauce"
+			],
 			"servingSize": 25,
 			"servingUnit": "g",
-			"allergens": ["Crustaceans", "Eggs", "Fish", "Milk", "Soy"],
+			"allergens": [
+				"Crustaceans",
+				"Eggs",
+				"Fish",
+				"Milk",
+				"Soy"
+			],
 			"nutrition": {
 				"energyKcal": 88,
 				"proteinG": 0.9,
@@ -2491,11 +3230,20 @@
 		{
 			"id": "zinger",
 			"name": "Zinger",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionZinger"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionZinger"
+			],
 			"servingSize": 202,
 			"servingUnit": "g",
-			"allergens": ["Cereals containing gluten", "Eggs", "Soy", "Wheat"],
+			"allergens": [
+				"Cereals containing gluten",
+				"Eggs",
+				"Soy",
+				"Wheat"
+			],
 			"nutrition": {
 				"energyKcal": 509,
 				"proteinG": 25.6,
@@ -2508,8 +3256,12 @@
 		{
 			"id": "zinger-stacker",
 			"name": "Zinger Stacker",
-			"categories": ["burgers"],
-			"sourceGroups": ["NutritionZingerStacker"],
+			"categories": [
+				"burgers"
+			],
+			"sourceGroups": [
+				"NutritionZingerStacker"
+			],
 			"servingSize": 351,
 			"servingUnit": "g",
 			"allergens": [
